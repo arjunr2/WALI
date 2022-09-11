@@ -1,0 +1,45 @@
+This file contains a list of all syscalls necessary to implement WASI.
+
+syscalls that are same between linux and MacOS
+-----------------------------------------------
+openat
+read
+write
+readv
+writev
+pread
+preadv
+pwrite
+pwritev
+lseek
+sync
+fdatasync
+fcntl (partially)
+ftruncate
+linkat
+mkdirat
+readlinkat
+unlinkat
+renameat
+symlinkat
+recvfrom 
+sendto
+shutdown
+poll
+socket
+connect
+ioctl (partially)
+
+
+syscalls that differ between Linux and MacOS 
+----------------------------------------------
+fadvise64
+fallocate
+newfstatat
+utimensat
+clock_gettime
+clock_getres
+getrandom
+nanosleep
+getdents64
+fstat
