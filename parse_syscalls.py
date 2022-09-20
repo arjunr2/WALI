@@ -7,7 +7,7 @@ from pathlib import Path
 #    CALLS = 3
 #    ERRORS = 4
 #    SYSCALL = 5
-syscall_nrs = {
+syscall_desc = {
     0: ("read", "Read from file"),
     1: ("write", "Write to file"),
     2: ("open", "Open or create file"),
@@ -345,7 +345,7 @@ syscall_nrs = {
     334: ("rseq", "")
 }
 
-syscall_map = {y: x for x, y in syscall_nrs.items()}
+syscall_nrs = {y[0]: x for x, y in syscall_desc.items()}
 
 
 def main():
@@ -365,9 +365,9 @@ def main():
             syscall_set.update(syscalls_file)
 
     with open('syscall_list.txt', 'w') as f:
-        syscall_list = sorted(syscall_set)
-        compiled_syscalls = [x + " , " + str(syscall_map[x]) for x in syscall_list]
-        f.writelines('\n'.join(compiled_syscalls))
+        syscall_list = sorted(syscall_set, key=lambda x: syscall_nrs[x])
+        compiled_syscall_desc = [','.join( [str(syscall_nrs[x]), x, syscall_desc[syscall_nrs[x]][1]]) for x in syscall_list]
+        f.writelines('\n'.join(compiled_syscall_desc))
 
 
 if __name__ == '__main__':
