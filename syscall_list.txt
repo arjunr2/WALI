@@ -1,98 +1,98 @@
-access
-alarm
-arch_prctl
-bind
-brk
-chdir
-chmod
-chown
-clock_gettime
-clock_nanosleep
-clone
-close
-connect
-dup
-dup2
-eventfd2
-execve
-faccessat
-fadvise64
-fchmod
-fchown
-fcntl
-fstat
-fsync
-futex
-get_mempolicy
-getcwd
-getdents64
-getegid
-geteuid
-getgid
-getpeername
-getpgrp
-getpid
-getppid
-getrandom
-getrusage
-getsockname
-getsockopt
-gettid
-getuid
-ioctl
-kill
-lseek
-lstat
-madvise
-mkdir
-mmap
-mprotect
-mremap
-munmap
-newfstatat
-openat
-pipe
-pipe2
-poll
-prctl
-pread64
-prlimit64
-pwrite64
-read
-readlink
-recvfrom
-recvmsg
-rt_sigaction
-rt_sigprocmask
-rt_sigreturn
-rt_sigsuspend
-sched_getaffinity
-sched_getattr
-sched_setaffinity
-sched_setattr
-sched_yield
-select
-sendmmsg
-sendmsg
-sendto
-set_mempolicy
-set_robust_list
-set_tid_address
-setsockopt
-sigaltstack
-socket
-stat
-statfs
-sysinfo
-timer_create
-timer_settime
-umask
-uname
-unlink
-unlinkat
-utime
-utimensat
-vfork
-wait4
-write
-writev
+access , 21
+alarm , 37
+arch_prctl , 158
+bind , 49
+brk , 12
+chdir , 80
+chmod , 90
+chown , 92
+clock_gettime , 228
+clock_nanosleep , 230
+clone , 56
+close , 3
+connect , 42
+dup , 32
+dup2 , 33
+eventfd2 , 290
+execve , 59
+faccessat , 269
+fadvise64 , 221
+fchmod , 91
+fchown , 93
+fcntl , 72
+fstat , 5
+fsync , 74
+futex , 202
+get_mempolicy , 239
+getcwd , 79
+getdents64 , 217
+getegid , 108
+geteuid , 107
+getgid , 104
+getpeername , 52
+getpgrp , 111
+getpid , 39
+getppid , 110
+getrandom , 318
+getrusage , 98
+getsockname , 51
+getsockopt , 55
+gettid , 186
+getuid , 102
+ioctl , 16
+kill , 62
+lseek , 8
+lstat , 6
+madvise , 28
+mkdir , 83
+mmap , 9
+mprotect , 10
+mremap , 25
+munmap , 11
+newfstatat , 262
+openat , 257
+pipe , 22
+pipe2 , 293
+poll , 7
+prctl , 157
+pread64 , 17
+prlimit64 , 302
+pwrite64 , 18
+read , 0
+readlink , 89
+recvfrom , 45
+recvmsg , 47
+rt_sigaction , 13
+rt_sigprocmask , 14
+rt_sigreturn , 15
+rt_sigsuspend , 130
+sched_getaffinity , 204
+sched_getattr , 315
+sched_setaffinity , 203
+sched_setattr , 314
+sched_yield , 24
+select , 23
+sendmmsg , 307
+sendmsg , 46
+sendto , 44
+set_mempolicy , 238
+set_robust_list , 273
+set_tid_address , 218
+setsockopt , 54
+sigaltstack , 131
+socket , 41
+stat , 4
+statfs , 137
+sysinfo , 99
+timer_create , 222
+timer_settime , 223
+umask , 95
+uname , 63
+unlink , 87
+unlinkat , 263
+utime , 132
+utimensat , 280
+vfork , 58
+wait4 , 61
+write , 1
+writev , 20
