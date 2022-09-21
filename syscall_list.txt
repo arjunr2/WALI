@@ -74,7 +74,7 @@
 202,futex,Fast user-space mutex
 203,sched_setaffinity,Set CPU affinity mask
 204,sched_getaffinity,Get CPU affinity mask
-217,getdents64,
+217,getdents64,Get directory entries
 218,set_tid_address,Set pointer to TID
 221,fadvise64,Declare access pattern of I/O for optimization
 222,timer_create,Create POSIX per-process timer
@@ -84,7 +84,7 @@
 238,set_mempolicy,Set default NUMA memory policy for thread/children
 239,get_mempolicy,Get NUMA memory policy for thread/children
 257,openat,Open file relative to directory fd
-262,newfstatat,stat, with relative directory path and cwd
+262,newfstatat,stat with relative directory path and cwd
 263,unlinkat,Delete name and possible file it references
 269,faccessat,Check user perms for file relative to dir
 273,set_robust_list,Set list of robust futexes
