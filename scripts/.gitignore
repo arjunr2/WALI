@@ -1,0 +1,6 @@
+syscall_list.txt
+wali_syscall_defs.out
+wali_syscall_cases.out
+wali_syscall_declr.out
+wali_syscall_impl.out
+wali_syscall_native.out

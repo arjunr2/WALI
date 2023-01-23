@@ -1,0 +1,15 @@
+To replace syscalls:
+
+One-liner, multiple args syscalls:
+find src/ -type f -exec sed -i 's/__syscall\s*(\s*\(SYS[^,]*\),\s*\(.*\))/__syscall_\1(\2)/g' {} +
+
+One-liner, no args syscalls:
+find src/ -type f -exec sed -i 's/__syscall\s*(\s*\(SYS[^)]*\))/__syscall_\1()/g' {} +
+
+Multi-liner:
+find src/ -type f -exec sed -i 's/__syscall\s*(\s*\(SYS[^,]*\),\s*\(.*\),$/__syscall_\1(\2,/g' {} +
+
+Also replace src/env/__init_tls.c syscall
+
+find src/ -type f -exec sed -i 's/__syscall\s*(\s*\(SYS[^,)]*\)[,)]\s*/__syscall_\1(/g' {} +
+
