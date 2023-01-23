@@ -1,11 +1,10 @@
 #!/bin/bash
 
-sysroot_dir=../sysroot
 crtfile=startup/crt1.o 
 
 outdir=.
 
-while getopts "vo:" OPT; do
+while getopts "vo:s:" OPT; do
   case $OPT in
     v) verbose=-v;;
     o) outdir=$OPTARG;;

@@ -2,6 +2,8 @@
 
 CC=gcc
 
+SYSROOT_DIR=../wali-musl/sysroot
+
 WASM_DIR=wasm
 ELF_DIR=elf
 
@@ -17,7 +19,7 @@ dir:
 
 %.o: %.c
 	$(CC) -o $(ELF_DIR)/$* $<
-	./compile-wali.sh -o $(WASM_DIR) $<
+	./compile-wali.sh -o $(WASM_DIR) -s $(SYSROOT_DIR) $<
 
 
 clean:
