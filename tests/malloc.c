@@ -1,6 +1,7 @@
 #include "common.h"
 
 int main() {
+  write(1, "Q", 1);
   int *f = (int*) malloc(15*sizeof(int));
   for (int i = 0; i < 15; i++) {
     f[i] = 64 * i;
