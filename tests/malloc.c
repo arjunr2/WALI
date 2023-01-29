@@ -14,5 +14,7 @@ int main() {
     res += (f[i] * g[i]);
   }
   printf("Dot product: %lld\n", res);
+  free(g);
+  free(f);
   return 0;
 }
