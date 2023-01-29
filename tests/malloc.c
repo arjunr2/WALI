@@ -1,13 +1,18 @@
 #include "common.h"
+#define SIZE 1523
 
 int main() {
-  write(1, "Q", 1);
-  int *f = (int*) malloc(15*sizeof(int));
-  printf("Malloc addr: %lld\n", f);
-  for (int i = 0; i < 15; i++) {
-    printf("Accessing elem %i\n", i);
-    f[i] = 64 * i;
+  int *f = (int*) malloc(SIZE*sizeof(int));
+  int *g = (int*) malloc(SIZE*sizeof(int));
+  for (int i = 0; i < SIZE; i++) {
+    printf("Setting elem %i\n", i);
+    f[i] = 33 * i;
+    g[i] = 31 * i;
   }
-  PRINT_INT("Elem 4", f[4]);
+  int64_t res = 0;
+  for (int i = 0; i < SIZE; i++) {
+    res += (f[i] * g[i]);
+  }
+  printf("Dot product: %lld\n", res);
   return 0;
 }
