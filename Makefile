@@ -1,6 +1,6 @@
 
 IWASM_DIR=wasm-micro-runtime/product-mini/platforms/linux/build
-TEST_DIR_ARGS=WASM_DIR=../wasm ELF_DIR=../elf
+#TEST_DIR_ARGS=WASM_DIR=../wasm ELF_DIR=../elf
 
 .PHONY: libc iwasm tests
 

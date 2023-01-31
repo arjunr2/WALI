@@ -10,7 +10,7 @@ while getopts "vo:s:" OPT; do
     o) outdir=$OPTARG;;
     s) sysroot_dir=$OPTARG;;
     *) 
-      echo "Incoorect opt provided"
+      echo "Incorrect opt provided"
       exit 1 ;;
   esac
 done
