@@ -51,7 +51,7 @@ NOTE: We currently use the startup file out of WASI, but this will change in the
 Use a Webassembly runtime of your choice to execute the above generated WASM code.
 
 If you built the baseline WAMR implementation and added the *IWASM_DIR* from the Makefile to your path,
-your can run `iwasm <path-to-wasm-file>` to run the code.
+you can use `iwasm <path-to-wasm-file>` to execute the code.
 
 
 ## Resources
