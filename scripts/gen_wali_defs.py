@@ -3,21 +3,18 @@ import pandas as pd
 import csv
 
 BASIC_TYPES = ["int", "char", "long", "void", "..."]
+# long long in WASM and Native is 64-bit machine
+# Each tuple in complex types denotes (native x64, wasm) size
 COMPLEX_TYPES = {
-    "off_t": "long long",
-    "size_t": "long", 
+    "off_t": "long long", # "long long",
+    "size_t": "unsigned int", # "long", 
     "mode_t": "int",
     "nfds_t": "int",
-    "socklen_t": "long",
+    "socklen_t": "unsigned int", # "long",
     "clockid_t": "int",
     "uid_t": "int",
     "pid_t": "int",
     "gid_t": "int"
-}
-
-# long long in WASM is really a long in 64-bit machine
-WASM_TO_NATIVE_SIZES = {
-    "long long": "long"
 }
 
 
@@ -92,7 +89,7 @@ def gen_base_impl(nr, name, fn_name, args):
 def gen_native_args(args):
     return "\"({params}){res}\"".format(
         params = ''.join(["I" if x == "long long" else "i" for x in args]),
-        res = "i"
+        res = "I"
         )
     
 
