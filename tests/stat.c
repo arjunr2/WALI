@@ -1,5 +1,6 @@
 #include "common.h"
 
+
 int main()
 {
     struct stat sb;
@@ -9,6 +10,8 @@ int main()
         print("ERROR\n");
         exit(1);
     }
+
+    printf("Size of stat var: %lu\n", sizeof(sb));
 
     print("ID of containing device: [");
     print_int((uintmax_t) major(sb.st_dev));

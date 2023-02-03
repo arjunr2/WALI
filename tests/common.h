@@ -18,6 +18,19 @@
 #include <arpa/inet.h>
 #include <sys/mman.h>
 
+#define PCT(sb, ty) { \
+  char buf[20]; \
+  char* sbc = (char*) &sb;  \
+  memcpy(buf, sbc + off, sizeof(ty)); \
+  printf( # ty ": "); \
+  for (int i = 0; i < sizeof(ty); i++) {  \
+    printf("%02X ", buf[i]);  \
+  } \
+  printf("\n"); \
+  off += sizeof(ty);  \
+}
+
+
 int print(const char* buf) {
   int len = strlen(buf);
   write(1, buf, len);
