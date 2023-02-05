@@ -24,6 +24,7 @@ int main() {
   int i = 0;
   while (i++ < 100000000) {
     print("Wait 2 sec\n");
+    sleep(2);
   }
   print("Its me\n");
 
