@@ -18,17 +18,17 @@
 #include <arpa/inet.h>
 #include <sys/mman.h>
 
-#define PCT(sb, ty) { \
-  char buf[20]; \
-  char* sbc = (char*) &sb;  \
-  memcpy(buf, sbc + off, sizeof(ty)); \
-  printf( # ty ": "); \
-  for (int i = 0; i < sizeof(ty); i++) {  \
-    printf("%02X ", buf[i]);  \
+/* Print num bytes from variables */
+#define PRINT_BYTES(var, num) ({ \
+  printf(#var " bytes: "); \
+  char* v = (char*) var;  \
+  int i;  \
+  for (i = 0; i < num; i++) { \
+    printf("%02X ", v[i]);  \
   } \
   printf("\n"); \
-  off += sizeof(ty);  \
-}
+  &v[i];  \
+})
 
 
 int print(const char* buf) {
