@@ -8,11 +8,12 @@ int main() {
   /* Child */
   if (cpid == 0) {
     sigset_t block_alarm;
+    sigset_t old_set;
     sigemptyset (&block_alarm);
     sigaddset (&block_alarm, SIGALRM);
 
     syscall(SYS_alarm, ALARM_TIME);
-    sigprocmask (SIG_BLOCK, &block_alarm, NULL);
+    sigprocmask (SIG_BLOCK, &block_alarm, &old_set);
     for (int i = 0; i < ALARM_TIME + 15; i++) {
       printf("Child ct: %d\n", ct);
       ct++;

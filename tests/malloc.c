@@ -13,7 +13,7 @@ int main() {
   for (int i = 0; i < SIZE; i++) {
     res += (f[i] * g[i]);
   }
-  printf("Dot product: %lld\n", res);
+  printf("Dot product: %ld\n", res);
   free(g);
   free(f);
   return 0;
