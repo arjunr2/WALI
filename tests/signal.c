@@ -4,7 +4,8 @@
 #define SEC 2
 
 void custom_signal_handler(int signo) {
-  printf("Custom Signal Handler: %s\n", strsignal(signo));
+  //printf("Custom Signal Handler: %s\n", strsignal(signo));
+  printf("Custom Signal Handler: %d\n", signo);
 }
 
 int main() {
@@ -12,7 +13,7 @@ int main() {
   struct sigaction act = {0};
   act.sa_handler = custom_signal_handler;
   sigemptyset (&act.sa_mask);
-  act.sa_flags = 0;
+  act.sa_flags = SA_RESTART;
 
   printf("PID: %d\n", getpid());
 
