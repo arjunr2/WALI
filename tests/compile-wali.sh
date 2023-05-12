@@ -1,7 +1,5 @@
 #!/bin/bash
 
-crtfile=startup/crt1.o 
-
 outdir=.
 
 while getopts "vo:s:" OPT; do
@@ -16,6 +14,8 @@ while getopts "vo:s:" OPT; do
 done
 cfile=${@:$OPTIND:1}
 outbase=$outdir/$(basename $cfile .c)
+
+crtfile=$sysroot_dir/lib/crt1.o 
 
 clang --target=wasm32 --sysroot=$sysroot_dir $cfile -S -emit-llvm -o $outbase.ll $verbose
 llc $outbase.ll -filetype=obj -o $outbase.wasm
