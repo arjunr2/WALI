@@ -12,5 +12,6 @@ int main() {
   PRINT_INT("LONG LONG", sizeof(long long));
   PRINT_INT("FLOAT", sizeof(float));
   PRINT_INT("DOUBLE", sizeof(double));
+  PRINT_INT("LONG DOUBLE", sizeof(long double));
   return 0;
 }

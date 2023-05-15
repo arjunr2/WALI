@@ -11,6 +11,11 @@ implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runti
 There are three major components for testing: WALI libc, WALI runtime, and the test suite. All three of these can
 be built with the default `make` command. However, initial setup and packages may be required for some of the components
 
+### Prerequisites
+
+Tested with Clang 16. Requires *compiler-rt* builtins for wasm32 for full libc support
+
+
 ### Building WALI libc
 
 The [wali-musl](wali-musl) submodule has detailed information on prerequisites and steps for compiling libc

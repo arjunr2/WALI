@@ -1,6 +1,7 @@
 #!/bin/bash
 
 outdir=.
+rt_lib=/home/arjun/tools/llvm-project/build-compiler-rt/libclang_rt.builtins-wasm32.a
 
 while getopts "vo:s:" OPT; do
   case $OPT in
@@ -17,8 +18,8 @@ outbase=$outdir/$(basename $cfile .c)
 
 crtfile=$sysroot_dir/lib/crt1.o 
 
-clang --target=wasm32 --sysroot=$sysroot_dir $cfile -S -emit-llvm -o $outbase.ll $verbose
+clang --target=wasm32 -O1 --sysroot=$sysroot_dir $cfile -S -emit-llvm -o $outbase.ll $verbose
 llc $outbase.ll -filetype=obj -o $outbase.wasm
 wasm2wat $outbase.wasm -o $outbase.wat
-wasm-ld --no-entry --allow-undefined -L$sysroot_dir/lib $outbase.wasm $crtfile -lc -o ${outbase}_link.wasm
+wasm-ld --no-entry --allow-undefined -L$sysroot_dir/lib $outbase.wasm $crtfile -lc -lm $rt_lib -o ${outbase}_link.wasm
 wasm2wat ${outbase}_link.wasm -o ${outbase}_link.wat
