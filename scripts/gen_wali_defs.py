@@ -124,17 +124,19 @@ def main():
     df_dict = df.to_dict(orient='records')
 
     syscall_info = df_dict
+    print(type(syscall_info))
     
     for item in syscall_info:
-        args, valid = gen_args(item)
-        print("{}: {}".format(item['Syscall'], args))
-        
-        fn_name = item['Aliases'] if item['Aliases'] else item['Syscall']
+        if item['Syscall']:
+            args, valid = gen_args(item)
+            print("{}: {}".format(item['Syscall'], args))
+            
+            fn_name = item['Aliases'] if item['Aliases'] else item['Syscall']
 
-        for ty, tup in out_dict.items():
-            buf, app_fn, ignore_valid = tup
-            if valid or ignore_valid:
-                buf.append(app_fn(item['NR'], item['Syscall'], fn_name, args))
+            for ty, tup in out_dict.items():
+                buf, app_fn, ignore_valid = tup
+                if valid or ignore_valid:
+                    buf.append(app_fn(item['NR'], item['Syscall'], fn_name, args))
 
 
     for ty, tup in out_dict.items():
