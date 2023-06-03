@@ -1,7 +1,7 @@
 .PHONY: dir clean all
 
 CC=gcc
-LFLAGS=-lm
+LFLAGS=-lm -lpthread
 
 SYSROOT_DIR=../wali-musl/sysroot
 

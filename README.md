@@ -13,7 +13,7 @@ be built with the default `make` command. However, initial setup and packages ma
 
 ### Prerequisites
 
-Tested with Clang 16. Requires *compiler-rt* builtins for wasm32 for full libc support
+Tested with LLVM Clang 16. Requires *compiler-rt* builtins for wasm32 for full libc support
 
 
 ### Building WALI libc

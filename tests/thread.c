@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <pthread.h>
 
+_Thread_local int l = 0;
+
 void *thread_fn(void* arg) {
-  printf("Hello thread\n");
+  printf("Hello thread -- l: %d\n", l);
   return NULL;
 }
 
