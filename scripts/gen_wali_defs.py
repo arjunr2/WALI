@@ -88,7 +88,7 @@ def gen_base_impl(nr, name, fn_name, args):
 
 def gen_native_args(args):
     return "\"({params}){res}\"".format(
-        params = ''.join(["I" if x == "long long" else "i" for x in args]),
+        params = ''.join(["I" if x == "long long"  or x == "long" else "i" for x in args]),
         res = "I"
         )
     
