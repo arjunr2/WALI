@@ -10,8 +10,7 @@ void *thread_fn(void* arg) {
   int k = 0;
   for (volatile int i = 0; i < N; i++) {
     if ((i % (N/10)) == 0) {
-      printf("------- Hello Thread | Self: %d, K: %d\n", pthread_self(), k++);
-      //PRINT_INT("---------- Hello Thread | Self", (long)pthread_self());
+      printf("------- Hello Thread | Self: %d, K: %d\n", (int)pthread_self(), k++);
     }
   }
   char* path = (char*) arg;
@@ -38,7 +37,7 @@ int main(int argc, char* argv[]) {
   int k = 0;
   for (volatile int i = 0; i < N*2; i++) {
     if ((i % (N/10)) == 0) {
-      printf("------ Hello Parent | Self: %d, K: %d\n", pthread_self(), k++);
+      printf("------ Hello Parent | Self: %d, K: %d\n", (int)pthread_self(), k++);
     }
   }
   if (!access(path1, F_OK)) {

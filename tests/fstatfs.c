@@ -8,7 +8,7 @@ int main() {
     printf("Error\n");
     return 1;
   }
-  printf("Size of statfs: %d\n", sizeof(sb));
+  printf("Size of statfs: %lu\n", sizeof(sb));
 
   printf("F-type: %lu\n", sb.f_type);
   printf("F-bsize: %lu\n", sb.f_bsize);

@@ -12,7 +12,7 @@ void *thread_fn(void* arg) {
     i -= j;
     pthread_mutex_unlock(&lock);
   }
-  printf("Child end: %d\n", i);
+  printf("Child end: %ld\n", i);
   return NULL;
 }
 
@@ -31,7 +31,7 @@ int main() {
     i += j;
     pthread_mutex_unlock(&lock);
   }
-  printf("Parent end: %d\n", i);
+  printf("Parent end: %ld\n", i);
   sleep(1);
   return 0;
 }
