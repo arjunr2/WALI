@@ -13,7 +13,7 @@ be built with the default `make` command. However, initial setup and packages ma
 
 ### Prerequisites
 
-Tested with LLVM Clang 16. Requires *compiler-rt* builtins for wasm32 for full libc support
+Tested with LLVM Clang 16. Requires *compiler-rt* builtins from LLVM 16 for wasm32 for full libc support
 
 
 ### Building WALI libc
@@ -48,8 +48,6 @@ The above target builds all the C files in [tests](tests) and generates the WASM
 can be executed by a WALI runtime. It also generates native ELF files for the respective tests in `tests/elf` to compare
 against the WASM output
 
-NOTE: We currently use the startup file out of WASI, but this will change in the future
-
 
 ### Running WASM code
 
@@ -61,7 +59,7 @@ you can use `iwasm <path-to-wasm-file>` to execute the code.
 
 ## Compilation Steps
 
-Note that Clang 16 shipped with WALI is required. After adding to path, run
+Note that Clang 16 shipped with WALI is required. After adding to path, to compile C to WASM, run
 
 ```shell
 clang --target=wasm32-wasi-threads -O3 --sysroot=<path-to-wali-sysroot> -L<path-to-wali-sysroot>/lib 
@@ -70,6 +68,8 @@ clang --target=wasm32-wasi-threads -O3 --sysroot=<path-to-wali-sysroot> -L<path-
 
 Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using supported enabled 
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
+
+For indepedent compilation and linking, refer to [compile-wali.sh](tests/compile-wali.sh) in the test suite compilation toolchai
 
 ## Resources
 [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
