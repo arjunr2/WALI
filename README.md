@@ -59,6 +59,18 @@ If you built the baseline WAMR implementation and added the *IWASM_DIR* from the
 you can use `iwasm <path-to-wasm-file>` to execute the code.
 
 
+## Compilation Steps
+
+Note that Clang 16 shipped with WALI is required. After adding to path, run
+
+```shell
+clang --target=wasm32-wasi-threads -O3 --sysroot=<path-to-wali-sysroot> -L<path-to-wali-sysroot>/lib 
+<input-c-file> -o <output-wasm-file>
+```
+
+Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using supported enabled 
+in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
+
 ## Resources
 [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 
