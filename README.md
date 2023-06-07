@@ -74,7 +74,7 @@ clang
   <input-c-file> -o <output-wasm-file>
 ```
 
-Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using supported enabled 
+Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
 
 For indepedent compilation and linking, refer to [compile-wali.sh](tests/compile-wali.sh) in the test suite compilation toolchai
