@@ -1,7 +1,7 @@
 #!/bin/bash
 
 outdir=.
-rt_lib=/home/arjun/tools/llvm-project/build-compiler-rt/libclang_rt.builtins-wasm32.a
+rt_lib=/home/arjun/tools/llvm-project/build/lib/clang/16/lib/wasi/libclang_rt.builtins-wasm32.a
 
 while getopts "vo:s:" OPT; do
   case $OPT in
