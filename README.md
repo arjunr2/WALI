@@ -59,20 +59,22 @@ you can use `iwasm <path-to-wasm-file>` to execute the code.
 
 ## Compilation Steps
 
-Note that Clang 16 shipped with WALI is required. After adding to path, to compile C to WASM, run
+Note that Clang 16 shipped with WALI is required. After adding to path, to compile C to WASM, refer to
+[compile-wali-standalone.sh](tests/compile-wali-standalone.sh), and run:
 
 ```shell
 # Compile standalone C file
 clang \
   --target=wasm32-wasi-threads -O3  \
   `# Sysroot and lib search path` \
-  --sysroot=$sysroot_dir -L$sysroot_dir/lib \
+  --sysroot=<path-to-wali-sysroot> -L<path-to-wali-sysroot>/lib \
   `# Enable wasm extension features`  \
   -matomics -mbulk-memory -mmutable-globals -msign-ext  \
   `# Linker flags for shared mem + threading` \
   -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=67108864 \
-  $cfile -o $outbase.wasm $verbose
+  <input-c-file> -o <output-wasm-file>
 ```
+
 
 Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
