@@ -218,7 +218,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases
 215,epoll_wait_old,,,,,,,,,
 216,remap_file_pages,,,,,,,,,
 217,getdents64,3,int,struct dirent*,int,,,,,
-218,set_tid_address,,,,,,,,,
+218,set_tid_address,1,int*,,,,,,,
 219,restart_syscall,,,,,,,,,
 220,semtimedop,,,,,,,,,
 221,fadvise,4,int,off_t,off_t,int,,,,fadvise64
@@ -270,7 +270,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases
 267,readlinkat,,,,,,,,,
 268,fchmodat,,,,,,,,,
 269,faccessat,4,int,char*,int,int,,,,
-270,pselect6,,,,,,,,,
+270,pselect6,6,int,fd_set*,fd_set*,fd_set*,struct timespec*,sigset_t*,,
 271,ppoll,,,,,,,,,
 272,unshare,,,,,,,,,
 273,set_robust_list,,,,,,,,,
