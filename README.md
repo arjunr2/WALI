@@ -81,6 +81,9 @@ in `wasi-threads` target. This will change once a `wasm32-linux` target is added
 
 For indepedent compilation and linking, refer to [compile-wali.sh](tests/compile-wali.sh) in the test suite compilation toolchai
 
+**NOTE**: There is an O0 compiler bug for clang for wasm when using `i32.atomic.rmw.or` in `a_or` builtin for WAMR. 
+Use O1 or higher for correct functionality
+
 ## Resources
 [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 

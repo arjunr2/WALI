@@ -25,5 +25,6 @@ crtfile=$sysroot_dir/lib/crt1.o
 #wasm2wat --enable-threads ${outbase}_link.wasm -o ${outbase}_link.wat
 
 clang --target=wasm32-wasi-threads -O1 -pthread --sysroot=$sysroot_dir $cfile -c -o $outbase.wasm $verbose
+wasm2wat --enable-threads $outbase.wasm -o $outbase.wat
 wasm-ld --no-entry --shared-memory --export-memory --import-memory --max-memory=67108864 --allow-undefined -L$sysroot_dir/lib $outbase.wasm $crtfile -lc -lm $rt_lib -o ${outbase}_link.wasm
 wasm2wat --enable-threads ${outbase}_link.wasm -o ${outbase}_link.wat
