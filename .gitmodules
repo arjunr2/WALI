@@ -5,3 +5,7 @@
 	path = wasm-micro-runtime
 	url = https://github.com/SilverLineFramework/wasm-micro-runtime.git
 	branch = wali
+[submodule "llvm-project"]
+	path = llvm-project
+	url = https://github.com/arjunr2/llvm-project.git
+	branch = release/16.x
