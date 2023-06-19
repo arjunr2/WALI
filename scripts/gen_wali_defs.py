@@ -100,6 +100,9 @@ def gen_native_def(nr, name, fn_name, args):
                 gen_native_args(args)
             )
 
+def gen_undefined_syscall(nr, name, fn_name, args):
+   pass 
+
 
 wali_def_list = []
 case_list = []
@@ -115,21 +118,27 @@ out_dict = {
     "wali_syscall_native":      (native_list, gen_native_def, 0)
 }
 
+    #"arch_syscalls_undefined":  (undefined_dict, gen_undefined_syscall, 1)
+
 
 def main():
     defs = gen_syscall_list()
     
-    format_file = "syscall_format.csv"
+    format_file = "syscall_full_format.csv"
     df = pd.read_csv(format_file, skiprows=1, keep_default_na=False)
-    df_dict = df.to_dict(orient='records')
 
+    # Find cross-architectures
+    archs = [k[:-3] for k in df.filter(regex=(".+_NR")).columns]
+    undefined_dict = {arch: [] for arch in archs}
+
+    df_dict = df.to_dict(orient='records')
     syscall_info = df_dict
-    print(type(syscall_info))
     
+    # Generate syscall lists
     for item in syscall_info:
         if item['Syscall']:
             args, valid = gen_args(item)
-            print("{}: {}".format(item['Syscall'], args))
+            #print("{}: {}".format(item['Syscall'], args))
             
             fn_name = item['Aliases'] if item['Aliases'] else item['Syscall']
 
@@ -138,10 +147,18 @@ def main():
                 if valid or ignore_valid:
                     buf.append(app_fn(item['NR'], item['Syscall'], fn_name, args))
 
+            for arch in archs:
+                if int(item[f'{arch}_NR']) == -1:
+                    undefined_dict[arch].append(fn_name)
+
 
     for ty, tup in out_dict.items():
         buf = tup[0]
         with open(ty + ".out", "w") as f:
+            f.writelines('\n'.join(buf))
+
+    for arch, buf in undefined_dict.items():
+        with open(f"{arch}_syscalls_undefined.out", "w") as f:
             f.writelines('\n'.join(buf))
 
 if __name__ == '__main__':
