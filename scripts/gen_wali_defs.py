@@ -138,7 +138,7 @@ def main():
     for item in syscall_info:
         if item['Syscall']:
             args, valid = gen_args(item)
-            #print("{}: {}".format(item['Syscall'], args))
+            print("{}: {}".format(item['Syscall'], args))
             
             fn_name = item['Aliases'] if item['Aliases'] else item['Syscall']
 

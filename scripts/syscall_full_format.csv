@@ -258,20 +258,20 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 255,inotify_rm_watch,,,,,,,,,,28,28
 256,migrate_pages,,,,,,,,,,238,238
 257,openat,4,int,char*,int,mode_t,,,,,56,56
-258,mkdirat,,,,,,,,,,34,34
+258,mkdirat,3,int,char*,mode_t,,,,,,34,34
 259,mknodat,,,,,,,,,,33,33
-260,fchownat,,,,,,,,,,54,54
+260,fchownat,5,int,char*,uid_t,gid_t,int,,,,54,54
 261,futimesat,,,,,,,,,,-1,-1
 262,newfstatat,,,,,,,,fstatat,,79,79
 263,unlinkat,3,int,char*,int,,,,,,35,35
 264,renameat,,,,,,,,,,38,-1
-265,linkat,,,,,,,,,,37,37
-266,symlinkat,,,,,,,,,,36,36
-267,readlinkat,,,,,,,,,,78,78
-268,fchmodat,,,,,,,,,,53,53
+265,linkat,5,int,char*,int,char*,int,,,,37,37
+266,symlinkat,3,char*,int,char*,,,,,,36,36
+267,readlinkat,4,int,char*,char*,size_t,,,,,78,78
+268,fchmodat,4,int,char*,mode_t,int,,,,,53,53
 269,faccessat,4,int,char*,int,int,,,,,48,48
 270,pselect6,6,int,fd_set*,fd_set*,fd_set*,struct timespec*,void*,,,72,72
-271,ppoll,,,,,,,,,,73,73
+271,ppoll,5,struct pollfd*,nfds_t,struct timespec*,sigset_t*,size_t,,,,73,73
 272,unshare,,,,,,,,,,97,97
 273,set_robust_list,,,,,,,,,,99,99
 274,get_robust_list,,,,,,,,,,100,100
@@ -292,7 +292,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 289,signalfd4,,,,,,,,,,74,74
 290,eventfd2,2,int,int,,,,,,,19,19
 291,epoll_create1,,,,,,,,,,20,20
-292,dup3,,,,,,,,,,24,24
+292,dup3,3,int,int,int,,,,,,24,24
 293,pipe2,2,int*,int,,,,,,,59,59
 294,inotify_init1,,,,,,,,,,26,26
 295,preadv,,,,,,,,,,69,69
@@ -316,7 +316,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 313,finit_module,,,,,,,,,,273,273
 314,sched_setattr,,,,,,,,,,274,274
 315,sched_getattr,,,,,,,,,,275,275
-316,renameat2,,,,,,,,,,276,276
+316,renameat2,5,int,char*,int,char*,int,,,,276,276
 317,seccomp,,,,,,,,,,277,277
 318,getrandom,3,void*,size_t,int,,,,,,278,278
 319,memfd_create,,,,,,,,,,279,279
