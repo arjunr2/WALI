@@ -262,7 +262,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 259,mknodat,,,,,,,,,,33,33
 260,fchownat,5,int,char*,uid_t,gid_t,int,,,,54,54
 261,futimesat,,,,,,,,,,-1,-1
-262,newfstatat,,,,,,,,fstatat,,79,79
+262,newfstatat,4,int,char*,struct stat*,int,,,fstatat,,79,79
 263,unlinkat,3,int,char*,int,,,,,,35,35
 264,renameat,,,,,,,,,,38,-1
 265,linkat,5,int,char*,int,char*,int,,,,37,37
