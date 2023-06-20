@@ -5,7 +5,7 @@
         do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 2048
 
 const char* get_type(char d_type) {
   switch (d_type) {
@@ -29,7 +29,7 @@ int main()
     int bpos;
     char d_type;
 
-    fd = open("../tools", O_RDONLY | O_DIRECTORY);
+    fd = open("../", O_RDONLY | O_DIRECTORY);
     if (fd == -1)
         handle_error("open");
 
