@@ -44,7 +44,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 41,socket,3,int,int,int,,,,,,198,198
 42,connect,3,int,struct sockaddr*,socklen_t,,,,,,203,203
 43,accept,3,int,struct sockaddr*,socklen_t*,,,,,,202,202
-44,sendto,4,int,void*,size_t,int,,,,,206,206
+44,sendto,6,int,void*,size_t,int,struct sockaddr*,socklen_t,,,206,206
 45,recvfrom,6,int,void*,size_t,int,struct sockaddr*,socklen_t*,,,207,207
 46,sendmsg,3,int,struct msghdr*,int,,,,,,211,211
 47,recvmsg,3,int,struct msghdr*,int,,,,,,212,212
