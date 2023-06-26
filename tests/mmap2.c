@@ -3,6 +3,10 @@
 
 int main() {
   int fd = open("sample_text.txt", O_RDONLY);
+  if (fd == -1) {
+    perror("Failed to open \'sample_text.txt\'");
+    return 1;
+  }
   off_t offset = PAGESIZE;
   int length = 600900;
   printf("page size: %ld\n", PAGESIZE);
