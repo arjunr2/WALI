@@ -1,6 +1,6 @@
 .PHONY: dir clean all
 
-CC=gcc
+CC=clang
 LFLAGS=-lm -lpthread
 
 SYSROOT_DIR=../wali-musl/sysroot
@@ -19,7 +19,7 @@ dir:
 	mkdir -p $(ELF_DIR)
 
 %.o: %.c
-	$(CC) -o $(ELF_DIR)/$* $< $(LFLAGS)
+	$(CC) -O3 -o $(ELF_DIR)/$* $< $(LFLAGS)
 	./compile-wali.sh -o $(WASM_DIR) -s $(SYSROOT_DIR) $<
 
 
