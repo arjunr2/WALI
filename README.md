@@ -153,7 +153,7 @@ Use the WAMR compiler `wamrc` as detailed in their README. Include the
 
 ### Register WASM as a miscellaneous binary format
 
-Imagine running WASM code like any ELF binary on your machine. The OS must be aware of which program to invoke to
+Imagine running WASM code like any ELF binary on your machine! The OS must be aware of which program to invoke to
 run the WASM file. 
 
 1. Create a wrapper bash script around the runtime invocation as below
