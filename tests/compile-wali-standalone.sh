@@ -17,7 +17,7 @@ outbase=$outdir/$(basename $cfile .c)
 
 # Compile standalone C file
 clang \
-  --target=wasm32-wasi-threads -O3  \
+  --target=wasm32-wasi-threads -O3 -pthread \
   `# Sysroot and lib search path` \
   --sysroot=$sysroot_dir -L$sysroot_dir/lib \
   `# Enable wasm extension features`  \

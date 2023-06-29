@@ -118,7 +118,7 @@ To compile C to WASM, refer to
 ```shell
 # Compile standalone C file
 clang \
-  --target=wasm32-wasi-threads -O3  \
+  --target=wasm32-wasi-threads -O3 -pthread \
   `# Sysroot and lib search path` \
   --sysroot=<path-to-wali-sysroot> -L<path-to-wali-sysroot>/lib \
   `# Enable wasm extension features`  \
