@@ -81,7 +81,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 78,getdents,3,int,struct dirent*,int,,,,,,-1,-1
 79,getcwd,2,char*,size_t,,,,,,,17,17
 80,chdir,1,char*,,,,,,,,49,49
-81,fchdir,,,,,,,,,,50,50
+81,fchdir,1,int,,,,,,,,50,50
 82,rename,2,char*,char*,,,,,,,-1,-1
 83,mkdir,2,char*,mode_t,,,,,,,-1,-1
 84,rmdir,1,char*,,,,,,,,-1,-1
@@ -127,7 +127,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 124,getsid,1,pid_t,,,,,,,,156,156
 125,capget,,,,,,,,,,90,90
 126,capset,,,,,,,,,,91,91
-127,rt_sigpending,,,,,,,,,,136,136
+127,rt_sigpending,2,sigset_t*,size_t,,,,,,,136,136
 128,rt_sigtimedwait,,,,,,,,,,137,137
 129,rt_sigqueueinfo,,,,,,,,,,138,138
 130,rt_sigsuspend,2,sigset_t*,size_t,,,,,,,133,133
