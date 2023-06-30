@@ -233,7 +233,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 230,clock_nanosleep,4,clockid_t,int,struct timespec*,struct timespec*,,,,,115,115
 231,exit_group,1,int,,,,,,,,94,94
 232,epoll_wait,,,,,,,,,,-1,-1
-233,epoll_ctl,,,,,,,,,,21,21
+233,epoll_ctl,4,int,int,int,struct epoll_event*,,,,,21,21
 234,tgkill,,,,,,,,,,131,131
 235,utimes,,,,,,,,,,-1,-1
 236,vserver,,,,,,,,,,-1,-1
@@ -281,7 +281,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 278,vmsplice,,,,,,,,,,75,75
 279,move_pages,,,,,,,,,,239,239
 280,utimensat,4,int,char*,struct timespec*,int,,,,,88,88
-281,epoll_pwait,,,,,,,,,,22,22
+281,epoll_pwait,6,int,struct epoll_event*,int,int,sigset_t*,size_t,,,22,22
 282,signalfd,,,,,,,,,,-1,-1
 283,timerfd_create,,,,,,,,,,85,85
 284,eventfd,1,int,,,,,,,,-1,-1
@@ -291,7 +291,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 288,accept4,,,,,,,,,,242,242
 289,signalfd4,,,,,,,,,,74,74
 290,eventfd2,2,int,int,,,,,,,19,19
-291,epoll_create1,,,,,,,,,,20,20
+291,epoll_create1,1,int,,,,,,,,20,20
 292,dup3,3,int,int,int,,,,,,24,24
 293,pipe2,2,int*,int,,,,,,,59,59
 294,inotify_init1,,,,,,,,,,26,26
