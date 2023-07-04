@@ -8,5 +8,8 @@ build:
     -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=67108864 \
     -lm -lpaho-mqtt3c -o benchmark mqtt.c
 
+build-native:
+	gcc -g mqtt.c -o benchmark-native -lpthread -lpaho-mqtt3c -lm
+
 clean:
 	rm -f benchmark
