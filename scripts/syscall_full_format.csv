@@ -53,7 +53,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 50,listen,2,int,int,,,,,,,201,201
 51,getsockname,3,int,struct sockaddr*,socklen_t*,,,,,,204,204
 52,getpeername,3,int,struct sockaddr*,socklen_t*,,,,,,205,205
-53,socketpair,,,,,,,,,,199,199
+53,socketpair,4,int,int,int,int*,,,,,199,199
 54,setsockopt,5,int,int,int,void*,socklen_t,,,,208,208
 55,getsockopt,5,int,int,int,void*,socklen_t*,,,,209,209
 56,clone,,,,,,,,,,220,220
@@ -200,7 +200,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 197,removexattr,,,,,,,,,,14,14
 198,lremovexattr,,,,,,,,,,15,15
 199,fremovexattr,,,,,,,,,,16,16
-200,tkill,,,,,,,,,,130,130
+200,tkill,2,int,int,,,,,,,130,130
 201,time,,,,,,,,,,-1,-1
 202,futex,6,int*,int,int,struct timespec*,int*,int,,,98,98
 203,sched_setaffinity,,,,,,,,,,122,122
