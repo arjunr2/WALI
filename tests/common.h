@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/mman.h>
+#include <wchar.h>
 
 /* Print num bytes from variables */
 #define PRINT_BYTES(var, num) ({ \

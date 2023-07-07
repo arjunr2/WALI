@@ -105,8 +105,8 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 102,getuid,0,,,,,,,,,174,174
 103,syslog,,,,,,,,,,116,116
 104,getgid,0,,,,,,,,,176,176
-105,setuid,,,,,,,,,,146,146
-106,setgid,,,,,,,,,,144,144
+105,setuid,1,uid_t,,,,,,,,146,146
+106,setgid,1,gid_t,,,,,,,,144,144
 107,geteuid,0,,,,,,,,,175,175
 108,getegid,0,,,,,,,,,177,177
 109,setpgid,2,pid_t,pid_t,,,,,,,154,154
@@ -115,11 +115,11 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 112,setsid,0,,,,,,,,,157,157
 113,setreuid,,,,,,,,,,145,145
 114,setregid,,,,,,,,,,143,143
-115,getgroups,,,,,,,,,,158,158
-116,setgroups,,,,,,,,,,159,159
-117,setresuid,,,,,,,,,,147,147
+115,getgroups,2,size_t,gid_t*,,,,,,,158,158
+116,setgroups,2,size_t,gid_t*,,,,,,,159,159
+117,setresuid,3,uid_t,uid_t,uid_t,,,,,,147,147
 118,getresuid,,,,,,,,,,148,148
-119,setresgid,,,,,,,,,,149,149
+119,setresgid,3,gid_t,gid_t,gid_t,,,,,,149,149
 120,getresgid,,,,,,,,,,150,150
 121,getpgid,1,pid_t,,,,,,,,155,155
 122,setfsuid,,,,,,,,,,151,151
@@ -161,7 +161,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 158,arch_prctl,,,,,,,,,,-1,-1
 159,adjtimex,,,,,,,,,,171,171
 160,setrlimit,2,int,struct rlimit*,,,,,,,164,164
-161,chroot,,,,,,,,,,51,51
+161,chroot,1,char*,,,,,,,,51,51
 162,sync,,,,,,,,,,81,81
 163,acct,,,,,,,,,,89,89
 164,settimeofday,,,,,,,,,,170,170

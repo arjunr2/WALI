@@ -13,5 +13,7 @@ int main() {
   PRINT_INT("FLOAT", sizeof(float));
   PRINT_INT("DOUBLE", sizeof(double));
   PRINT_INT("LONG DOUBLE", sizeof(long double));
+  PRINT_INT("WCHAR_T", sizeof(wchar_t));
+  if (sizeof (mode_t)) return 0;
   return 0;
 }
