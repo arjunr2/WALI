@@ -9,4 +9,7 @@ end
 
 print("enter a number:")
 a = io.read("*number")        -- read a number
-print(fact(a))
+local x = os.clock()
+local k = fact(a)
+print(string.format("Result: %d | Time: %.2f", k, os.clock() - x))
+
