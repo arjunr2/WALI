@@ -74,7 +74,7 @@ building the following components.
 
 ### Building WALI libc
 
-The [wali-musl](wali-musl) submodule has detailed information on prerequisites and steps for compiling libc
+The [wali-musl](https://github.com/arjunr2/wali-musl) submodule has detailed information on prerequisites and steps for compiling libc
 
 Once the initial setup is performed for building libc, you may use the makefile target:
 ```shell
