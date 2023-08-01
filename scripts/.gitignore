@@ -4,3 +4,8 @@ wali_syscall_cases.out
 wali_syscall_declr.out
 wali_syscall_impl.out
 wali_syscall_native.out
+aarch64_syscalls_undefined.out
+riscv64_syscalls_undefined.out
+aarch64_undefined_consolidate.out
+sorted_syscall_conversion.csv
+*.profile
