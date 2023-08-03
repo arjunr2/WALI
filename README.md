@@ -3,7 +3,11 @@
 This repo serves to document design decisions, requirements, and specifications for the WALI.
 
 ## Overview
-We create a custom modified [musl libc](https://github.com/arjunr2/wali-musl) that uses WALI
+WALI is a complete(ish?) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
+down to even low-level system applications. 
+A parallel goal is to increase the scope for WebAssembly-oriented research by building the infrastructure for 
+seamless build-run-deploy workflows of WebAssembly applications.
+We create a custom modified C standard library ([musl libc](https://github.com/arjunr2/wali-musl)) that uses WALI
 and produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali)
 
 ## Skip the talk, I want to run some things!
