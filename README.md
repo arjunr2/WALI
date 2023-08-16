@@ -10,82 +10,80 @@ seamless build-run-deploy workflows of WebAssembly applications.
 We create a custom modified C standard library ([musl libc](https://github.com/arjunr2/wali-musl)) that uses WALI
 and produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali)
 
-## Skip the talk, I want to run some things!
+## Skip the talk, I want to run some WALI apps!
 
-1. Install dependencies
-```shell
-sudo apt update
-sudo apt install make cmake ninja-build gcc
-```
-
-2. Clone the repo
+1. Clone this repo
 ```shell
 git clone https://github.com/arjunr2/WALI.git
-git submodule init wasm-micro-runtime
-git submodule update wasm-micro-runtime
 ```
 
-2. Build the WALI webassembly runtime
+2. Install dependencies
 ```shell
-make iwasm
+sudo ./install_deps.sh
 ```
-The runtime executable is located in the path specified in the *IWASM_DIR* variable in the root Makefile
 
-3. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite.
-As an example to run sqlite (a sample database and script are included in the directory):
+3. Build a WALI runtime
 ```shell
-cd wasm-apps/sqlite
+./mvp-setup.sh
+```
+An `iwasm` symlink executable should be generated in the root directory
+
+4. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite
+with sample scripts/data for each app.
+As an example, to run `sqlite3`:
+```shell
 # Increase the stack size if the program runs out of space
-<path-to-iwasm> -v=0 --stack-size=262144 sqlite3.wasm
+./iwasm -v=0 --stack-size=262144 wasm-apps/sqlite/sqlite3.wasm
 ```
 
 
-## Getting Started with the Toolchain
+## Building the Entire Toolchain
 
-There are three major components for testing: the Wasm-WALI compiler, WALI libc, WALI runtime. 
-Initial setup and packages may be required for some of the components detailed below.
-
-`wasm-micro-runtime` submodule contains the required runtime. In case you don't need the 
-entire compilation toolchain, skip to [building the runtime](#building-wali-runtime) after
-installing the dependencies. `wali-musl` and 
-`llvm-project` are only needed if you want the entire compilation toolchain.
-
-### Install Dependencies
-
+Before proceeding, make sure all dependencies are up to date by running:
 ```shell
-sudo apt update
-sudo apt install make cmake ninja-build gcc
+./install_deps.sh
 ```
 
-### Building the compiler
+There are four major toolchain components: 
+* Custom Clang compiler (C -> Wasm-WALI)
+* C-standard library for WALI
+* WALI runtime
+* (Optional) AoT Compiler for WAMR (Wasm-WALI -> WAMR AoT)
 
-We use LLVM Clang 16. Requires *compiler-rt* builtins from LLVM 16 for wasm32 for full libc support.
+If compilation capability is not required, only the WALI runtime needs to be built. 
+In this case, skip to [building the runtime](#building-wali-runtime)
+
+
+### Building the Wasm-WALI Clang compiler
+
+We use LLVM Clang 16. Requires *compiler-rt* builtins from LLVM 16 for wasm32 for full libc support, which is
+included in the [misc](misc) directory.
 To build the llvm suite:
 
 ```shell
-cd llvm-project
-cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;lldb" \
-  -DLLVM_ENABLE_RUNTIMES=compiler-rt -DLLVM_PARALLEL_COMPILE_JOBS=8 -DLLVM_USE_LINKER=lld \
-  -DLLVM_PARALLEL_LINK_JOBS=2
-cd build
-ninja
+git submodule update --init llvm-project
+make wali-compiler
+# Add builtins into search paths for linker
+mkdir -p llvm-project/build/lib/clang/16/lib/wasi/
+cp misc/libclang_rt.builtins-wasm32.a llvm-project/build/lib/clang/16/lib/
+cp misc/libclang_rt.builtins-wasm32.a llvm-project/build/lib/clang/16/lib/wasi
 ```
 
-Add the llvm toolchain build to PATH so the clang built is used as the default compiler. This is necessary for 
-building the following components.
-
+Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) to PATH for convenience as the default compiler.
 
 
 ### Building WALI libc
 
-The [wali-musl](https://github.com/arjunr2/wali-musl) submodule has detailed information on prerequisites and steps for compiling libc
+The [wali-musl](https://github.com/arjunr2/wali-musl) submodule has detailed information on prerequisites and 
+steps for compiling libc
 
-Once the initial setup is performed for building libc, you may use the makefile target:
+Once the clang compiler is installed, you may pull+build libc as such:
 ```shell
+git submodule update --init wali-musl
 make libc
 ```
 
-We currently support 64-bit architectures for x86-64, AARCH64, and RISCV64. In the future, we will expand
+We currently support 64-bit architectures for x86-64, aarch64, and riscv64. In the future, we will expand
 to more architectures.
 
 
@@ -94,22 +92,21 @@ to more architectures.
 We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
 For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
 
-After cloning the wasm-micro-runtime submodule, the following target will build the WALI implementation of the runtime
+The following steps will pull+build the WALI implementation of the runtime
 ```shell
+git submodule update --init wasm-micro-runtime
 make iwasm
 ```
-You may add the *IWASM_DIR* in the Makefile to your PATH to access the *iwasm* executable.
 
+### (Optional) WAMR AoT Compiler
 
-## Running WALI-WASM code
+Refer [here](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
+on steps to build the AoT compiler.
 
-Use any Webassembly runtime that implements WALI to execute the above generated WASM code.
-
-If you built the baseline WAMR implementation and added the *IWASM_DIR* from the Makefile to your path,
-you can use `iwasm <path-to-wasm-file>` to execute the code.
-
-The [wasm-apps](wasm-apps) directory has several popular prebuilt binaries to run. You may also
-run the test suite binaries detailed [here](#building-the-test-suite)
+Once completed, you can create a symlink from the root directory:
+```shell
+ln -sf wasm-micro-runtime/wamr-compiler/wamrc wamrc
+```
 
 
 ## Compiling Applications to WALI
@@ -132,7 +129,7 @@ clang \
   <input-c-file> -o <output-wasm-file>
 ```
 
-clang must use the one built in the earlier step. Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
+Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
 
 To indepedently specify compile and link flags, refer to [compile-wali.sh](tests/compile-wali.sh) in the test suite compilation toolchain
@@ -146,10 +143,23 @@ The above target builds all the C files in [tests](tests) using the above script
 can be executed by a WALI-supported runtime. It also generates native ELF files for the respective tests in `tests/elf` to compare
 against the WASM output
 
+
 ### WASM Bytecode -> AoT Compilation
 
 Use the WAMR compiler `wamrc` as detailed in their README. Include the 
 `--enable-multi-thread` flag to generate threaded code
+
+
+
+## Running WALI-WASM code
+
+Use any Webassembly runtime that implements WALI to execute the above generated WASM code.
+
+If you built the baseline WAMR implementation from the Makefile,
+you can use `./iwasm <path-to-wasm-file>` to execute the code.
+
+The [wasm-apps](wasm-apps) directory has several popular prebuilt binaries to run. You may also
+run the test suite binaries detailed [here](#building-the-test-suite)
 
 
 
@@ -169,7 +179,8 @@ exec <full-path-to-iwasm> -v=0 --stack-size=262144 "$@"
 ```
 2. Register WASM as a misc format and use the script from step 1 as the interpreter
 ```shell
-sudo echo ':iwasm-interp:M::\x00asm::/usr/bin/iwasm-wrapper:' > /proc/sys/fs/binfmt_misc/register
+cd misc;
+sudo ./binfmt_register.sh
 ```
 
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
