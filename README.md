@@ -179,7 +179,7 @@ exec <full-path-to-iwasm> -v=0 --stack-size=262144 "$@"
 ```
 2. Register WASM as a misc format and use the script from step 1 as the interpreter
 ```shell
-cd misc;
+cd misc
 sudo ./binfmt_register.sh
 ```
 
