@@ -41,7 +41,7 @@ As an example, to run `sqlite3`:
 
 Before proceeding, make sure all dependencies are up to date by running:
 ```shell
-./install_deps.sh
+sudo ./install_deps.sh
 ```
 
 There are four major toolchain components: 
