@@ -165,10 +165,10 @@ run the test suite binaries detailed [here](#building-the-test-suite)
 
 ## Miscellaneous
 
-### Register WASM as a miscellaneous binary format
+### Run WASM code like an ELF binary!
 
-Imagine running WASM code like any ELF binary on your machine! The OS must be aware of which program to invoke to
-run the WASM file. 
+Most Linux distros will allow registration of miscellaneous binary formats.
+For WASM binaries, the OS must be aware of which program to invoke to run the WASM file. 
 
 1. Create a wrapper bash script around the runtime invocation as below
 ```shell
