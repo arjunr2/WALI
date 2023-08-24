@@ -18,9 +18,12 @@ git clone https://github.com/arjunr2/WALI.git
 ```
 
 2. Install dependencies
-```shell
-sudo ./install_deps.sh
-```
+* Ninja
+* Make
+* Cmake
+* GCC
+
+If using `apt`, run the `./apt-install-deps.sh` script with privileges to install above depedencies
 
 3. Build a WALI runtime
 ```shell
@@ -39,10 +42,7 @@ As an example, to run `sqlite3`:
 
 ## Building the Entire Toolchain
 
-Before proceeding, make sure all dependencies are up to date by running:
-```shell
-sudo ./install_deps.sh
-```
+Before proceeding, make sure all dependencies are up to date, as detailed in previous [section](#skip-the-talk-i-want-to-run-some-wali-apps):
 
 There are four major toolchain components: 
 * Custom Clang compiler (C -> Wasm-WALI)
