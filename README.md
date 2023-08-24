@@ -23,6 +23,7 @@ git clone https://github.com/arjunr2/WALI.git
 * Cmake
 * GCC
 * lld
+* [WABT](https://github.com/WebAssembly/wabt)
 
 If using `apt`, run the `./apt-install-deps.sh` script with privileges to install above depedencies
 
