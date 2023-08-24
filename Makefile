@@ -33,7 +33,8 @@ wali-compiler:
 	cd build
 	ninja
 	mkdir -p lib/clang/16/lib/wasi
-	cp ../../libclang_rt.builtins-wasm32.a lib/clang
+	cp ../../misc/libclang_rt.builtins-wasm32.a lib/clang/16/lib/
+	cp ../../misc/libclang_rt.builtins-wasm32.a lib/clang/16/lib/wasi/
 
 tests: libc
 	make -C tests -j8 $(TEST_DIR_ARGS)
