@@ -64,10 +64,6 @@ To build the llvm suite:
 ```shell
 git submodule update --init llvm-project
 make wali-compiler
-# Add builtins into search paths for linker
-mkdir -p llvm-project/build/lib/clang/16/lib/wasi/
-cp misc/libclang_rt.builtins-wasm32.a llvm-project/build/lib/clang/16/lib/
-cp misc/libclang_rt.builtins-wasm32.a llvm-project/build/lib/clang/16/lib/wasi
 ```
 
 Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) to PATH for convenience as the default compiler.
