@@ -181,6 +181,12 @@ cd misc
 sudo ./binfmt_register.sh
 ```
 
+**NOTE**: The above solution gets erased after reboots. For a more permanent setup using binfmt daemon:
+```shell
+sudo cp misc/iwali.conf /etc/binfmt.d/
+sudo systemctl restart systemd-binfmt
+```
+
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 ## Resources
