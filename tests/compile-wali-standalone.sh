@@ -2,6 +2,9 @@
 
 outdir=.
 
+LLVM_DIR=../llvm-project/build/bin
+CC=$LLVM_DIR/clang
+
 while getopts "vo:s:" OPT; do
   case $OPT in
     v) verbose=-v;;
@@ -16,7 +19,7 @@ cfile=${@:$OPTIND:1}
 outbase=$outdir/$(basename $cfile .c)
 
 # Compile standalone C file
-clang \
+$CC \
   --target=wasm32-wasi-threads -O3 -pthread \
   `# Sysroot and lib search path` \
   --sysroot=$sysroot_dir -L$sysroot_dir/lib \
