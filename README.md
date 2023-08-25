@@ -1,6 +1,6 @@
 # Webassembly Linux Interface (WALI)
 
-This repo serves to document design decisions, requirements, and specifications for the WALI.
+This repo serves to prototype an implementation of the WebAssembly Linux Interface.
 
 ## Overview
 WALI is a complete(ish?) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
