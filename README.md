@@ -58,8 +58,7 @@ In this case, skip to [building the runtime](#building-wali-runtime)
 
 ### Building the Wasm-WALI Clang compiler
 
-We use LLVM Clang 16. Requires *compiler-rt* builtins from LLVM 16 for wasm32 for full libc support, which is
-included in the [misc](misc) directory.
+We use LLVM Clang 16 with *compiler-rt* builtins for full wasm32 support.
 To build the llvm suite:
 
 ```shell
@@ -67,7 +66,8 @@ git submodule update --init llvm-project
 make wali-compiler
 ```
 
-Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) to PATH for convenience as the default compiler.
+Future steps use this toolchain.
+Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) to PATH for convenience.
 
 
 ### Building WALI libc
@@ -75,7 +75,7 @@ Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) 
 The [wali-musl](https://github.com/arjunr2/wali-musl) submodule has detailed information on prerequisites and 
 steps for compiling libc
 
-Once the clang compiler is installed, you may pull+build libc as such:
+To build libc:
 ```shell
 git submodule update --init wali-musl
 make libc
@@ -90,7 +90,7 @@ to more architectures.
 We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
 For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
 
-The following steps will pull+build the WALI implementation of the runtime
+To build the WAMR-WALI runtime:
 ```shell
 git submodule update --init wasm-micro-runtime
 make iwasm
@@ -130,23 +130,20 @@ To compile C to WASM, refer to
 Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
 
-To indepedently specify compile and link flags, refer to [compile-wali.sh](tests/compile-wali.sh) in the test suite compilation toolchain
+To indepedently specify compile and link flags, refer to [compile-wali.sh](tests/compile-wali.sh) used for the test suite
 
 ### Building the Test Suite
 ```shell
 make tests
 ```
 
-The above target builds all the C files in [tests](tests) using the above script and generates the WASM executables `tests/wasm/*_link.wasm`, which
-can be executed by a WALI-supported runtime. It also generates native ELF files for the respective tests in `tests/elf` to compare
-against the WASM output
+WALI executables are located in `tests/wasm/*_link.wasm`. 
+Native ELF files for the same in `tests/elf` can be used to compare against the WASM output
 
 
 ### WASM Bytecode -> AoT Compilation
 
-Use the WAMR compiler `wamrc` as detailed in their README. Include the 
-`--enable-multi-thread` flag to generate threaded code
-
+Use the WAMR compiler `wamrc` with the `--enable-multi-thread` flag to generate threaded code
 
 
 ## Running WALI-WASM code
