@@ -11,7 +11,6 @@ void *thread_fn(void* arg) {
   for (volatile int i = 0; i < N; i++) {
     if ((i % (N/10)) == 0) {
       printf("------- Hello Thread | Self: %d, TL: %d, K: %d\n", (int)pthread_self(), l, k++);
-      //PRINT_INT("---------- Hello Thread | Self", (long)pthread_self());
     }
   }
   return NULL;
