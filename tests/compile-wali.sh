@@ -1,11 +1,12 @@
 #!/bin/bash
 
 outdir=.
-rt_lib=../llvm-project/build/lib/clang/16/lib/wasi/libclang_rt.builtins-wasm32.a
+LLVM_DIR=../llvm-project
 
-LLVM_DIR=../llvm-project/build/bin
-CC=$LLVM_DIR/clang
-LD=$LLVM_DIR/wasm-ld
+rt_lib=$LLVM_DIR/build/lib/clang/16/lib/wasi/libclang_rt.builtins-wasm32.a
+
+CC=$LLVM_DIR/build/bin/clang
+LD=$LLVM_DIR/build/bin/wasm-ld
 
 while getopts "vo:s:" OPT; do
   case $OPT in
@@ -21,12 +22,6 @@ cfile=${@:$OPTIND:1}
 outbase=$outdir/$(basename $cfile .c)
 
 crtfile=$sysroot_dir/lib/crt1.o 
-
-#clang --target=wasm32-wasi-threads -O1 -pthread --sysroot=$sysroot_dir $cfile -S -emit-llvm -o $outbase.ll $verbose
-#llc $outbase.ll -filetype=obj -o $outbase.wasm
-#wasm2wat $outbase.wasm -o $outbase.wat
-#wasm-ld --no-entry --shared-memory --allow-undefined -L$sysroot_dir/lib $outbase.wasm $crtfile -lc -lm $rt_lib -o ${outbase}_link.wasm
-#wasm2wat --enable-threads ${outbase}_link.wasm -o ${outbase}_link.wat
 
 $CC $verbose --target=wasm32-wasi-threads -O0 -pthread --sysroot=$sysroot_dir $cfile -c -o $outbase.wasm
 wasm2wat --enable-threads $outbase.wasm -o $outbase.wat
