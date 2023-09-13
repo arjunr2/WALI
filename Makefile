@@ -36,6 +36,15 @@ wali-compiler:
 	cp ../../misc/libclang_rt.builtins-wasm32.a lib/clang/16/lib/
 	cp ../../misc/libclang_rt.builtins-wasm32.a lib/clang/16/lib/wasi/
 
+.ONESHELL:
+wamr-compiler:
+	cd wasm-micro-runtime/wamr-compiler
+	./build_llvm.sh
+	mkdir -p build && cd build
+	cmake .. -GNinja
+	ninja
+
+
 tests: libc
 	make -C tests -j8 $(TEST_DIR_ARGS)
 
