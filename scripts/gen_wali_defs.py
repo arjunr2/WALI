@@ -73,7 +73,7 @@ def gen_base_impl(nr, name, fn_name, args):
                 fn_name = fn_name, 
                 arglist = ''.join([f", long a{i+1}" for i, j in enumerate(args)])),
 
-            f"\tSC({fn_name});",
+            f"\tSC({nr} ,{fn_name});",
             f"\tERRSC({fn_name});",
             "\treturn __syscall{num_args}(SYS_{fn_name}{arglist});".format(
                 num_args = len(args),

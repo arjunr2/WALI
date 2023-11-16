@@ -75,7 +75,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 72,fcntl,3,int,int,int,,,,,,25,25
 73,flock,2,int,int,,,,,,,32,32
 74,fsync,1,int,,,,,,,,82,82
-75,fdatasync,,,,,,,,,,83,83
+75,fdatasync,1,int,,,,,,,,83,83
 76,truncate,,,,,,,,,,45,45
 77,ftruncate,2,int,off_t,,,,,,,46,46
 78,getdents,3,int,struct dirent*,int,,,,,,-1,-1
@@ -229,7 +229,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 226,timer_delete,,,,,,,,,,111,111
 227,clock_settime,,,,,,,,,,112,112
 228,clock_gettime,2,clockid_t,struct timespec*,,,,,,,113,113
-229,clock_getres,,,,,,,,,,114,114
+229,clock_getres,2,clockid_t,struct timespec*,,,,,,,114,114
 230,clock_nanosleep,4,clockid_t,int,struct timespec*,struct timespec*,,,,,115,115
 231,exit_group,1,int,,,,,,,,94,94
 232,epoll_wait,,,,,,,,,,-1,-1
@@ -288,7 +288,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 285,fallocate,,,,,,,,,,47,47
 286,timerfd_settime,,,,,,,,,,86,86
 287,timerfd_gettime,,,,,,,,,,87,87
-288,accept4,,,,,,,,,,242,242
+288,accept4,4,int,struct sockaddr*,socklen_t*,int,,,,,242,242
 289,signalfd4,,,,,,,,,,74,74
 290,eventfd2,2,int,int,,,,,,,19,19
 291,epoll_create1,1,int,,,,,,,,20,20
