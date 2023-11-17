@@ -9,3 +9,12 @@
 	path = llvm-project
 	url = https://github.com/arjunr2/llvm-project.git
 	branch = release/16.x
+[submodule "applications/FFmpeg"]
+	path = applications/FFmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
+[submodule "applications/sqlite"]
+	path = applications/sqlite
+	url = https://github.com/sqlite/sqlite.git
+[submodule "applications/vim"]
+	path = applications/vim
+	url = https://github.com/vim/vim.git
