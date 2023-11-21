@@ -1,4 +1,4 @@
-.PHONY: all clean vim sqlite
+.PHONY: all clean libs vim sqlite openssh zlib
 
 CURDIR = $(shell pwd)
 
@@ -21,16 +21,45 @@ WALI_COMMON_LDFLAGS = -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=6
 # --- Library path --- #
 WALI_LIBS = $(CURDIR)/../libraries
 
+WALI_LIB_SRC = $(CURDIR)/libs
 
-all: vim sqlite
+
+all: vim sqlite openssh
+
+libs: zlib
 
 .ONESHELL:
+
+## --- Libraries --- ##
+zlib:
+	cd $(WALI_LIB_SRC)/zlib
+	CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" LIBS="-lpthread"  AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes ./configure 
+	make
+zlib-clean:
+	make -C $(WALI_LIB_SRC)/zlib clean
+
+## --- Applications --- ##
 vim:
 	cd vim;
 	make CC=$(WALI_CC) CClink="$(WALI_CC) $(WALI_COMMON_CFLAGS)" CFLAGS="$(WALI_COMMON_CFLAGS)" LDFLAGS="-L$(WALI_LIBS)/libncurses $(WALI_COMMON_LDFLAGS)" LD=$(WALI_LD) CONF_OPT_TERMINAL=--disable-terminal
+vim-clean:
+	make -C vim clean
 
 sqlite:
-	cd sqlite; mkdir -p build; cd build;
+	mkdir -p sqlite/build; cd sqlite/build;
 	../configure CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) BCC=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -U__wasi__" LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
 	make
+sqlite-clean:
+	rm -rf sqlite/build
+
+openssh: zlib
+	mkdir -p openssh/build; cd openssh/build;
+	../configure --without-openssl --with-zlib=$(WALI_LIB_SRC)/zlib CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS) $(WALI_COMMON_CFLAGS)" LIBS="-lpthread" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	make
+openssh-clean: zlib-clean
+	rm -rf openssh/build
+
+
+clean: sqlite-clean openssh-clean vim-clean
+
 
