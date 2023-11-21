@@ -9,9 +9,6 @@
 	path = llvm-project
 	url = https://github.com/arjunr2/llvm-project.git
 	branch = release/16.x
-[submodule "applications/ffmpeg"]
-	path = applications/ffmpeg
-	url = https://github.com/FFmpeg/FFmpeg.git
 [submodule "applications/sqlite"]
 	path = applications/sqlite
 	url = https://github.com/sqlite/sqlite.git
@@ -21,3 +18,9 @@
 [submodule "applications/libs/zlib"]
 	path = applications/libs/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "applications/FFmpeg"]
+	path = applications/FFmpeg
+	url = https://github.com/FFmpeg/FFmpeg.git
+[submodule "applications/libs/libevent"]
+	path = applications/libs/libevent
+	url = https://github.com/libevent/libevent.git

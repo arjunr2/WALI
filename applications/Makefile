@@ -1,4 +1,4 @@
-.PHONY: all clean libs vim sqlite openssh zlib
+.PHONY: all clean libs vim sqlite openssh zlib libevent
 
 CURDIR = $(shell pwd)
 
@@ -26,7 +26,7 @@ WALI_LIB_SRC = $(CURDIR)/libs
 
 all: vim sqlite openssh
 
-libs: zlib
+libs: zlib libevent
 
 .ONESHELL:
 
@@ -37,6 +37,14 @@ zlib:
 	make
 zlib-clean:
 	make -C $(WALI_LIB_SRC)/zlib clean
+
+libevent:
+	cd $(WALI_LIB_SRC)/libevent;
+	mkdir -p build; cd build
+	cmake .. -DCMAKE_C_COMPILER=$(WALI_CC) -DCMAKE_C_FLAGS="-pthread $(WALI_COMMON_CFLAGS)" -DCMAKE_LINKER=$(WALI_LD) -DCMAKE_LD_FLAGS="$(WALI_COMMON_LDFLAGS)" -DCMAKE_AR=$(WALI_AR) -DCMAKE_RANLIB=$(WALI_RANLIB) -DEVENT__DISABLE_OPENSSL=ON -DEVENT__LIBRARY_TYPE=STATIC
+libevent-clean:
+	rm -rf $(WALI_LIB_SRC)/libevent/build
+
 
 ## --- Applications --- ##
 vim:
