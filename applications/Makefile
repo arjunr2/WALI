@@ -26,7 +26,7 @@ WALI_LIB_SRC = $(CURDIR)/libs
 
 all: vim sqlite openssh
 
-libs: zlib libevent
+libs: zlib libevent ncurses
 
 .ONESHELL:
 
@@ -42,8 +42,18 @@ libevent:
 	cd $(WALI_LIB_SRC)/libevent;
 	mkdir -p build; cd build
 	cmake .. -DCMAKE_C_COMPILER=$(WALI_CC) -DCMAKE_C_FLAGS="-pthread $(WALI_COMMON_CFLAGS)" -DCMAKE_LINKER=$(WALI_LD) -DCMAKE_LD_FLAGS="$(WALI_COMMON_LDFLAGS)" -DCMAKE_AR=$(WALI_AR) -DCMAKE_RANLIB=$(WALI_RANLIB) -DEVENT__DISABLE_OPENSSL=ON -DEVENT__LIBRARY_TYPE=STATIC
+	make
+
 libevent-clean:
 	rm -rf $(WALI_LIB_SRC)/libevent/build
+
+ncurses:
+	cd $(WALI_LIB_SRC)/ncurses;
+	mkdir -p build; cd build;
+	../configure CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS=$(WALI_COMMON_LD_FLAGS) AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	make
+ncurses-clean:
+	rm -rf $(WALI_LIB_SRC)/ncurses/build
 
 
 ## --- Applications --- ##
@@ -68,6 +78,6 @@ openssh-clean: zlib-clean
 	rm -rf openssh/build
 
 
-clean: sqlite-clean openssh-clean vim-clean
+clean: sqlite-clean openssh-clean vim-clean ncurses-clean
 
 
