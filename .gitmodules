@@ -37,3 +37,7 @@
 [submodule "applications/lua"]
 	path = applications/lua
 	url = https://github.com/lua/lua.git
+[submodule "applications/make"]
+	path = applications/make
+	url = https://github.com/arjunr2/make.git
+	branch = wali
