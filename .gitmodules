@@ -30,3 +30,7 @@
 [submodule "applications/libs/paho.mqtt.c"]
 	path = applications/libs/paho.mqtt.c
 	url = https://github.com/eclipse/paho.mqtt.c
+[submodule "applications/libs/uvwasi"]
+	path = applications/libs/uvwasi
+	url = https://github.com/arjunr2/uvwasi.git
+	branch = wali

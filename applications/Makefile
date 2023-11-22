@@ -1,5 +1,5 @@
 .PHONY: all clean vim sqlite openssh mqtt-app
-.PHONY: libs zlib libevent paho.mqtt.c ncurses
+.PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi 
 
 CURDIR = $(shell pwd)
 MAKE = make
@@ -26,7 +26,7 @@ WALI_LIB_SRC = $(CURDIR)/libs
 
 all: vim sqlite openssh
 
-libs: zlib libevent ncurses paho.mqtt.c
+libs: zlib libevent ncurses paho.mqtt.c uvwasi
 
 .ONESHELL:
 
@@ -63,11 +63,19 @@ paho.mqtt.c:
 paho.mqtt.c-clean:
 	rm -rf $(WALI_LIB_SRC)/paho.mqtt.c/build
 
+uvwasi:
+	cd $(WALI_LIB_SRC)/uvwasi;
+	mkdir -p out/cmake; cd out/cmake;
+	cmake ../.. -DUVWASI_BUILD_SHARED=FALSE -DBUILD_TESTING=ON -DCMAKE_C_COMPILER=$(WALI_CC) -DCMAKE_C_FLAGS="-pthread $(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS)"
+	$(MAKE)
+uvwasi-clean:
+	rm -rf $(WALI_LIB_SRC)/uvwasi/out
+
 ## --- Applications --- ##
 vim: ncurses
 	cd vim;
 	$(MAKE) CC=$(WALI_CC) CClink="$(WALI_CC) $(WALI_COMMON_CFLAGS)" CFLAGS="$(WALI_COMMON_CFLAGS)" LDFLAGS="-L$(WALI_LIB_SRC)/ncurses/build/lib $(WALI_COMMON_LDFLAGS)" LD=$(WALI_LD) CONF_OPT_TERMINAL=--disable-terminal
-vim-clean:
+vim-clean: ncurses-clean
 	$(MAKE) -C vim clean
 
 sqlite:
@@ -90,6 +98,6 @@ mqtt-app-clean: paho.mqtt.c-clean
 	rm mqtt-app/mqtt-app
 	
 
-clean: sqlite-clean openssh-clean vim-clean ncurses-clean
+clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean
 
 
