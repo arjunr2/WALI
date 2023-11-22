@@ -27,3 +27,6 @@
 [submodule "applications/libs/ncurses"]
 	path = applications/libs/ncurses
 	url = https://github.com/mirror/ncurses.git
+[submodule "applications/libs/paho.mqtt.c"]
+	path = applications/libs/paho.mqtt.c
+	url = https://github.com/eclipse/paho.mqtt.c
