@@ -34,3 +34,6 @@
 	path = applications/libs/uvwasi
 	url = https://github.com/arjunr2/uvwasi.git
 	branch = wali
+[submodule "applications/lua"]
+	path = applications/lua
+	url = https://github.com/lua/lua.git

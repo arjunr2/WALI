@@ -1,4 +1,4 @@
-.PHONY: all clean vim sqlite openssh mqtt-app
+.PHONY: all clean vim sqlite openssh mqtt-app lua
 .PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi 
 
 CURDIR = $(shell pwd)
@@ -96,8 +96,14 @@ mqtt-app: paho.mqtt.c
 	$(WALI_CC) $(WALI_COMMON_CFLAGS) -L$(WALI_LIB_SRC)/paho.mqtt.c/build/src -I$(WALI_LIB_SRC)/paho.mqtt.c/src $(WALI_COMMON_LDFLAGS) -lm -lpaho-mqtt3c $@/mqtt.c -o $@/mqtt-app 
 mqtt-app-clean: paho.mqtt.c-clean
 	rm mqtt-app/mqtt-app
+
+lua:
+	cd lua;
+	$(MAKE) CC=$(WALI_CC) MYCFLAGS="$(WALI_COMMON_CFLAGS) -std=c99 -DLUA_USE_LONGJMP -fno-stack-protector -fno-common" MYLDFLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -Wl,-E" MYLIBS="" AR="$(WALI_AR) rc" RANLIB=$(WALI_RANLIB)
+lua-clean:
+	make -C lua clean
 	
 
-clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean
+clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean lua-clean
 
 
