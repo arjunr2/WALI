@@ -45,3 +45,7 @@
 	path = applications/memcached
 	url = https://github.com/arjunr2/memcached.git
 	branch = wali
+[submodule "applications/bash"]
+	path = applications/bash
+	url = https://github.com/arjunr2/bash.git
+	branch = wali
