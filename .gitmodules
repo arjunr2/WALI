@@ -41,3 +41,7 @@
 	path = applications/make
 	url = https://github.com/arjunr2/make.git
 	branch = wali
+[submodule "applications/memcached"]
+	path = applications/memcached
+	url = https://github.com/arjunr2/memcached.git
+	branch = wali
