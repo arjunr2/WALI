@@ -12,12 +12,7 @@ and produce a baseline implementation in [WAMR](https://github.com/SilverLineFra
 
 ## Skip the talk, I want to run some WALI apps!
 
-1. Clone this repo
-```shell
-git clone https://github.com/arjunr2/WALI.git
-```
-
-2. Install dependencies
+1. Install dependencies
 * Ninja
 * Make
 * Cmake
@@ -25,15 +20,11 @@ git clone https://github.com/arjunr2/WALI.git
 * lld
 * [WABT](https://github.com/WebAssembly/wabt)
 
-If using `apt`, run the `./apt-install-deps.sh` script with privileges to install above depedencies
+If using `apt`, run the `./apt-install-deps.sh` script with `sudo` to install above depedencies
 
-3. Build a WALI runtime
-```shell
-./mvp-setup.sh
-```
-An `iwasm` symlink executable should be generated in the root directory
+2. Build a WALI runtime as shown [here](#building-wali-runtime)
 
-4. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite
+3. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite
 with sample scripts/data for each app.
 As an example, to run `sqlite3`:
 ```shell
@@ -47,13 +38,24 @@ As an example, to run `sqlite3`:
 Before proceeding, make sure all dependencies are up to date, as detailed in previous [section](#skip-the-talk-i-want-to-run-some-wali-apps):
 
 There are four major toolchain components: 
-* Custom Clang compiler (C -> Wasm-WALI)
-* C-standard library for WALI
-* WALI runtime
-* (Optional) AoT Compiler for WAMR (Wasm-WALI -> WAMR AoT)
+1. WALI runtime
+2. Custom Clang compiler (C -> Wasm-WALI)
+3. C-standard library for WALI
+4. (Optional) AoT Compiler for WAMR (Wasm-WALI -> WAMR AoT)
 
-If compilation capability is not required, only the WALI runtime needs to be built. 
-In this case, skip to [building the runtime](#building-wali-runtime)
+If compiling WALI applications is not required and step 1 is required.
+
+### Building WALI runtime
+
+We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
+For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
+
+To build the WAMR-WALI runtime:
+```shell
+git submodule update --init wasm-micro-runtime
+make iwasm
+```
+An `iwasm` symlink executable should be generated in the root directory
 
 
 ### Building the Wasm-WALI Clang compiler
@@ -84,17 +86,6 @@ make libc
 We currently support 64-bit architectures for x86-64, aarch64, and riscv64. In the future, we will expand
 to more architectures.
 
-
-### Building WALI runtime
-
-We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
-For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
-
-To build the WAMR-WALI runtime:
-```shell
-git submodule update --init wasm-micro-runtime
-make iwasm
-```
 
 ### (Optional) WAMR AoT Compiler
 
@@ -165,14 +156,19 @@ run the test suite binaries detailed [here](#building-the-test-suite)
 Most Linux distros will allow registration of miscellaneous binary formats.
 For WASM binaries, the OS must be aware of which program to invoke to run the WASM file. 
 
-1. Create a wrapper bash script around the runtime invocation as below
+1. Save all current environment variables to a file
+```
+env &> ~/.walienv
+```
+
+2. Create a wrapper bash script around the runtime invocation as below
 ```shell
 #!/bin/bash
 # /usr/bin/iwasm-wrapper - Wrapper for running WASM programs
 
-exec <full-path-to-iwasm> -v=0 --stack-size=262144 "$@"
+exec <absolute-path-to-iwasm> -v=0 --stack-size=262144 --env-file=<absolute-path-to-envfile> "$@"
 ```
-2. Register WASM as a misc format and use the script from step 1 as the interpreter
+3. Register WASM as a misc format and use the script from step 2 as the interpreter
 ```shell
 cd misc
 sudo ./binfmt_register.sh

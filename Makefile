@@ -17,9 +17,9 @@ libc:
 .ONESHELL:
 iwasm: iwasm-dir
 	cd $(IWASM_DIR)
-	cmake -GNinja .. -DWAMR_BUILD_PLATFORM=linux -DWAMR_BUILD_CUSTOM_NAME_SECTION=1 \
+	cmake -GNinja .. -DCMAKE_BUILD_TYPE=Debug -DWAMR_BUILD_PLATFORM=linux -DWAMR_BUILD_CUSTOM_NAME_SECTION=1 \
 		-DWAMR_BUILD_DUMP_CALL_STACK=1 -DWAMR_BUILD_LIB_WASI_THREADS=1 \
-		-DWAMR_BUILD_MEMORY_PROFILING=1 -DWAMR_BUILD_LIBC_WALI=1
+		-DWAMR_BUILD_MEMORY_PROFILING=0 -DWAMR_BUILD_LIBC_WALI=1
 	ninja
 	cd -
 	ln -fs $(IWASM_DIR)/iwasm iwasm
@@ -27,9 +27,9 @@ iwasm: iwasm-dir
 .ONESHELL:
 wali-compiler:
 	cd llvm-project
-	cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;lldb" \
+	cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="lld;clang;lldb" \
 		-DLLVM_ENABLE_RUNTIMES=compiler-rt -DLLVM_PARALLEL_COMPILE_JOBS=8 -DLLVM_USE_LINKER=lld \
-		-DLLVM_PARALLEL_LINK_JOBS=2
+		-DLLVM_PARALLEL_LINK_JOBS=1
 	cd build
 	ninja
 	mkdir -p lib/clang/16/lib/wasi
