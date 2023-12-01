@@ -29,7 +29,7 @@ with sample scripts/data for each app.
 As an example, to run `sqlite3`:
 ```shell
 # Increase the stack size if the program runs out of space
-./iwasm -v=0 --stack-size=262144 wasm-apps/sqlite/sqlite3.wasm
+./iwasm -v=0 --stack-size=524288 wasm-apps/sqlite/sqlite3.wasm
 ```
 
 
@@ -128,7 +128,7 @@ To indepedently specify compile and link flags, refer to [compile-wali.sh](tests
 make tests
 ```
 
-WALI executables are located in `tests/wasm/*_link.wasm`. 
+WALI executables are located in `tests/wasm`. 
 Native ELF files for the same in `tests/elf` can be used to compare against the WASM output
 
 
@@ -161,12 +161,13 @@ For WASM binaries, the OS must be aware of which program to invoke to run the WA
 env &> ~/.walienv
 ```
 
-2. Create a wrapper bash script around the runtime invocation as below
+2. Create a wrapper bash script around the runtime invocation as below.
+Parameters to `iwasm` can be configured based on preferences
 ```shell
 #!/bin/bash
 # /usr/bin/iwasm-wrapper - Wrapper for running WASM programs
 
-exec <absolute-path-to-iwasm> -v=0 --stack-size=262144 --env-file=<absolute-path-to-envfile> "$@"
+exec <absolute-path-to-iwasm> -v=0 --stack-size=524288 --max-threads=30 --env-file=<absolute-path-to-envfile> "$@"
 ```
 3. Register WASM as a misc format and use the script from step 2 as the interpreter
 ```shell
