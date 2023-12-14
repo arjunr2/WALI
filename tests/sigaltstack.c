@@ -38,7 +38,6 @@ int main() {
     print("Wait 2 sec\n");
     sleep(2);
   }
-  print("Its me\n");
 
   return 0;
 }

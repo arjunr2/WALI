@@ -36,7 +36,6 @@ int main() {
     sigsuspend(&block_int);
     printf("Wake %d\n", i);
   }
-  print("Its me\n");
 
   return 0;
 }

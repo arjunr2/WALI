@@ -4,7 +4,6 @@
 #define SEC 2
 
 void alarm_signal_handler(int signo) {
-  //printf("Custom Signal Handler: %s\n", strsignal(signo));
   printf("Alarm signal handler: %d\n", signo);
   
   struct sigaction act = {0};
@@ -40,7 +39,7 @@ int main() {
     printf("i: %d\n", i);
     sleep(1);
   }
-  print("Its me\n");
+  print("Unreachable\n");
 
   return 0;
 }
