@@ -1,5 +1,5 @@
-## Helper Scripts for automating WALI implementations
+## Helper Scripts for automating WALI documentation/implementation
 
-* `gen_wali_defs.py` : Takes `syscall_full_format.csv` and generates definitions matching them for libc and WAMR
+* `autogen.py` : Run `-h` for usage
 * `convert_syscall.py` : Sorts the syscall table according to x86_64 numbering
 * `process.ipynb`: Scripts to process WALI profile data

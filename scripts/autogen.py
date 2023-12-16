@@ -222,7 +222,7 @@ def parse_args() -> argparse.Namespace:
         Argument parsing for CLI
     """
     parser = argparse.ArgumentParser(prog='wali-autogen', description="Generate WALI descriptions/implementations/stubs for different uses")
-    parser.add_argument('--file', '-f', help='CSV file containing syscall format', default='syscall_full_format.csv')
+    parser.add_argument('--file', '-f', help='CSV file containing syscall format', default='csvs/syscall_full_format.csv')
     parser.add_argument('--verbose', '-v', help='Logging verbosity', choices=range(6), type=int, default=4)
     parser.add_argument('stubs', nargs='*', choices=list(stub_classes.keys())+['all'], default='all')
     p = parser.parse_args()
