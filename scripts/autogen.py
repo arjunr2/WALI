@@ -7,22 +7,22 @@ from pathlib import Path
 
 from typing import List, Dict, Tuple, Any
 
-BASIC_TYPES = ["int", "char", "long", "void"]
+BASIC_TYPES = ["unsigned int", "int", "char", "long", "long long", "void"]
 # long long in WASM and Native is 64-bits
 # Each tuple in complex types denotes (native x64, wasm) size
 COMPLEX_TYPES = {
     "off_t": "long long", # "long long",
     "size_t": "unsigned int", # "long", 
-    "mode_t": "int",
-    "nfds_t": "int",
+    "nfds_t": "unsigned int",
     "socklen_t": "unsigned int", # "long",
     "clockid_t": "int",
+    "mode_t": "int",
     "uid_t": "int",
     "pid_t": "int",
     "gid_t": "int"
 }
 
-def get_scargs(x):
+def get_scargs(x, replace_complex: bool = True):
     """
         System Call arguments processed as basic types
     """
@@ -30,7 +30,7 @@ def get_scargs(x):
         return []
     args = [x["a"+str(i+1)] for i in range(int(x['# Args']))]
     arg_sub = [COMPLEX_TYPES.get(arg, "UNDEF") if arg[-1] != '*' and arg not in BASIC_TYPES \
-        else arg for arg in args]
+        else arg for arg in args] if replace_complex else args
     return arg_sub
 
 
@@ -58,7 +58,7 @@ def gen_and_write(stub_name, syscall_info, outpath):
     with open(outpath, 'w') as f:
         f.write('\n'.join(buf))
 
-def gen_libc_stubs(spath, syscall_info):
+def gen_libc_stubs(spath, syscall_info, archs):
     """
         --------------------------------------------------------------
         Libc WALI: Declarations and Case-statement for syscall-by-number 
@@ -79,7 +79,7 @@ def gen_libc_stubs(spath, syscall_info):
     gen_and_write(case_stub, syscall_info, spath / 'case.out')
     
 
-def gen_wamr_stubs(spath, syscall_info):
+def gen_wamr_stubs(spath, syscall_info, archs):
     """
         --------------------------------------------------------------
         WAMR WALI: Declarations, Linking Symbols, and Implementation 
@@ -127,11 +127,88 @@ def gen_wamr_stubs(spath, syscall_info):
     gen_and_write(symbols_stub, syscall_info, spath / 'symbols.out')
 
 
-def gen_wit_stubs(spath, syscall_info):
-    pass
+def gen_wit_stubs(spath, syscall_info, archs):
+    """
+        --------------------------------------------------------------
+        WIT WALI Syscall Interface Declaration
+        --------------------------------------------------------------
+    """
+    buf = []
+    uniq_ptr_types = set()
+    buf = []
+    wit_basictype_map = {
+        "int": "s32",
+        "unsigned int": "u32",
+        "long": "s64",
+        "long long": "s64",
+        "char": "u8",
+        "void": "UNDEF"
+    }
+    def wit_sc_def(nargs, fn_name, args):
+        return "\tSYS-{fn_name}: func({arglist}) -> syscall-result;".format(
+            fn_name = fn_name.replace('_', '-'),
+            arglist = ', '.join(["a{}: {}".format(
+                        i+1, wit_basictype_map[arg] if arg in wit_basictype_map else arg) 
+                        for i, arg in enumerate(args)])
+        ) if nargs else ""
 
-def gen_arch_diff_stubs(spath, syscall_info):
-    pass
+    for sc in syscall_info:
+        args = get_scargs(sc, False)
+        args = [x.strip().replace(' ', '-').replace('_', '-') for x in args]
+        args = [f"ptr-{x[:-1]}" if x[-1] == '*' else x for x in args]
+        up_types = set([x for x in args if x.startswith('ptr')])
+        fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
+        uniq_ptr_types.update(up_types)
+        buf.append(wit_sc_def(sc['# Args'], fn_name, args))
+
+    buf = list(filter(bool, buf))
+    print(buf)
+
+    ### Generate types and syscall interface
+    comp_types = {
+        'ptr': 'int',
+        'syscall-result': 'long',
+        **{k.replace('_', '-'): v for k, v in COMPLEX_TYPES.items()}
+    }
+    type_if = ["interface types {"] + ["\ttype {} = {};".format(k, wit_basictype_map[v]) 
+                for k, v in comp_types.items()] + \
+            ["}"]
+    
+    sc_prelude = ["interface syscalls {"] + \
+                ["\tuse types.{{{}}};".format(', '.join([k for k in comp_types]))] + \
+                ["\t/// Readable pointer types"] + \
+                ["\ttype {} = ptr;".format(x) for x in uniq_ptr_types] + \
+                [""]
+    
+    sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
+
+    with open('wali.wit.template', 'r') as f:
+        template = f.read()
+
+    fill_temp = template.replace(
+        '[[TYPES_STUB]]', '\n'.join(type_if)
+        ).replace(
+        '[[SYSCALLS_STUB]]', '\n'.join(sc_if))
+
+    with open(spath / 'wali.wit',  'w') as f:
+        f.write(fill_temp)
+
+
+
+def gen_arch_diff_stubs(spath, syscall_info, archs):
+    """
+        --------------------------------------------------------------
+        Cross-Architecture syscall differences
+        --------------------------------------------------------------
+    """
+    bufs = {x: [] for x in archs}
+    for sc in syscall_info:
+        for arch in archs:
+            if sc[f"{arch}_NR"] and int(sc[f"{arch}_NR"]) == -1:
+                bufs[arch].append(sc["Syscall"])
+    for arch, buf in bufs.items():
+        with open(spath / f"{arch}_undefined.out", 'w') as f:
+            f.write('\n'.join(buf))
 
 stub_classes = {
     'libc': gen_libc_stubs,
@@ -172,7 +249,7 @@ def main():
         spath = Path(stub)
         logging.info(f"Generating {stub} stubs")
         spath.mkdir(parents=True, exist_ok=True)
-        stub_classes[stub](spath, syscall_info)
+        stub_classes[stub](spath, syscall_info, archs)
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,53 @@
+package wali:linux64@1.0.0;
+
+/// WALI is a set of functions for perform low-level virtualization of the
+/// Linux applications by performing syscall translation. The WALI API is designed to be 
+/// as close as possible to the stable Linux syscall interface, requiring minimal work in engine
+/// implementations.
+/// This interface is designed for 64-bit Linux machines running WASM
+world linux {
+    import syscalls;
+    import threads;
+    import environment;
+    import cl-args;
+    import misc;
+}
+
+/// Representation of Linux syscall interface types
+[[TYPES_STUB]]
+
+/// Raw user-space Linux syscall wrappers
+[[SYSCALLS_STUB]]
+
+interface threads {
+    wasm-thread-spawn: func(setup-funcptr: u32, arg-wasm: s32) -> s32;
+}
+
+interface environment {
+    use syscalls.{ptr-char};
+    // Startup
+    call-ctors: func();
+    // Cleanup
+    call-dtors: func();
+    proc-exit: func(status: s32);
+    // Environment variables
+    get-init-envfile: func(filepath: ptr-char, pathsize: u32) -> bool;
+}
+
+interface cl-args {
+    use syscalls.{ptr-char};
+    // Get number of CL arguments
+    cl-get-argc: func() -> u32;
+    // Get size of a specific CL argument
+    cl-get-argv-len: func(arg-idx: u32) -> u32;
+    // Copy the contents of a specific CL argument
+    cl-copy-argv: func(argv-addr: ptr-char, arg-idx: u32) -> u32; 
+}
+
+interface misc {
+    use types.{ptr};
+    type ptr-sigjmpbuf = ptr;
+    // Setjmp/longjmp temporary stubs
+    sigsetjmp: func(sigjmpbuf: ptr-sigjmpbuf, savesigs: s32) -> s32;
+    siglongjmp: func(sigjmpbuf: ptr-sigjmpbuf, val: s32);
+}
