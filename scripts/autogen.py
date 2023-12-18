@@ -182,13 +182,13 @@ def gen_wit_stubs(spath, syscall_info, archs):
     sc_prelude = ["interface syscalls {"] + \
                 ["\tuse types.{{{}}};".format(', '.join([k for k in comp_types]))] + \
                 ["\t/// Readable pointer types"] + \
-                ["\ttype {} = ptr;".format(x) for x in uniq_ptr_types] + \
+                ["\ttype {} = ptr;".format(x) for x in sorted(uniq_ptr_types)] + \
                 [""]
     
     sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
 
     # Fill in template
-    with open('wali.wit.template', 'r') as f:
+    with open('templates/wali.wit.template', 'r') as f:
         template = f.read()
 
     fill_temp = template.replace(
@@ -242,7 +242,7 @@ def gen_markdown_stubs(spath, syscall_info, archs):
     unsupp_list = ["* {}".format(x) for x in sorted(unsupp_set)]
 
     # Fill in template
-    with open('support.md.template', 'r') as f:
+    with open('templates/support.md.template', 'r') as f:
         template = f.read()
 
     fill_temp = template.replace(
