@@ -168,7 +168,6 @@ def gen_wit_stubs(spath, syscall_info, archs):
         buf.append(wit_sc_def(sc['NR'], sc['# Args'], fn_name, args, orig_args))
 
     buf = list(filter(bool, buf))
-    print(buf)
 
     ### Generate types and syscall interface
     comp_types = {
@@ -237,7 +236,7 @@ def gen_markdown_stubs(spath, syscall_info, archs):
     # Get supported and unsupported set
     supp_set = set([s['Syscall'] for s in syscall_info if s['# Args']])
     supp_df = df[df['Syscall'].isin(supp_set)]
-    supp_format_df = supp_df[['Syscall', '# Args', *[f"a{x}" for x in range(1, 6)]]]
+    supp_format_df = supp_df[['Syscall', '# Args', *[f"a{x+1}" for x in range(6)]]]
 
     unsupp_set = arch_call_set.difference(supp_set)
     unsupp_list = ["* {}".format(x) for x in unsupp_set]
@@ -248,13 +247,12 @@ def gen_markdown_stubs(spath, syscall_info, archs):
 
     fill_temp = template.replace(
         '[[SUPPORTED_SYSCALLS_STUB]]', 
-        supp_format_df.to_markdown(tablefmt='grid', index=False).replace('*', '\*').replace('_', '\_')
+        supp_format_df.to_markdown(index=False).replace('*', '\*').replace('_', '\_')
         ).replace(
         '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list).replace('_', '\_'))
 
     with open(spath / 'support.md', 'w') as f:
         f.write(fill_temp)
-    print(unsupp_list)
     
 
 

@@ -3,7 +3,7 @@
 The WALI prototype is designed to support syscalls across the following
 architectures: **x86-64, aarch64, riscv64**
 
-Gneerated based on Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
+Generated based on Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
 
 [[SUPPORTED_SYSCALLS_STUB]]
 
