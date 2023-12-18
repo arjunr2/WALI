@@ -1,12 +1,13 @@
 # Webassembly Linux Interface (WALI)
 
-This repo serves to prototype an implementation of the WebAssembly Linux Interface.
+This repo serves to prototype an implementation of the WebAssembly Linux Interface. For current range of 
+support, refer [here](docs/support.md)
 
 ## Overview
 WALI is a complete(ish?) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
 down to even low-level system applications. 
-A parallel goal is to increase the scope for WebAssembly-oriented research by building the infrastructure for 
-seamless build-run-deploy workflows of WebAssembly applications.
+A parallel goal is to increase the scope for WebAssembly-oriented research by virtualizing high-level APIs
+and establishing infrastructure for seamless build-run-deploy workflows of WebAssembly applications.
 We create a custom modified C standard library ([musl libc](https://github.com/arjunr2/wali-musl)) that uses WALI
 and produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali)
 
@@ -20,9 +21,9 @@ and produce a baseline implementation in [WAMR](https://github.com/SilverLineFra
 * lld
 * [WABT](https://github.com/WebAssembly/wabt)
 
-If using `apt`, run the `./apt-install-deps.sh` script with `sudo` to install above depedencies
+If using `apt`, run `sudo ./apt-install-deps.sh` to install above depedencies
 
-2. Build a WALI runtime as shown [here](#building-wali-runtime)
+2. Build a WALI runtime following these [instructions](#building-wali-runtime)
 
 3. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite
 with sample scripts/data for each app.
