@@ -247,9 +247,10 @@ def gen_markdown_stubs(spath, syscall_info, archs):
         template = f.read()
 
     fill_temp = template.replace(
-        '[[SUPPORTED_SYSCALLS_STUB]]', supp_format_df.to_markdown(tablefmt='grid', index=False)
+        '[[SUPPORTED_SYSCALLS_STUB]]', 
+        supp_format_df.to_markdown(tablefmt='grid', index=False).replace('*', '\*').replace('_', '\_')
         ).replace(
-        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list))
+        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list).replace('_', '\_'))
 
     with open(spath / 'support.md', 'w') as f:
         f.write(fill_temp)
