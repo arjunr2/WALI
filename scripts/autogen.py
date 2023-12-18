@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 import argparse
 import logging
+import system_calls
 from pathlib import Path
 
 from typing import List, Dict, Tuple, Any
@@ -187,6 +188,7 @@ def gen_wit_stubs(spath, syscall_info, archs):
     
     sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
 
+    # Fill in template
     with open('wali.wit.template', 'r') as f:
         template = f.read()
 
@@ -215,11 +217,52 @@ def gen_arch_diff_stubs(spath, syscall_info, archs):
         with open(spath / f"{arch}_undefined.out", 'w') as f:
             f.write('\n'.join(buf))
 
+
+def gen_markdown_stubs(spath, syscall_info, archs):
+    """
+        --------------------------------------------------------------
+        Markdown tracking syscall support
+        --------------------------------------------------------------
+    """
+    syscalls = system_calls.syscalls()
+    arch_supp = archs + ['x86_64']
+    arch_remap = {
+        'aarch64': 'arm64',
+    }
+    arch_supp = {arch_remap[x] if x in arch_remap else x for x in arch_supp}
+    arch_calls = [set(syscalls.syscalls['archs'][v].keys()) for v in arch_supp]
+    arch_call_set = set().union(*arch_calls)
+
+    df = pd.DataFrame.from_dict(syscall_info)
+    # Get supported and unsupported set
+    supp_set = set([s['Syscall'] for s in syscall_info if s['# Args']])
+    supp_df = df[df['Syscall'].isin(supp_set)]
+    supp_format_df = supp_df[['Syscall', '# Args', *[f"a{x}" for x in range(1, 6)]]]
+
+    unsupp_set = arch_call_set.difference(supp_set)
+    unsupp_list = ["* {}".format(x) for x in unsupp_set]
+
+    # Fill in template
+    with open('support.md.template', 'r') as f:
+        template = f.read()
+
+    fill_temp = template.replace(
+        '[[SUPPORTED_SYSCALLS_STUB]]', supp_format_df.to_markdown(tablefmt='grid', index=False)
+        ).replace(
+        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list))
+
+    with open(spath / 'support.md', 'w') as f:
+        f.write(fill_temp)
+    print(unsupp_list)
+    
+
+
 stub_classes = {
     'libc': gen_libc_stubs,
     'wamr': gen_wamr_stubs,
     'wit': gen_wit_stubs,
-    'arch-diff': gen_arch_diff_stubs
+    'arch-diff': gen_arch_diff_stubs,
+    'markdown': gen_markdown_stubs
 }
 
 def parse_args() -> argparse.Namespace:
