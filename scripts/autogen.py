@@ -239,13 +239,16 @@ def gen_markdown_stubs(spath, syscall_info, archs):
     supp_format_df = supp_df[['Syscall', '# Args', *[f"a{x+1}" for x in range(6)]]]
 
     unsupp_set = arch_call_set.difference(supp_set)
-    unsupp_list = ["* {}".format(x) for x in unsupp_set]
+    unsupp_list = ["* {}".format(x) for x in sorted(unsupp_set)]
 
     # Fill in template
     with open('support.md.template', 'r') as f:
         template = f.read()
 
     fill_temp = template.replace(
+        '[[NUM_SUPPORTED_SYSCALLS_STUB]]', 
+        str(len(supp_format_df))
+        ).replace(
         '[[SUPPORTED_SYSCALLS_STUB]]', 
         supp_format_df.to_markdown(index=False).replace('*', '\*').replace('_', '\_')
         ).replace(

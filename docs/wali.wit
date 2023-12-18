@@ -32,32 +32,32 @@ interface types {
 interface syscalls {
 	use types.{ptr, syscall-result, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t};
 	/// Readable pointer types
-	type ptr-gid-t = ptr;
-	type ptr-struct-sigaction = ptr;
-	type ptr-socklen-t = ptr;
 	type ptr-void = ptr;
-	type ptr-fd-set = ptr;
-	type ptr-struct-epoll-event = ptr;
-	type ptr-int = ptr;
-	type ptr-struct-rlimit = ptr;
-	type ptr-struct-utsname = ptr;
-	type ptr-struct-dirent = ptr;
 	type ptr-struct-timeval = ptr;
-	type ptr-struct-sysinfo = ptr;
-	type ptr-struct-timespec = ptr;
-	type ptr-struct-statfs = ptr;
-	type ptr-char = ptr;
-	type ptr-struct-rusage = ptr;
-	type ptr-struct-sockaddr = ptr;
+	type ptr-socklen-t = ptr;
+	type ptr-struct-pollfd = ptr;
+	type ptr-struct-utsname = ptr;
 	type ptr-struct-utimbuf = ptr;
-	type ptr-struct-stat = ptr;
-	type ptr-struct-msghdr = ptr;
+	type ptr-struct-sockaddr = ptr;
+	type ptr-gid-t = ptr;
+	type ptr-char = ptr;
+	type ptr-struct-dirent = ptr;
+	type ptr-int = ptr;
+	type ptr-struct-sigaction = ptr;
+	type ptr-struct-statfs = ptr;
+	type ptr-stack-t = ptr;
 	type ptr-sigset-t = ptr;
+	type ptr-struct-rlimit = ptr;
+	type ptr-struct-sysinfo = ptr;
+	type ptr-struct-stat = ptr;
+	type ptr-struct-epoll-event = ptr;
+	type ptr-struct-msghdr = ptr;
+	type ptr-struct-itimerval = ptr;
+	type ptr-struct-timespec = ptr;
 	type ptr-struct-iovec = ptr;
 	type ptr-struct-statx = ptr;
-	type ptr-struct-itimerval = ptr;
-	type ptr-stack-t = ptr;
-	type ptr-struct-pollfd = ptr;
+	type ptr-fd-set = ptr;
+	type ptr-struct-rusage = ptr;
 
 	/// Syscall methods
 	// [0] read(int, void*, size_t)

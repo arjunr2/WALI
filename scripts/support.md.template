@@ -5,6 +5,8 @@ architectures: **x86-64, aarch64, riscv64**
 
 Generated based on Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
 
+Number of supported syscalls: **[[NUM_SUPPORTED_SYSCALLS_STUB]]**
+
 [[SUPPORTED_SYSCALLS_STUB]]
 
 ## Currently Unsupported Syscalls
