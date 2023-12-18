@@ -144,22 +144,27 @@ def gen_wit_stubs(spath, syscall_info, archs):
         "char": "u8",
         "void": "UNDEF"
     }
-    def wit_sc_def(nargs, fn_name, args):
-        return "\tSYS-{fn_name}: func({arglist}) -> syscall-result;".format(
+    def wit_sc_def(nr, nargs, fn_name, args, orig_args):
+        l1 = "\t// [{nr}] {fn_name}({orig_args})".format(
+            nr = nr,
+            fn_name = fn_name,
+            orig_args = ', '.join(orig_args))
+        l2 = "\tSYS-{fn_name}: func({arglist}) -> syscall-result;".format(
             fn_name = fn_name.replace('_', '-'),
             arglist = ', '.join(["a{}: {}".format(
                         i+1, wit_basictype_map[arg] if arg in wit_basictype_map else arg) 
                         for i, arg in enumerate(args)])
-        ) if nargs else ""
+        ) 
+        return '\n'.join([l1, l2]) if nargs else ""
 
     for sc in syscall_info:
-        args = get_scargs(sc, False)
-        args = [x.strip().replace(' ', '-').replace('_', '-') for x in args]
+        orig_args = get_scargs(sc, False)
+        args = [x.strip().replace(' ', '-').replace('_', '-') for x in orig_args]
         args = [f"ptr-{x[:-1]}" if x[-1] == '*' else x for x in args]
         up_types = set([x for x in args if x.startswith('ptr')])
         fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
         uniq_ptr_types.update(up_types)
-        buf.append(wit_sc_def(sc['# Args'], fn_name, args))
+        buf.append(wit_sc_def(sc['NR'], sc['# Args'], fn_name, args, orig_args))
 
     buf = list(filter(bool, buf))
     print(buf)
