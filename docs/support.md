@@ -5,7 +5,7 @@ architectures: **x86-64, aarch64, riscv64**
 
 Generated based on Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
 
-Number of supported syscalls: **138**
+Number of supported syscalls: **140**
 
 | Syscall         |   # Args | a1               | a2                  | a3                | a4                  | a5               | a6         |
 |:----------------|---------:|:-----------------|:--------------------|:------------------|:--------------------|:-----------------|:-----------|
@@ -97,6 +97,8 @@ Number of supported syscalls: **138**
 | setpgid         |        2 | pid\_t            | pid\_t               |                   |                     |                  |            |
 | getppid         |        0 |                  |                     |                   |                     |                  |            |
 | setsid          |        0 |                  |                     |                   |                     |                  |            |
+| setreuid        |        2 | uid\_t            | uid\_t               |                   |                     |                  |            |
+| setregid        |        2 | gid\_t            | gid\_t               |                   |                     |                  |            |
 | getgroups       |        2 | size\_t           | gid\_t\*              |                   |                     |                  |            |
 | setgroups       |        2 | size\_t           | gid\_t\*              |                   |                     |                  |            |
 | setresuid       |        3 | uid\_t            | uid\_t               | uid\_t             |                     |                  |            |
@@ -334,8 +336,6 @@ Number of supported syscalls: **138**
 * sethostname
 * setns
 * setpriority
-* setregid
-* setreuid
 * settimeofday
 * setxattr
 * shmat

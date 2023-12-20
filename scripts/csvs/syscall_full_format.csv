@@ -113,8 +113,8 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 110,getppid,0,,,,,,,,,173,173
 111,getpgrp,,,,,,,,,,-1,-1
 112,setsid,0,,,,,,,,,157,157
-113,setreuid,,,,,,,,,,145,145
-114,setregid,,,,,,,,,,143,143
+113,setreuid,2,uid_t,uid_t,,,,,,,145,145
+114,setregid,2,gid_t,gid_t,,,,,,,143,143
 115,getgroups,2,size_t,gid_t*,,,,,,,158,158
 116,setgroups,2,size_t,gid_t*,,,,,,,159,159
 117,setresuid,3,uid_t,uid_t,uid_t,,,,,,147,147

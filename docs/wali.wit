@@ -236,6 +236,10 @@ interface syscalls {
 	SYS-getppid: func() -> syscall-result;
 	// [112] setsid()
 	SYS-setsid: func() -> syscall-result;
+	// [113] setreuid(uid_t, uid_t)
+	SYS-setreuid: func(a1: uid-t, a2: uid-t) -> syscall-result;
+	// [114] setregid(gid_t, gid_t)
+	SYS-setregid: func(a1: gid-t, a2: gid-t) -> syscall-result;
 	// [115] getgroups(size_t, gid_t*)
 	SYS-getgroups: func(a1: size-t, a2: ptr-gid-t) -> syscall-result;
 	// [116] setgroups(size_t, gid_t*)
