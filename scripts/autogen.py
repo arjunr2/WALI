@@ -117,7 +117,7 @@ def gen_wamr_stubs(spath, syscall_info, archs):
             )
         
     def symbols_stub(nr, nargs, name, fn_name, args):
-        return "\t\t\tNSYMBOL ( {: >20}, {: >30}, {: >12} ),".format(
+        return "\tNSYMBOL ( {: >20}, {: >30}, {: >12} ),".format(
                     "SYS_" + fn_name,
                     "wali_syscall_" + fn_name,
                     gen_native_args(args)
