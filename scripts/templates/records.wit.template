@@ -1,0 +1,224 @@
+/// Primitive types
+type long = s64;
+type long-long = s64;
+type short = s16;
+type unsigned-long = s64;
+type unsigned-long-long = s64;
+type unsigned-short = u16;
+/// Function pointer = table index
+type fn-ptr = u32;
+type reg = s64;
+type unsigned-reg = u64;
+
+/// Complex types
+type rlim-t = unsigned-long-long
+type time-t = s64;
+type suseconds-t = s64;
+type sigset-t = Array[128, u8];
+type sa-family-t = unsigned-short;
+type dev-t = u64;
+type nlink-t = unsigned-reg;
+type blksize-t = long;
+type blkcnt-t = s64;
+type fsblkcnt-t = u64;
+type fsfilcnt-t = u64;
+type fsid-t = Array[2, s32];
+type uts-str = Array[char, 65];
+/// Epoll data is just an anonymous 64-bit value
+type epoll-data-t = s64;
+
+
+record struct-timespec {
+  tv-sec: time-t,
+  tv-nsec: long
+}
+
+record struct-timeval {
+  tv_sec: time-t,
+  tv_usec: suseconds-t
+}
+
+record stack-t {
+  ss-sp: ptr-void,
+  ss-flags: s32,
+  ss-size: size-t
+}
+
+record struct-dirent {
+  d-ino: ino-t,
+  d-off: off-t,
+  d-reclen: unsigned-short,
+  d-type: char,
+  d-name: Array[256, char]
+}
+
+
+record struct-epoll-event {
+  events: u32,
+  data: epoll-data-t
+}
+
+record struct-iovec {
+  iov-base: ptr-void,
+  iov-len: size-t
+}
+
+record struct-itimerval {
+  it-interval: struct-timeval,
+  it-value: struct-timeval
+}
+
+record struct-msghdr {
+  msg-name: ptr-void,
+  msg-namelen: socklen-t,
+  msg-iov: struct-iovec,
+  msg-iovlen: s32,
+  pad1: s32,
+  msg-control: ptr-void,
+  msg-controllen: socklen-t,
+  pad2: s32,
+  msg-flags: s32
+}
+
+record struct-pollfd {
+  fd: s32,
+  events: short,
+  revents: short
+}
+
+record struct-rlimit {
+  rlim-cur: rlim-t,
+  rlim-max: rlim-t
+}
+
+record struct-rusage {
+  ru-utime: struct-timeval,
+  ru-stime: struct-timeval,
+  ru-maxrss: long,
+  ru-ixrss: long,
+  ru-idrss: long,
+  ru-isrss: long,
+  ru-minflt: long,
+  ru-majflt: long,
+  ru-nswap: long,
+  ru-inblock: long,
+  ru-oublock: long,
+  ru-msgsng: long,
+  ru-msgrcv: long,
+  ru-nsignals: long,
+  ru-nvcsw: long,
+  ru-nivcsw: long,
+  reserved: Array[16, long]
+}
+
+record struct-sigaction {
+  sa-handler: fn-ptr,
+  sa-mask: sigset-t,
+  sa-flags: s32,
+  sa-restorer: fn-ptr
+}
+
+record struct-sockaddr {
+  sa-family: sa-family-t,
+  sa-data: Array[14, char]
+}
+
+record struct-stat {
+  st-dev: dev-t,
+  st-ino: ino-t,
+  st-nlink: nlink-t,
+
+  st-mode: mode-t,
+  st-uid: uid-t,
+  st-gid: gid-t,
+  pad0: u32,
+  st-rdev: dev-t,
+  st-size: off-t,
+  st-blksize: blksize-t,
+  st-blocks: blkcnt-t,
+
+  st-atim: struct-timespec,
+  st-mtim: struct-timespec,
+  st-ctim: struct-timespec,
+  unused: Array[3, long]
+}
+
+record struct-statfs {
+  f-type: unsigned-long,
+  f-bsize: unsigned-long,
+
+  f-blocks: fsblkcnt-t,
+  f-bfree: fsblkcnt-t,
+  f-bavail: fsblkcnt-t,
+
+  f-files: fsfilcnt-t,
+  f-ffree: fsfilcnt-t,
+  f-fsid: fsid-t,
+
+  f-namelen: unsigned-long,
+  f-frsize: unsigned-long,
+  f-flags: unsigned-long,
+  f-spare: Array[unsigned-long, 4],
+}
+
+
+record stx-time {
+  tv-sec: s64,
+  tv-nsec: u32,
+  pad: s32
+}
+
+record struct-statx {
+  stx-mask: u32,
+  stx-blksize: u32,
+  stx-attributes: u64,
+  stx-nlink: u32,
+  stx-uid: u32,
+  stx-gid: u32,
+  stx-mode: u16,
+  pad1: u16,
+  stx-ino: u64,
+  stx-size: u64,
+  stx-blocks: u64,
+  stx-attributes-mask: u64,
+  stx-atime: stx-time,
+  stx-btime: stx-time,
+  stx-ctime: stx-time,
+  stx-mtime: stx-time,
+  stx-rdev-major: u32,
+  stx-rdev-minor: u32,
+  stx-dev-major: u32,
+  stx-dev-minor: u32,
+  spare: Array[u64, 14]
+}
+
+record struct-sysinfo {
+  uptime: unsigned-long,
+  loads: Array[unsigned-long, 3],
+  totalram: unsigned-long,
+  freeram: unsigned-long,
+  sharedram: unsigned-long,
+  bufferram: unsigned-long,
+  totalswap: unsigned-long,
+  freeswap: unsigned-long,
+  procs: unsigned-short,
+  pad: unsigned-short,
+  totalhigh: unsigned-long,
+  freehigh: unsigned-long,
+  mem-unit: u32,
+  reserved: Array[256, char]
+}
+
+record struct-utimbuf {
+  actime: time-t,
+  modtime: time-t
+}
+
+record struct-utsname {
+  sysname: uts-str,
+  nodename: uts-str,
+  release: uts-str,
+  version: uts-str,
+  machine: uts-str,
+  domainname: uts-str,
+}
