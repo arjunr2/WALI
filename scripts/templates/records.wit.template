@@ -1,21 +1,3 @@
-/// Complex types
-type rlim-t = unsigned-long-long
-type time-t = s64;
-type suseconds-t = s64;
-type sigset-t = Array[128, u8];
-type sa-family-t = unsigned-short;
-type dev-t = u64;
-type nlink-t = unsigned-reg;
-type blksize-t = long;
-type blkcnt-t = s64;
-type fsblkcnt-t = u64;
-type fsfilcnt-t = u64;
-type fsid-t = Array[2, s32];
-type uts-str = Array[char, 65];
-/// Epoll data is just an anonymous 64-bit value
-type epoll-data-t = s64;
-
-
 record struct-timespec {
   tv-sec: time-t,
   tv-nsec: long
