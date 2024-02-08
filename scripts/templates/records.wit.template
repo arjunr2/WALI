@@ -1,15 +1,3 @@
-/// Primitive types
-type long = s64;
-type long-long = s64;
-type short = s16;
-type unsigned-long = s64;
-type unsigned-long-long = s64;
-type unsigned-short = u16;
-/// Function pointer = table index
-type fn-ptr = u32;
-type reg = s64;
-type unsigned-reg = u64;
-
 /// Complex types
 type rlim-t = unsigned-long-long
 type time-t = s64;
