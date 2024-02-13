@@ -1,5 +1,18 @@
 /// Complex types
-type rlim-t = unsigned-long-long
+
+/// Syscall arg types
+type off-t = long-long;
+type size-t = unsigned-int;
+type nfds-t = unsigned-int;
+type socklen-t = unsigned-int;
+type clockid-t = int;
+type mode-t = int;
+type uid-t = int;
+type pid-t = int;
+type gid-t = int;
+
+/// Syscall param reference types
+type rlim-t = unsigned-long-long;
 type time-t = s64;
 type suseconds-t = s64;
 type sigset-t = Array[128, u8];
@@ -14,4 +27,3 @@ type fsid-t = Array[2, s32];
 type uts-str = Array[char, 65];
 /// Epoll data is just an anonymous 64-bit value
 type epoll-data-t = s64;
-

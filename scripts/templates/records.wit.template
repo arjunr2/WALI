@@ -22,7 +22,6 @@ record struct-dirent {
   d-name: Array[256, char]
 }
 
-
 record struct-epoll-event {
   events: u32,
   data: epoll-data-t
@@ -82,10 +81,10 @@ record struct-rusage {
 }
 
 record struct-sigaction {
-  sa-handler: fn-ptr,
+  sa-handler: ptr-func,
   sa-mask: sigset-t,
   sa-flags: s32,
-  sa-restorer: fn-ptr
+  sa-restorer: ptr-func
 }
 
 record struct-sockaddr {
@@ -130,7 +129,6 @@ record struct-statfs {
   f-flags: unsigned-long,
   f-spare: Array[unsigned-long, 4],
 }
-
 
 record stx-time {
   tv-sec: s64,

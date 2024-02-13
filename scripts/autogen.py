@@ -8,20 +8,22 @@ from pathlib import Path
 
 from typing import List, Dict, Tuple, Any
 
-BASIC_TYPES = ["unsigned int", "int", "char", "long", "long long", "void"]
-# long long in WASM and Native is 64-bits
-# Each tuple in complex types denotes (native x64, wasm) size
-COMPLEX_TYPES = {
-    "off_t": "long long", # "long long",
-    "size_t": "unsigned int", # "long", 
-    "nfds_t": "unsigned int",
-    "socklen_t": "unsigned int", # "long",
-    "clockid_t": "int",
-    "mode_t": "int",
-    "uid_t": "int",
-    "pid_t": "int",
-    "gid_t": "int"
-}
+# Initialize primitive/complex types from template
+##########################
+def parse_type_file(path):
+    prog = re.compile(r'type ([^\s=]+)\s*=\s*(.*);')
+    with open(path) as f:
+        content = f.read()
+    return dict(prog.findall(content))
+
+sub = lambda k, ch: k.replace('-', ch)
+
+BASIC_TYPES = { sub(k, ' '): v for k, v in parse_type_file('templates/primitives.wit.template').items() }
+COMPLEX_TYPES = { sub(k, '_'): sub(v, ' ') if sub(v, ' ') in BASIC_TYPES else sub(v, '_') 
+                    for k, v in parse_type_file('templates/complex.wit.template').items()}
+##########################
+
+
 
 def get_scargs(x, replace_complex: bool = True):
     """
@@ -134,17 +136,10 @@ def gen_wit_stubs(spath, syscall_info, archs):
         WIT WALI Syscall Interface Declaration
         --------------------------------------------------------------
     """
+    # Outputs
     buf = []
     uniq_ptr_types = set()
-    buf = []
-    wit_basictype_map = {
-        "int": "s32",
-        "unsigned int": "u32",
-        "long": "s64",
-        "long long": "s64",
-        "char": "u8",
-        "void": "UNDEF"
-    }
+
     def wit_sc_def(nr, nargs, fn_name, args, orig_args):
         l1 = "\t// [{nr}] {fn_name}({orig_args})".format(
             nr = nr,
@@ -153,7 +148,7 @@ def gen_wit_stubs(spath, syscall_info, archs):
         l2 = "\tSYS-{fn_name}: func({arglist}) -> syscall-result;".format(
             fn_name = fn_name.replace('_', '-'),
             arglist = ', '.join(["a{}: {}".format(
-                        i+1, wit_basictype_map[arg] if arg in wit_basictype_map else arg) 
+                        i+1, BASIC_TYPES[arg] if arg in BASIC_TYPES else arg) 
                         for i, arg in enumerate(args)])
         ) 
         return '\n'.join([l1, l2]) if nargs else ""
@@ -162,28 +157,41 @@ def gen_wit_stubs(spath, syscall_info, archs):
         orig_args = get_scargs(sc, False)
         args = [x.strip().replace(' ', '-').replace('_', '-') for x in orig_args]
         args = [f"ptr-{x[:-1]}" if x[-1] == '*' else x for x in args]
-        up_types = set([x for x in args if x.startswith('ptr')])
+        up_types = set([x for x in args if x.startswith('ptr-')])
         fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
         uniq_ptr_types.update(up_types)
         buf.append(wit_sc_def(sc['NR'], sc['# Args'], fn_name, args, orig_args))
 
     buf = list(filter(bool, buf))
 
+
     ### Generate types and syscall interface
     comp_types = {
-        'ptr': 'int',
-        'syscall-result': 'long',
+        'syscall-result': 's64',
         **{k.replace('_', '-'): v for k, v in COMPLEX_TYPES.items()}
     }
-    type_if = ["interface types {"] + ["\ttype {} = {};".format(k, wit_basictype_map[v]) 
+    type_if = ["interface types {"] + ["\ttype {} = {};".format(k, BASIC_TYPES[v] if v in BASIC_TYPES else v) 
                 for k, v in comp_types.items()] + \
             ["}"]
+
+    # Match set of record bindings for complex pointer types used in syscalls
+    with open('templates/records.wit.template') as f:
+        record_content = f.read()
+    record_types = set(re.findall(r'record (\S+)', record_content))
+    sc_ptr_types = set([x[4:] for x in uniq_ptr_types if x.startswith('ptr-') and \
+            x[4:] not in BASIC_TYPES and x[4:] not in comp_types \
+            and x[4:] != 'void' and x[4:] != 'char'])
+    logging.warning(f"Missing Records for Complex Types: {sc_ptr_types.difference(record_types)}")
     
     sc_prelude = ["interface syscalls {"] + \
                 ["\tuse types.{{{}}};".format(', '.join([k for k in comp_types]))] + \
                 ["\t/// Readable pointer types"] + \
                 ["\ttype {} = ptr;".format(x) for x in sorted(uniq_ptr_types)] + \
+                [""] + \
+                ["\t/// Record types"] + \
+                ["\t" + '\n\t'.join(record_content.split('\n'))] + \
                 [""]
+
     
     sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
 
@@ -295,6 +303,8 @@ def main():
         format='%(levelname)s: %(message)s')
     syscall_info, archs = parse_csv(args.file)
     
+    logging.info(f"Basic Types: {BASIC_TYPES}")
+    logging.info(f"Complex Types: {COMPLEX_TYPES}")
     for stub in args.stubs:
         spath = Path(stub)
         logging.info(f"Generating {stub} stubs")

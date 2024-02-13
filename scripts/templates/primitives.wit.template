@@ -1,11 +1,19 @@
-/// Primitive types
+/// Primitive types (64-bit Linux)
+
+type int = s32;
 type long = s64;
 type long-long = s64;
 type short = s16;
 type reg = s64;
+type unsigned = u32;
+type unsigned-int = u32;
 type unsigned-long = s64;
 type unsigned-long-long = s64;
 type unsigned-short = u16;
 type unsigned-reg = u64;
+type syscall-result = s64;
+
+/// Primitive types (Wasm32 specific)
+type ptr = s32;
 /// Function pointer = table index
-type fn-ptr = u32;
+type ptr-func = u32;
