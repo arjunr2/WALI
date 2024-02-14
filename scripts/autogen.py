@@ -166,12 +166,14 @@ def gen_wit_stubs(spath, syscall_info, archs):
 
 
     ### Generate types and syscall interface
+    rep = lambda p: p.replace('_', '-').replace(' ', '-')
     comp_types = {
         'syscall-result': 's64',
-        **{k.replace('_', '-'): v for k, v in COMPLEX_TYPES.items()}
+        **{rep(k): rep(v) if not v.startswith('Array') else v.replace('_','-') \
+            for k, v in (BASIC_TYPES | COMPLEX_TYPES).items() }
     }
-    type_if = ["interface types {"] + ["\ttype {} = {};".format(k, BASIC_TYPES[v] if v in BASIC_TYPES else v) 
-                for k, v in comp_types.items()] + \
+    type_if = ["interface types {"] + \
+              ["\ttype {} = {};".format(k, v) for k, v in comp_types.items()] + \
             ["}"]
 
     # Match set of record bindings for complex pointer types used in syscalls
@@ -181,7 +183,11 @@ def gen_wit_stubs(spath, syscall_info, archs):
     sc_ptr_types = set([x[4:] for x in uniq_ptr_types if x.startswith('ptr-') and \
             x[4:] not in BASIC_TYPES and x[4:] not in comp_types \
             and x[4:] != 'void' and x[4:] != 'char'])
-    logging.warning(f"Missing Records for Complex Types: {sc_ptr_types.difference(record_types)}")
+    missing_types = sc_ptr_types.difference(record_types)
+    if missing_types:
+        logging.warning(f"Missing Records for Complex Types: {missing_types}")
+    else:
+        logging.info(f"Successfully bound all records")
     
     sc_prelude = ["interface syscalls {"] + \
                 ["\tuse types.{{{}}};".format(', '.join([k for k in comp_types]))] + \
@@ -205,7 +211,15 @@ def gen_wit_stubs(spath, syscall_info, archs):
         '[[SYSCALLS_STUB]]', '\n'.join(sc_if))
 
     with open(spath / 'wali.wit',  'w') as f:
+        def matchrep(matchobj):
+            num_elem, ty = matchobj.groups()
+            return "tuple<{}>".format(','.join([ty] * int(num_elem)))
+        ## TEMPORARY: No fixed-length arrays in WIT
+        # Written as Array[num_elem, type] ---convert---> tuple<type, type, ...>
+        fill_temp = re.sub(r'Array\[\s*(\d+),\s*(\S+)\s*\]', 
+                            matchrep, fill_temp)
         f.write(fill_temp)
+
 
 
 

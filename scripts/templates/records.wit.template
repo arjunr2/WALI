@@ -4,8 +4,8 @@ record struct-timespec {
 }
 
 record struct-timeval {
-  tv_sec: time-t,
-  tv_usec: suseconds-t
+  tv-sec: time-t,
+  tv-usec: suseconds-t
 }
 
 record stack-t {
@@ -18,8 +18,8 @@ record struct-dirent {
   d-ino: ino-t,
   d-off: off-t,
   d-reclen: unsigned-short,
-  d-type: char,
-  d-name: Array[256, char]
+  d-type: u8,
+  d-name: Array[256, u8]
 }
 
 record struct-epoll-event {
@@ -89,7 +89,7 @@ record struct-sigaction {
 
 record struct-sockaddr {
   sa-family: sa-family-t,
-  sa-data: Array[14, char]
+  sa-data: Array[14, u8]
 }
 
 record struct-stat {
@@ -127,7 +127,7 @@ record struct-statfs {
   f-namelen: unsigned-long,
   f-frsize: unsigned-long,
   f-flags: unsigned-long,
-  f-spare: Array[unsigned-long, 4],
+  f-spare: Array[4, unsigned-long],
 }
 
 record stx-time {
@@ -157,12 +157,12 @@ record struct-statx {
   stx-rdev-minor: u32,
   stx-dev-major: u32,
   stx-dev-minor: u32,
-  spare: Array[u64, 14]
+  spare: Array[14, u64]
 }
 
 record struct-sysinfo {
   uptime: unsigned-long,
-  loads: Array[unsigned-long, 3],
+  loads: Array[3, unsigned-long],
   totalram: unsigned-long,
   freeram: unsigned-long,
   sharedram: unsigned-long,
@@ -174,7 +174,7 @@ record struct-sysinfo {
   totalhigh: unsigned-long,
   freehigh: unsigned-long,
   mem-unit: u32,
-  reserved: Array[256, char]
+  reserved: Array[256, u8]
 }
 
 record struct-utimbuf {
@@ -189,4 +189,8 @@ record struct-utsname {
   version: uts-str,
   machine: uts-str,
   domainname: uts-str,
+}
+
+record fd-set {
+  fds-bits: Array[128, u8]
 }
