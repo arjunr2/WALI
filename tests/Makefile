@@ -1,6 +1,6 @@
 .PHONY: dir clean all
 
-CC=clang
+CC=../llvm-project/build/bin/clang
 LFLAGS=-lm -lpthread
 
 SYSROOT_DIR=../wali-musl/sysroot

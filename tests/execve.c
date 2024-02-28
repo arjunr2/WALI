@@ -1,7 +1,7 @@
 #include "common.h"
 
 int main() {
-  pid_t cpid = syscall(SYS_fork);
+  pid_t cpid = fork();
   /* Child */
   if (cpid == 0) {
     printf("Child PID: %d\n", getpid());

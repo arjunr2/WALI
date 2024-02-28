@@ -3,7 +3,7 @@
 #define ALARM_TIME 3
 
 int main() {
-  pid_t cpid = syscall(SYS_fork);
+  pid_t cpid = fork();
   int ct = 0;
   /* Child */
   if (cpid == 0) {
@@ -12,7 +12,7 @@ int main() {
     sigemptyset (&block_alarm);
     sigaddset (&block_alarm, SIGALRM);
 
-    syscall(SYS_alarm, ALARM_TIME);
+    alarm(ALARM_TIME);
     sigprocmask (SIG_BLOCK, &block_alarm, &old_set);
     for (int i = 0; i < ALARM_TIME + 15; i++) {
       printf("Child ct: %d\n", ct);

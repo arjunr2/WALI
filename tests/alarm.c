@@ -3,11 +3,11 @@
 #define ALARM_TIME 3
 
 int main() {
-  pid_t cpid = syscall(SYS_fork);
+  pid_t cpid = fork();
   int ct = 0;
   /* Child */
   if (cpid == 0) {
-    syscall(SYS_alarm, ALARM_TIME);
+    alarm(ALARM_TIME);
     while (1) {
       printf("Child ct: %d\n", ct);
       ct++;

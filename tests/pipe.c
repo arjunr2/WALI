@@ -22,7 +22,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    cpid = syscall(SYS_fork);
+    cpid = fork();
     if (cpid == -1) {
         perror("fork");
         exit(EXIT_FAILURE);
