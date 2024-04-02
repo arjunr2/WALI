@@ -41,7 +41,7 @@ wamr-compiler:
 	cd wasm-micro-runtime/wamr-compiler
 	./build_llvm.sh
 	mkdir -p build && cd build
-	cmake .. -GNinja
+	cmake -GNinja .. -DWAMR_BUILD_LIBC_WALI=1 -DWAMR_BUILD_GC=0
 	ninja
 
 
