@@ -1,6 +1,6 @@
 # Webassembly Linux Interface (WALI)
 
-![WebAssembly Linux Interface](logos/main-logo.png?raw=true)
+![WebAssembly Linux Interface](assets/main-logo.png?raw=true)
 
 This repo serves to prototype an implementation of the [WebAssembly Linux Interface](https://arxiv.org/abs/2312.03858). For current range of 
 support, refer [here](docs/support.md)
