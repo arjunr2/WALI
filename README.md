@@ -20,7 +20,6 @@ and produce a baseline implementation in [WAMR](https://github.com/SilverLineFra
 * Make
 * Cmake
 * GCC
-* lld
 * [WABT](https://github.com/WebAssembly/wabt)
 
 If using `apt`, run `sudo ./apt-install-deps.sh` to install above depedencies
