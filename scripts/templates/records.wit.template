@@ -194,3 +194,7 @@ record struct-utsname {
 record fd-set {
   fds-bits: Array[128, u8]
 }
+
+record cpu-set-t {
+  bits: Array[128, u8]
+}

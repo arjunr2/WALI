@@ -204,7 +204,7 @@ NR,Syscall,# Args,a1,a2,a3,a4,a5,a6,Aliases,Unused Aliases,aarch64_NR,riscv64_NR
 201,time,,,,,,,,,,-1,-1
 202,futex,6,int*,int,int,struct timespec*,int*,int,,,98,98
 203,sched_setaffinity,,,,,,,,,,122,122
-204,sched_getaffinity,,,,,,,,,,123,123
+204,sched_getaffinity,3,pid_t,size_t,cpu_set_t*,,,,,,123,123
 205,set_thread_area,,,,,,,,,,-1,-1
 206,io_setup,,,,,,,,,,0,0
 207,io_destroy,,,,,,,,,,1,1

@@ -15,24 +15,52 @@ world linux {
 
 /// Representation of Linux syscall interface types
 interface types {
-	type ptr = s32;
 	type syscall-result = s64;
-	type off-t = s64;
-	type size-t = u32;
-	type nfds-t = u32;
-	type socklen-t = u32;
-	type clockid-t = s32;
-	type mode-t = s32;
-	type uid-t = s32;
-	type pid-t = s32;
-	type gid-t = s32;
+	type int = s32;
+	type long = s64;
+	type long-long = s64;
+	type short = s16;
+	type reg = s64;
+	type unsigned = u32;
+	type unsigned-int = u32;
+	type unsigned-long = s64;
+	type unsigned-long-long = s64;
+	type unsigned-short = u16;
+	type unsigned-reg = u64;
+	type ptr = s32;
+	type ptr-func = u32;
+	type off-t = long-long;
+	type size-t = unsigned-int;
+	type nfds-t = unsigned-int;
+	type socklen-t = unsigned-int;
+	type clockid-t = int;
+	type mode-t = int;
+	type uid-t = int;
+	type pid-t = int;
+	type gid-t = int;
+	type rlim-t = unsigned-long-long;
+	type time-t = s64;
+	type suseconds-t = s64;
+	type sigset-t = tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>;
+	type sa-family-t = unsigned-short;
+	type ino-t = u64;
+	type dev-t = u64;
+	type nlink-t = unsigned-reg;
+	type blksize-t = long;
+	type blkcnt-t = s64;
+	type fsblkcnt-t = u64;
+	type fsfilcnt-t = u64;
+	type fsid-t = tuple<s32,s32>;
+	type uts-str = tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>;
+	type epoll-data-t = s64;
 }
 
 /// Raw user-space Linux syscall wrappers
 interface syscalls {
-	use types.{ptr, syscall-result, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t};
+	use types.{syscall-result, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
 	/// Readable pointer types
 	type ptr-char = ptr;
+	type ptr-cpu-set-t = ptr;
 	type ptr-fd-set = ptr;
 	type ptr-gid-t = ptr;
 	type ptr-int = ptr;
@@ -58,6 +86,209 @@ interface syscalls {
 	type ptr-struct-utimbuf = ptr;
 	type ptr-struct-utsname = ptr;
 	type ptr-void = ptr;
+
+	/// Record types
+	record struct-timespec {
+	  tv-sec: time-t,
+	  tv-nsec: long
+	}
+	
+	record struct-timeval {
+	  tv-sec: time-t,
+	  tv-usec: suseconds-t
+	}
+	
+	record stack-t {
+	  ss-sp: ptr-void,
+	  ss-flags: s32,
+	  ss-size: size-t
+	}
+	
+	record struct-dirent {
+	  d-ino: ino-t,
+	  d-off: off-t,
+	  d-reclen: unsigned-short,
+	  d-type: u8,
+	  d-name: tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>
+	}
+	
+	record struct-epoll-event {
+	  events: u32,
+	  data: epoll-data-t
+	}
+	
+	record struct-iovec {
+	  iov-base: ptr-void,
+	  iov-len: size-t
+	}
+	
+	record struct-itimerval {
+	  it-interval: struct-timeval,
+	  it-value: struct-timeval
+	}
+	
+	record struct-msghdr {
+	  msg-name: ptr-void,
+	  msg-namelen: socklen-t,
+	  msg-iov: struct-iovec,
+	  msg-iovlen: s32,
+	  pad1: s32,
+	  msg-control: ptr-void,
+	  msg-controllen: socklen-t,
+	  pad2: s32,
+	  msg-flags: s32
+	}
+	
+	record struct-pollfd {
+	  fd: s32,
+	  events: short,
+	  revents: short
+	}
+	
+	record struct-rlimit {
+	  rlim-cur: rlim-t,
+	  rlim-max: rlim-t
+	}
+	
+	record struct-rusage {
+	  ru-utime: struct-timeval,
+	  ru-stime: struct-timeval,
+	  ru-maxrss: long,
+	  ru-ixrss: long,
+	  ru-idrss: long,
+	  ru-isrss: long,
+	  ru-minflt: long,
+	  ru-majflt: long,
+	  ru-nswap: long,
+	  ru-inblock: long,
+	  ru-oublock: long,
+	  ru-msgsng: long,
+	  ru-msgrcv: long,
+	  ru-nsignals: long,
+	  ru-nvcsw: long,
+	  ru-nivcsw: long,
+	  reserved: tuple<long,long,long,long,long,long,long,long,long,long,long,long,long,long,long,long>
+	}
+	
+	record struct-sigaction {
+	  sa-handler: ptr-func,
+	  sa-mask: sigset-t,
+	  sa-flags: s32,
+	  sa-restorer: ptr-func
+	}
+	
+	record struct-sockaddr {
+	  sa-family: sa-family-t,
+	  sa-data: tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>
+	}
+	
+	record struct-stat {
+	  st-dev: dev-t,
+	  st-ino: ino-t,
+	  st-nlink: nlink-t,
+	
+	  st-mode: mode-t,
+	  st-uid: uid-t,
+	  st-gid: gid-t,
+	  pad0: u32,
+	  st-rdev: dev-t,
+	  st-size: off-t,
+	  st-blksize: blksize-t,
+	  st-blocks: blkcnt-t,
+	
+	  st-atim: struct-timespec,
+	  st-mtim: struct-timespec,
+	  st-ctim: struct-timespec,
+	  unused: tuple<long,long,long>
+	}
+	
+	record struct-statfs {
+	  f-type: unsigned-long,
+	  f-bsize: unsigned-long,
+	
+	  f-blocks: fsblkcnt-t,
+	  f-bfree: fsblkcnt-t,
+	  f-bavail: fsblkcnt-t,
+	
+	  f-files: fsfilcnt-t,
+	  f-ffree: fsfilcnt-t,
+	  f-fsid: fsid-t,
+	
+	  f-namelen: unsigned-long,
+	  f-frsize: unsigned-long,
+	  f-flags: unsigned-long,
+	  f-spare: tuple<unsigned-long,unsigned-long,unsigned-long,unsigned-long>,
+	}
+	
+	record stx-time {
+	  tv-sec: s64,
+	  tv-nsec: u32,
+	  pad: s32
+	}
+	
+	record struct-statx {
+	  stx-mask: u32,
+	  stx-blksize: u32,
+	  stx-attributes: u64,
+	  stx-nlink: u32,
+	  stx-uid: u32,
+	  stx-gid: u32,
+	  stx-mode: u16,
+	  pad1: u16,
+	  stx-ino: u64,
+	  stx-size: u64,
+	  stx-blocks: u64,
+	  stx-attributes-mask: u64,
+	  stx-atime: stx-time,
+	  stx-btime: stx-time,
+	  stx-ctime: stx-time,
+	  stx-mtime: stx-time,
+	  stx-rdev-major: u32,
+	  stx-rdev-minor: u32,
+	  stx-dev-major: u32,
+	  stx-dev-minor: u32,
+	  spare: tuple<u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64,u64>
+	}
+	
+	record struct-sysinfo {
+	  uptime: unsigned-long,
+	  loads: tuple<unsigned-long,unsigned-long,unsigned-long>,
+	  totalram: unsigned-long,
+	  freeram: unsigned-long,
+	  sharedram: unsigned-long,
+	  bufferram: unsigned-long,
+	  totalswap: unsigned-long,
+	  freeswap: unsigned-long,
+	  procs: unsigned-short,
+	  pad: unsigned-short,
+	  totalhigh: unsigned-long,
+	  freehigh: unsigned-long,
+	  mem-unit: u32,
+	  reserved: tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>
+	}
+	
+	record struct-utimbuf {
+	  actime: time-t,
+	  modtime: time-t
+	}
+	
+	record struct-utsname {
+	  sysname: uts-str,
+	  nodename: uts-str,
+	  release: uts-str,
+	  version: uts-str,
+	  machine: uts-str,
+	  domainname: uts-str,
+	}
+	
+	record fd-set {
+	  fds-bits: tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>
+	}
+	
+	record cpu-set-t {
+	  bits: tuple<u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8,u8>
+	}
+	
 
 	/// Syscall methods
 	// [0] read(int, void*, size_t)
@@ -274,6 +505,8 @@ interface syscalls {
 	SYS-tkill: func(a1: s32, a2: s32) -> syscall-result;
 	// [202] futex(int*, int, int, struct timespec*, int*, int)
 	SYS-futex: func(a1: ptr-int, a2: s32, a3: s32, a4: ptr-struct-timespec, a5: ptr-int, a6: s32) -> syscall-result;
+	// [204] sched_getaffinity(pid_t, size_t, cpu_set_t*)
+	SYS-sched-getaffinity: func(a1: pid-t, a2: size-t, a3: ptr-cpu-set-t) -> syscall-result;
 	// [217] getdents64(int, struct dirent*, int)
 	SYS-getdents64: func(a1: s32, a2: ptr-struct-dirent, a3: s32) -> syscall-result;
 	// [218] set_tid_address(int*)
