@@ -20,8 +20,3 @@ WALI_WASM_FEATURE_FLAGS := -matomics -mbulk-memory -mmutable-globals -msign-ext
 WALI_COMMON_CFLAGS := -O0 --target=wasm32-wasi-threads $(WALI_WARNING_CFLAGS) --sysroot=$(WALI_SYSROOT_DIR) -L$(WALI_SYSROOT_DIR)/lib $(WALI_WASM_FEATURE_FLAGS)
 WALI_COMMON_LDFLAGS := -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=67108864
 
-.PHONY: print-rootdir
-
-print-rootdir:
-	echo "Root dir: $(ROOT_DIR)"
-

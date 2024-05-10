@@ -1,9 +1,9 @@
+include ../wali_config.mk
+
 .PHONY: dir clean all
 
-CC=../llvm-project/build/bin/clang
-LFLAGS=-lm -lpthread
-
-SYSROOT_DIR=../wali-musl/sysroot
+# For ELF
+ELF_LFLAGS=-lm -lpthread
 
 WASM_DIR=wasm
 ELF_DIR=elf
@@ -19,8 +19,8 @@ dir:
 	mkdir -p $(ELF_DIR)
 
 %.o: %.c
-	$(CC) -O1 -o $(ELF_DIR)/$* $< $(LFLAGS)
-	./compile-wali.sh -o $(WASM_DIR) -s $(SYSROOT_DIR) $<
+	$(WALI_CC) -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
+	./compile-wali.sh -o $(WASM_DIR) -s $(WALI_SYSROOT_DIR) $<
 
 
 clean:

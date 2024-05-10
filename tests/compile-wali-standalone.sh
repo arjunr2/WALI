@@ -1,9 +1,8 @@
 #!/bin/bash
 
-outdir=.
+source ../wali_bashenv.sh
 
-LLVM_DIR=../llvm-project/build/bin
-CC=$LLVM_DIR/clang
+outdir=.
 
 while getopts "vo:s:" OPT; do
   case $OPT in
@@ -19,7 +18,7 @@ cfile=${@:$OPTIND:1}
 outbase=$outdir/$(basename $cfile .c)
 
 # Compile standalone C file
-$CC \
+$WALI_CC \
   --target=wasm32-wasi-threads -O3 -pthread \
   `# Sysroot and lib search path` \
   --sysroot=$sysroot_dir -L$sysroot_dir/lib \
