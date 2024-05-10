@@ -14,7 +14,7 @@ export WALI_RANLIB=$WALI_LLVM_BIN/llvm-ranlib
 export WALI_SYSROOT_DIR=$WALI_DIR/wali-musl/sysroot
 
 # C/C++ flags
-export WALI_CFLAGS="--target=wasm32-wasi-threads -pthread --sysroot=/$WALI_DIR/wali-musl/sysroot -matomics -mbulk-memory -mmutable-globals -msign-ext"
-export WALI_CXXFLAGS="-stdlib=libc++ --target=wasm32-wasi-threads -pthread --sysroot=/$WALI_DIR/wali-musl/sysroot -I$WALI_DIR/libcxx/include/c++/v1 -matomics -mbulk-memory -mmutable-globals -msign-ext"
-export WALI_LDFLAGS="-L/$WALI_DIR/wali-musl/sysroot/lib -L/$WALI_DIR/libcxx/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648"
+export WALI_CFLAGS="--target=wasm32-wasi-threads -pthread --sysroot=$WALI_SYSROOT_DIR -matomics -mbulk-memory -mmutable-globals -msign-ext"
+export WALI_CXXFLAGS="-stdlib=libc++ --target=wasm32-wasi-threads -pthread --sysroot=$WALI_SYSROOT_DIR -I$WALI_DIR/libcxx/include/c++/v1 -matomics -mbulk-memory -mmutable-globals -msign-ext"
+export WALI_LDFLAGS="-L$WALI_SYSROOT_DIR/lib -L$WALI_DIR/libcxx/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648"
 
