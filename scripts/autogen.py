@@ -114,7 +114,7 @@ def gen_wamr_stubs(spath, syscall_info, archs):
 
     def gen_native_args(args):
         return "\"({params}){res}\"".format(
-            params = ''.join(["I" if x == "long long"  or x == "long" else "i" for x in args]),
+            params = ''.join(["I" if x.endswith("long long") or x.endswith("long") else "i" for x in args]),
             res = "I"
             )
         
