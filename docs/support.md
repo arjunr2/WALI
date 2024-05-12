@@ -5,7 +5,7 @@ architectures: **x86-64, aarch64, riscv64**
 
 Generated based on Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
 
-Number of supported syscalls: **141**
+Number of supported syscalls: **142**
 
 | Syscall           |   # Args | a1               | a2                  | a3                | a4                  | a5               | a6         |
 |:------------------|---------:|:-----------------|:--------------------|:------------------|:--------------------|:-----------------|:-----------|
@@ -111,6 +111,7 @@ Number of supported syscalls: **141**
 | utime             |        2 | char\*            | struct utimbuf\*     |                   |                     |                  |            |
 | statfs            |        2 | char\*            | struct statfs\*      |                   |                     |                  |            |
 | fstatfs           |        2 | int              | struct statfs\*      |                   |                     |                  |            |
+| prctl             |        5 | int              | unsigned long       | unsigned long     | unsigned long       | unsigned long    |            |
 | setrlimit         |        2 | int              | struct rlimit\*      |                   |                     |                  |            |
 | chroot            |        1 | char\*            |                     |                   |                     |                  |            |
 | gettid            |        0 |                  |                     |                   |                     |                  |            |
@@ -280,7 +281,6 @@ Number of supported syscalls: **141**
 * pkey\_alloc
 * pkey\_free
 * pkey\_mprotect
-* prctl
 * preadv
 * preadv2
 * process\_madvise

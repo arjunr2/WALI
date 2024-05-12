@@ -1,3 +1,5 @@
 elf
 wasm
 libcxx
+docs/linux*
+iwasm
