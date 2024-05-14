@@ -1,10 +1,10 @@
 #!/bin/bash
 
-source ../wali_bashenv.sh
+source ../wali_config.sh
 
 outdir=.
 
-rt_lib=$WALI_DIR/llvm-project/build/lib/clang/16/lib/wasi/libclang_rt.builtins-wasm32.a
+rt_lib=$WALI_LIBCLANG_RT_LIB
 
 while getopts "vo:s:" OPT; do
   case $OPT in

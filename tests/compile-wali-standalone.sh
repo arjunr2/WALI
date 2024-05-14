@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ../wali_bashenv.sh
+source ../wali_config.sh
 
 outdir=.
 

@@ -24,5 +24,5 @@ dir:
 
 
 clean:
-	rm -r $(WASM_DIR)
-	rm -r $(ELF_DIR)
+	rm -rf $(WASM_DIR)
+	rm -rf $(ELF_DIR)
