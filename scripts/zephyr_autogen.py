@@ -12,7 +12,7 @@ BASIC_TYPE_SET = {
     "int32_t", "uint32_t", "int64_t", "uint64_t",
     "int16_t", "uint16_t", "int8_t", "uint8_t",
     "char", "unsigned char", "int", "unsigned int", 
-    "bool"
+    "bool", "void"
 }
 
 BASIC_TYPES = {x: x for x in BASIC_TYPE_SET}
@@ -28,6 +28,7 @@ INTM_TYPES = {
 
 # Simplify all the complex types
 COMPLEX_TYPES = {}
+JSON_DATA = {}
 with open('wazi/wazi_types.json', 'r') as f:
     JSON_DATA = json.load(f)
     for k, v in JSON_DATA.items():
@@ -56,18 +57,20 @@ def parse_args() -> argparse.Namespace:
 
 
 
-def reduce_sc_args(sc_name, sc_args):
+def reduce_sc_types(sc_name, sc_args, sc_ret):
     """
-        Reduce all system call argument types
-            Arg: {
-             ptr_indirection: <int>
-             enum: <bool>
-             type: <string>
-             name: <string>
+        Reduce all system call argument/return types
+            Each type has: {
+             sc: <string> System call
+             ptr_id: <int> Number of pointer indirections
+             type: <string> Bare unreduced type
+             enum: <bool> Is ENUM?
+             name: <string> Name of the variable
+             basic_type: <string> Basic reduced type 
             }
     """
     reduce_args = []
-    for ty, name in sc_args:
+    for ty, name in sc_args + [(sc_ret, 'ret')]:
         # Remove ZRESTRICT
         tstring = ty[:-len('ZRESTRICT')] if ty.endswith('ZRESTRICT') else ty
         tstring = tstring.rstrip()
@@ -109,15 +112,15 @@ def reduce_sc_args(sc_name, sc_args):
                 "basic_type": basic_type
         })
 
-    return reduce_args
+    return reduce_args[:-1], reduce_args[-1]
 
 
 def syscall_iter(df, stub_fn):
     buf = []
     for index, row in df.iterrows():
-        args = reduce_sc_args(row['name'], row['args'])
+        args, ret = reduce_sc_types(row['name'], row['args'], row['rettype'])
         logging.debug(args)
-        buf.append(stub_fn(index, row['name'], args))
+        buf.append(stub_fn(index, row['name'], args, ret, row['includefile']))
     return filter(bool, buf)
 
 def gen_and_write(df, stub_fn, outpath):
@@ -130,13 +133,14 @@ def gen_and_write(df, stub_fn, outpath):
 
 def gen_wazi_stubs(spath, df):
 
-    def declr_stub(nr, sys_name, args):
+    def declr_stub(nr, sys_name, args, ret, incf):
         """
             Definitions of C prototypes for WAMR implementation
         """
-        return "// [{nr}] : {sys_name1} \nint64_t wazi_syscall_{sys_name2} (wasm_exec_env_t exec_env{arglist});".format(
+        return "// [{nr}] : {sys_name1} \n{rettype} wazi_syscall_{sys_name2} (wasm_exec_env_t exec_env{arglist});".format(
                     nr = nr,
                     sys_name1 = sys_name,
+                    rettype = ret['basic_type'],
                     sys_name2 = sys_name,
                     arglist = ''.join([", {x} sca{y}".format(
                             x = arg['basic_type'], y = idx+1) 
@@ -145,7 +149,7 @@ def gen_wazi_stubs(spath, df):
                 )
 
 
-    def impl_core(sys_name, args):
+    def impl_core(sys_name, args, ret):
         def translation(arg, src_name):
             ptr_id = arg['ptr_id']
             # Pointer Translation
@@ -159,12 +163,19 @@ def gen_wazi_stubs(spath, df):
             # Implicit pointers
             if arg['type'] in IMPLICIT_PTRS:
                 return f"({arg['type']}) MADDR({src_name})"
+            # Function pointers
+            if JSON_DATA.get(arg['type']) == 'fn-ptr':
+                return "ERROR_FN_PTR"
             # Struct translation
             if arg['type'] == 'k_timeout_t':
                 return "{{ .ticks = {v} }}".format(v=src_name)
             # Union translation, use a field that uses the entire size
             if arg['type'] == 'union fuel_gauge_prop_val':
                 return "{{ .chg_current = {v} }}".format(v=src_name)
+            if arg['type'] == 'struct log_msg_desc':
+                return f"LOG_MSG_DESC_INIT({src_name})"
+            if arg['type'] == 'va_list':
+                return f"VA_LIST_INIT({src_name})"
             else:
                 return src_name
 
@@ -177,18 +188,24 @@ def gen_wazi_stubs(spath, df):
                     val = translation(arg, f"sca{idx+1}")
                 )]
             names += [arg['name']]
-        v += ["RETURN({sys_name}({argvals}));".format(
+        v += ["RETURN(({rettype}) {sys_name}({argvals}));".format(
+                    rettype = ret['basic_type'],
+                    sys_name = sys_name,
+                    argvals = ','.join(names))
+             ] if ret['basic_type'] != 'void' else [
+                 "RETURN_VOID({sys_name}({argvals}));".format(
                     sys_name = sys_name,
                     argvals = ','.join(names))
              ]
         return '\n'.join(['\t' + x for x in v])
 
-    def impl_stub(nr, sys_name, args):
+    def impl_stub(nr, sys_name, args, ret, incf):
         """
             Auto-implementation of syscalls through simple linear address translations
         """
         lines = [f"// {nr} TODO",
-                "int64_t wazi_syscall_{sys_name} (wasm_exec_env_t exec_env{arglist}) {{".format(
+                "{rettype} wazi_syscall_{sys_name} (wasm_exec_env_t exec_env{arglist}) {{".format(
+                    rettype = ret['basic_type'],
                     sys_name = sys_name,
                     arglist = ''.join([", {x} sca{y}".format(
                             x = arg['basic_type'], y = idx+1) 
@@ -197,29 +214,46 @@ def gen_wazi_stubs(spath, df):
                 ),
                 f"\tSC({nr}, {sys_name});",
                 f"\tERRSC({sys_name});",
-                impl_core(sys_name, args),
+                impl_core(sys_name, args, ret),
                 "}\n"
                 ]
         return '\n'.join(lines)
 
 
-    def gen_native_args(args):
+    def gen_native_args(args, ret):
+        def sym_convert(arg):
+            if arg['basic_type'] == "void":
+                return ""
+            elif arg['basic_type'] == 'int64_t' or arg['basic_type'] == 'uint64_t':
+                return "I"
+            else:
+                return "i"
+
         return "\"({params}){res}\"".format(
-            params = ''.join(["I" if x['basic_type'] == 'int64_t' or x['basic_type'] == 'uint64_t' else "i" for x in args]),
-            res = "I"
+            params = ''.join([sym_convert(x) for x in args]),
+            res = sym_convert(ret)
             )
 
-    def symbols_stub(nr, sys_name, args):
+    def symbols_stub(nr, sys_name, args, ret, incf):
         """
             WAMR Native Symbols for syscalls
         """
         return "\tNSYMBOL ( {: >40}, {: >55}, {: >12} ),".format(
                     f"SYS_{sys_name}",
                     f"wazi_syscall_{sys_name}",
-                    gen_native_args(args)
+                    gen_native_args(args, ret)
                 )
 
-
+    inc_set = set()
+    def incs_stub(nr, sys_name, args, ret, incf):
+        """
+            All include headers necessary for 
+        """
+        if incf not in inc_set:
+            inc_set.add(incf)
+            return f"#include <zephyr/drivers/{incf}>"
+        else:
+            return ""
 
     gen_and_write(df, declr_stub, spath / 'zephyr_declr.out')
     logging.info("Generated WAZI declarations")
@@ -227,6 +261,8 @@ def gen_wazi_stubs(spath, df):
     logging.info("Generated WAZI implementation")
     gen_and_write(df, symbols_stub, spath / 'zephyr_symbols.out')
     logging.info("Generated WAZI symbols")
+    gen_and_write(df, incs_stub, spath / 'zephyr_incs.out')
+    logging.info("Generated WAZI include headers")
 
 
 def main():
@@ -237,7 +273,8 @@ def main():
     df = pd.read_pickle("pkls/syscalls_zephyr.pkl")
     pd.set_option('display.max_rows', None)
     pd.set_option('display.max_colwidth', 120)
-    logging.debug(df)
+    #logging.debug(df)
+    logging.debug(df['rettype'])
     
     if args.gen_types:
         logging.info("Generating type skeleton")

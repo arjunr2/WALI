@@ -16,7 +16,9 @@
     "int": "",
     "int16_t": "",
     "int32_t": "",
+    "int64_t": "",
     "k_thread_entry_t": "",
+    "k_ticks_t": "",
     "k_tid_t": "",
     "k_timeout_t": "",
     "kscan_callback_t": "",
@@ -29,6 +31,7 @@
     "sdhc_interrupt_cb_t": "",
     "size_t": "",
     "socklen_t": "",
+    "ssize_t": "",
     "stack_data_t": "",
     "struct log_msg_desc": "",
     "uint16_t": "",
@@ -41,5 +44,6 @@
     "unsigned int": "",
     "unsigned long": "",
     "va_list": "",
+    "void": "",
     "w1_search_callback_t": ""
 }
