@@ -27,17 +27,19 @@ INTM_TYPES = {
 }
 
 # Simplify all the complex types
+COMPLEX_TYPES = {}
 with open('wazi/wazi_types.json', 'r') as f:
-    COMPLEX_TYPES = json.load(f)
-    for k, v in COMPLEX_TYPES.items():
+    JSON_DATA = json.load(f)
+    for k, v in JSON_DATA.items():
         while v not in BASIC_TYPES:
-            v = INTM_TYPES[v] if v in INTM_TYPES else COMPLEX_TYPES
+            v = INTM_TYPES[v] if v in INTM_TYPES else JSON_DATA[v]
         COMPLEX_TYPES[k] = v
 
 
 BASIC_TYPE_MAP = {**BASIC_TYPES, **INTM_TYPES, **COMPLEX_TYPES}
 
-
+S = {**JSON_DATA, **INTM_TYPES}
+IMPLICIT_PTRS = { k: 1 for k, v in S.items() if v == 'ptr' or v == 'uintptr_t' or k == 'uintptr_t' }
 
 def empty_fn(*args, **kwargs):
     pass
@@ -132,9 +134,11 @@ def gen_wazi_stubs(spath, df):
         """
             Definitions of C prototypes for WAMR implementation
         """
-        return "int64_t wazi_syscall_{sys_name} (wasm_exec_env_t exec_env{arglist});".format(
-                    sys_name = sys_name,
-                    arglist = ''.join([", {x} a{y}".format(
+        return "// [{nr}] : {sys_name1} \nint64_t wazi_syscall_{sys_name2} (wasm_exec_env_t exec_env{arglist});".format(
+                    nr = nr,
+                    sys_name1 = sys_name,
+                    sys_name2 = sys_name,
+                    arglist = ''.join([", {x} sca{y}".format(
                             x = arg['basic_type'], y = idx+1) 
                             for idx, arg in enumerate(args)]
                     )
@@ -144,15 +148,25 @@ def gen_wazi_stubs(spath, df):
     def impl_core(sys_name, args):
         def translation(arg, src_name):
             ptr_id = arg['ptr_id']
-            if ptr_id == 0:
-                return src_name
-            elif ptr_id == 1:
+            # Pointer Translation
+            if ptr_id == 1:
                 if arg['type'] == 'FILE':
-                    return f"MADDR_FILE({src_name})"
+                    return f"({arg['type']}*) MADDR_FILE({src_name})"
                 else:
-                    return f"MADDR({src_name})"
-            else:
+                    return f"({arg['type']}*) MADDR({src_name})"
+            elif ptr_id >= 2:
                 return "ERROR_PTR"
+            # Implicit pointers
+            if arg['type'] in IMPLICIT_PTRS:
+                return f"({arg['type']}) MADDR({src_name})"
+            # Struct translation
+            if arg['type'] == 'k_timeout_t':
+                return "{{ .ticks = {v} }}".format(v=src_name)
+            # Union translation, use a field that uses the entire size
+            if arg['type'] == 'union fuel_gauge_prop_val':
+                return "{{ .chg_current = {v} }}".format(v=src_name)
+            else:
+                return src_name
 
         v = []
         names = []
@@ -160,7 +174,7 @@ def gen_wazi_stubs(spath, df):
             v += ["{ty} {name} = {val};".format(
                     ty = arg['type'],
                     name = "*"*arg['ptr_id'] + arg['name'],
-                    val = translation(arg, f"a{idx+1}")
+                    val = translation(arg, f"sca{idx+1}")
                 )]
             names += [arg['name']]
         v += ["RETURN({sys_name}({argvals}));".format(
@@ -176,7 +190,7 @@ def gen_wazi_stubs(spath, df):
         lines = [f"// {nr} TODO",
                 "int64_t wazi_syscall_{sys_name} (wasm_exec_env_t exec_env{arglist}) {{".format(
                     sys_name = sys_name,
-                    arglist = ''.join([", {x} a{y}".format(
+                    arglist = ''.join([", {x} sca{y}".format(
                             x = arg['basic_type'], y = idx+1) 
                             for idx, arg in enumerate(args)]
                     )
