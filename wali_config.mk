@@ -20,4 +20,4 @@ WALI_WASM_FEATURE_FLAGS := -matomics -mbulk-memory -mmutable-globals -msign-ext 
 # ---- Common flags ---- #
 WALI_COMMON_CFLAGS := -O0 --target=wasm32-wasi-threads -pthread $(WALI_WARNING_CFLAGS) --sysroot=$(WALI_SYSROOT_DIR) -fwasm-exceptions -fdeclspec $(WALI_WASM_FEATURE_FLAGS)
 WALI_COMMON_CXXFLAGS := -stdlib=libc++ $(WALI_COMMON_CFLAGS) -I$(WALI_ROOT_DIR)/libcxx/include/c++/v1
-WALI_COMMON_LDFLAGS := -L$(WALI_SYSROOT_DIR)/lib -L$(WALI_LIBCXX_DIR)/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648 -Wl,--warn-unresolved-symbols
+WALI_COMMON_LDFLAGS := -L$(WALI_SYSROOT_DIR)/lib -L$(WALI_LIBCXX_DIR)/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648

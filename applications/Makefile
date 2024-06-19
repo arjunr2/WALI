@@ -35,7 +35,7 @@ libevent-clean:
 ncurses:
 	cd $(WALI_LIB_SRC)/ncurses;
 	mkdir -p build; cd build;
-	../configure --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS=$(WALI_COMMON_LD_FLAGS) AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	../configure --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
 	$(MAKE)
 ncurses-clean:
 	rm -rf $(WALI_LIB_SRC)/ncurses/build
