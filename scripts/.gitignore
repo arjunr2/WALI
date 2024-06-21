@@ -6,6 +6,7 @@ sorted_syscall_conversion.csv
 *.profile
 libc
 wamr
+wazi
 wit
 arch-diff
 markdown

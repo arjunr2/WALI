@@ -49,3 +49,6 @@
 	path = applications/bash
 	url = https://github.com/arjunr2/bash.git
 	branch = wali
+[submodule "picolibc"]
+	path = picolibc
+	url = https://github.com/arjunr2/picolibc.git

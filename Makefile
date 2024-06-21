@@ -8,7 +8,7 @@ LIBCXX_BUILD_DIR := $(WALI_ROOT_DIR)/libcxx
 COMPILE_PARALLEL := 4
 LINK_PARALLEL := 1
 
-.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all
+.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests picolibc clean clean-iwasm clean-all
 
 default: iwasm
 
@@ -69,6 +69,15 @@ libcxx: wali-compiler libc
 	cd $(LIBCXX_BUILD_DIR)
 	make -j$(COMPILE_PARALLEL)
 
+
+.ONESHELL:
+picolibc:
+	cd picolibc
+	mkdir -p build
+	cd build
+	../scripts/do-clang-wasm32-configure -Dprefix=`pwd`/../install -Db_asneeded=false -Db_lundef=false
+	ninja
+	ninja install
 
 # --- WAMR RUNTIME/COMPILER --- #
 iwasm-dir:
