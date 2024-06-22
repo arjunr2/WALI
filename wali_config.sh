@@ -16,10 +16,10 @@ export WALI_AR=$WALI_LLVM_BIN_DIR/llvm-ar
 export WALI_RANLIB=$WALI_LLVM_BIN_DIR/llvm-ranlib
 
 # C/C++ flags
-WASM_FEATURES="-matomics -mbulk-memory -mmutable-globals -msign-ext -mexception-handling"
+export WASM_FEATURES="-matomics -mbulk-memory -mmutable-globals -msign-ext -mexception-handling"
 export WALI_CFLAGS="--target=wasm32-wasi-threads -pthread --sysroot=$WALI_SYSROOT_DIR -fdeclspec $WASM_FEATURES"
 export WALI_CXXFLAGS="$WALI_CFLAGS -stdlib=libc++ -I$WALI_ROOT_DIR/libcxx/include/c++/v1"
-export WALI_LDFLAGS="-L$WALI_SYSROOT_DIR/lib -L$WALI_LIBCXX_DIR/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648 -Wl,--warn-unresolved-symbols"
+export WALI_LDFLAGS="-L$WALI_SYSROOT_DIR/lib -L$WALI_LIBCXX_DIR/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=262144"
 
 # Libclang RT
 export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/llvm-config --version | cut -d '.' -f 1)
