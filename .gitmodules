@@ -52,3 +52,7 @@
 [submodule "picolibc"]
 	path = picolibc
 	url = https://github.com/arjunr2/picolibc.git
+[submodule "zephyr/lua"]
+	path = zephyr/lua
+	url = https://github.com/arjunr2/lua-wali.git
+	branch = zephyr
