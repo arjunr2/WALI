@@ -20,9 +20,8 @@ lua: $(HOOK_O)
 	wasm2wat --enable-threads lua/lua -o lua/lua.wat
 
 .ONESHELL:
-samples:
-	cd samples
-	./compile.sh hello_world.c
+samples: $(HOOK_O)
+	make -C samples HOOK=$(HOOK_O)
 
 clean:
 	rm -rf samples/wasms

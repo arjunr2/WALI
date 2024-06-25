@@ -1,6 +1,7 @@
-#!/bin/bash
+wali_mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+WAZI_ROOT_DIR := $(patsubst %/,%, $(dir $(wali_mkfile_path)))
 
-include ../wali_config.mk
+include $(WAZI_ROOT_DIR)/../wali_config.mk
 
 LVERSION := $(shell $(WALI_LLVM_BIN_DIR)/llvm-config --version | cut -d '.' -f 1)
 LIBCLANG_RT := $(WALI_LLVM_DIR)/build/lib/clang/$(LVERSION)/lib/libclang_rt.builtins-wasm32.a
