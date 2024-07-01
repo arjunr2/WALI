@@ -7,4 +7,5 @@ make
 ```
 
 **NOTE**: Some builds (e.g. bash) generate and execute intermediate WALI binaries in their
-build process. To support this, register it as a miscellaneous binary format. 
+build process. 
+We require registration of our interpreter as a [miscellaneous binary format](https://github.com/arjunr2/WALI/tree/main?tab=readme-ov-file#miscellaneous). 
