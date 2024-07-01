@@ -157,16 +157,17 @@ run the test suite binaries detailed [here](#building-the-test-suite)
 
 Most Linux distros will allow registration of miscellaneous binary formats.
 This will **greatly** simplify all toolchain builds for WALI out-of-the-box and is highly recommended.
-We essentially point the OS to our `iwasm` interpreter to invoke any WASM file. 
+This is **required** to compile some [applications](applications) in our repo
 To enable this, run the following:
 ```shell
 cd misc
 source misc/gen_iwasm_wrapper.sh
-# Default binfmt_regiser does not survive reboots in the system
+# Default binfmt_register does not survive reboots in the system
 # Specify '-p' option to register with systemd-binfmt for reboot survival
 sudo ./binfmt_register.sh
 ```
 
+This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 ## Resources
