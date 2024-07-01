@@ -164,7 +164,7 @@ cd misc
 source misc/gen_iwasm_wrapper.sh
 # Default binfmt_register does not survive reboots in the system
 # Specify '-p' option to register with systemd-binfmt for reboot survival
-sudo ./binfmt_register.sh
+sudo ./misc/binfmt_register.sh
 ```
 
 This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
