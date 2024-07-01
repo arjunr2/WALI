@@ -5,10 +5,10 @@ LLVM_BUILD_DIR := $(WALI_LLVM_DIR)/build
 MUSL_BUILD_DIR := $(WALI_ROOT_DIR)/wali-musl
 LIBCXX_BUILD_DIR := $(WALI_ROOT_DIR)/libcxx
 
-COMPILE_PARALLEL := 4
-LINK_PARALLEL := 1
+COMPILE_PARALLEL := $(shell nproc --all)
+LINK_PARALLEL := $(shell echo "$$(free -g | sed -n '2p' | awk '{print $$2}') / 16" | bc)
 
-.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all
+.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all clean-llvm
 
 default: iwasm
 
@@ -101,7 +101,7 @@ llvm-base:
 		-DLLVM_PARALLEL_COMPILE_JOBS=$(COMPILE_PARALLEL) -DLLVM_PARALLEL_LINK_JOBS=$(LINK_PARALLEL) \
 		-DLLVM_USE_LINKER=lld \
 		-DLLVM_STATIC_LINK_CXX_STDLIB=ON -DLLVM_STATIC_LINK_CXX_STDLIB=ON -DLLVM_DEFAULT_TARGET_TRIPLE=wasm32-wasi-threads \
-		-DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_UTILS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF \
+		-DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF \
 		-DCMAKE_C_FLAGS="-fdebug-types-section" -DCMAKE_CXX_FLAGS="-fdebug-types-section"
 	cd $(LLVM_BUILD_DIR)
 	ninja
@@ -130,5 +130,8 @@ clean: clean-iwasm
 	make -C $(MUSL_BUILD_DIR) clean
 	rm -rf $(LIBCXX_BUILD_DIR)
 
-clean-all: clean
+clean-llvm:
 	rm -rf $(WALI_LLVM_DIR)/build
+
+clean-all: clean clean-llvm
+
