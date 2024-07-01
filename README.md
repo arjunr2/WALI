@@ -161,10 +161,10 @@ This is **required** to compile some [applications](applications) in our repo
 To enable this, run the following:
 ```shell
 cd misc
-source misc/gen_iwasm_wrapper.sh
+source gen_iwasm_wrapper.sh
 # Default binfmt_register does not survive reboots in the system
 # Specify '-p' option to register with systemd-binfmt for reboot survival
-sudo ./misc/binfmt_register.sh
+sudo ./binfmt_register.sh
 ```
 
 This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
