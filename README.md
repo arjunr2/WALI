@@ -169,7 +169,8 @@ Parameters to `iwasm` can be configured based on preferences
 #!/bin/bash
 # /usr/bin/iwasm-wrapper - Wrapper for running WASM programs
 
-exec <absolute-path-to-iwasm> -v=0 --stack-size=524288 --max-threads=30 --env-file=<absolute-path-to-envfile> "$@"
+VERBOSITY=${WALI_VERBOSE:-0}
+exec <absolute-path-to-iwasm> -v=$VERBOSITY --stack-size=524288 --max-threads=20 --env-file=<absolute-path-to-envfile> "$@"
 ```
 3. Register WASM as a misc format and use the script from step 2 as the interpreter
 ```shell
