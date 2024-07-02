@@ -156,33 +156,18 @@ run the test suite binaries detailed [here](#building-the-test-suite)
 ### Run WASM code like an ELF binary!
 
 Most Linux distros will allow registration of miscellaneous binary formats.
-For WASM binaries, the OS must be aware of which program to invoke to run the WASM file. 
-
-1. Save all current environment variables to a file
-```
-env &> ~/.walienv
-```
-
-2. Create a wrapper bash script around the runtime invocation as below.
-Parameters to `iwasm` can be configured based on preferences
-```shell
-#!/bin/bash
-# /usr/bin/iwasm-wrapper - Wrapper for running WASM programs
-
-exec <absolute-path-to-iwasm> -v=0 --stack-size=524288 --max-threads=30 --env-file=<absolute-path-to-envfile> "$@"
-```
-3. Register WASM as a misc format and use the script from step 2 as the interpreter
+This will **greatly** simplify all toolchain builds for WALI out-of-the-box and is highly recommended.
+This is **required** to compile some [applications](applications) in our repo
+To enable this, run the following:
 ```shell
 cd misc
+source gen_iwasm_wrapper.sh
+# Default binfmt_register does not survive reboots in the system
+# Specify '-p' option to register with systemd-binfmt for reboot survival
 sudo ./binfmt_register.sh
 ```
 
-**NOTE**: The above solution gets erased after reboots. For a more permanent setup using binfmt daemon:
-```shell
-sudo cp misc/iwali.conf /etc/binfmt.d/
-sudo systemctl restart systemd-binfmt
-```
-
+This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 ## Resources
