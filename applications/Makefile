@@ -85,7 +85,7 @@ mqtt-app-clean: paho.mqtt.c-clean
 
 lua:
 	cd lua;
-	$(MAKE) CC=$(WALI_CC) MYCFLAGS="$(WALI_COMMON_CFLAGS) -std=c99 -DLUA_USE_LONGJMP -fno-stack-protector -fno-common" MYLDFLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -Wl,-E" MYLIBS="" AR="$(WALI_AR) rc" RANLIB=$(WALI_RANLIB)
+	$(MAKE) CC=$(WALI_CC) CFLAGS="-Wall -O2 $(WALI_COMMON_CFLAGS) -std=c99 -DLUA_USE_LONGJMP -fno-stack-protector -fno-common" MYLDFLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -Wl,-E" MYLIBS="" AR="$(WALI_AR) rc" RANLIB=$(WALI_RANLIB)
 lua-clean:
 	cd lua;
 	$(MAKE) clean
