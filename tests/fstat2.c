@@ -7,7 +7,7 @@ int main()
 
     int fd = open(path, O_RDONLY);
 
-    if (syscall(SYS_fstat, fd, &sb) == -1) {
+    if (syscall(SYS_fstat, (long)fd, (long)&sb) == -1) {
         print("ERROR\n");
         exit(1);
     }

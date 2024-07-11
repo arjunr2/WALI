@@ -35,7 +35,7 @@ int main()
 
     for ( ; ; ) {
         PRINT_INT("getdents64", SYS_getdents64);
-        nread = syscall(SYS_getdents64, fd, buf, BUF_SIZE);
+        nread = syscall(SYS_getdents64, (long)fd, (long)buf, (long)BUF_SIZE);
         if (nread == -1)
             handle_error("getdents");
 
