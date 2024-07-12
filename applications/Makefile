@@ -85,7 +85,7 @@ mqtt-app-clean: paho.mqtt.c-clean
 
 lua:
 	cd lua;
-	$(MAKE) CC=$(WALI_CC) MYCFLAGS="$(WALI_COMMON_CFLAGS) -std=c99 -DLUA_USE_LONGJMP -fno-stack-protector -fno-common" MYLDFLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -Wl,-E" MYLIBS="" AR="$(WALI_AR) rc" RANLIB=$(WALI_RANLIB)
+	$(MAKE) CC=$(WALI_CC) CFLAGS="-Wall -O2 $(WALI_COMMON_CFLAGS) -std=c99 -DLUA_USE_LONGJMP -fno-stack-protector -fno-common" MYLDFLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -Wl,-E" MYLIBS="" AR="$(WALI_AR) rc" RANLIB=$(WALI_RANLIB)
 lua-clean:
 	cd lua;
 	$(MAKE) clean
@@ -111,7 +111,7 @@ memcached-clean:
 bash:
 	cd bash;
 	mkdir -p build; cd build
-	../configure --disable-threads --without-bash-malloc  CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -DNO_MAIN_ENV_ARG" CFLAGS_FOR_BUILD="$(WALI_COMMON_CFLAGS) -DNO_MAIN_ENV_ARG" CPPFLAGS="$(WALI_COMMON_CFLAGS)" CPPFLAGS_FOR_BUILD="$(WALI_COMMON_CFLAGS)" LD=$(WALI_LD) LD_FOR_BUILD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" LDFLAGS_FOR_BUILD="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes CONFIG_SHELL=/bin/bash MAKE_SHELL=/bin/bash SHELL=/bin/bash
+	../configure --disable-threads --without-bash-malloc  CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -DNO_MAIN_ENV_ARG" CFLAGS_FOR_BUILD="$(WALI_COMMON_CFLAGS) -DNO_MAIN_ENV_ARG" CPPFLAGS="$(WALI_COMMON_CFLAGS)" CPPFLAGS_FOR_BUILD="$(WALI_COMMON_CFLAGS)" LD=$(WALI_LD) LD_FOR_BUILD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" LDFLAGS_FOR_BUILD="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) SIZE="wasm-objdump -h" cross_compiling=yes CONFIG_SHELL=/bin/bash MAKE_SHELL=/bin/bash SHELL=/bin/bash
 	$(MAKE)
 bash-clean:
 	rm -rf bash/build

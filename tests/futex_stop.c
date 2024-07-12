@@ -23,7 +23,7 @@ int main() {
 
   int i = 0;
   /* Infinite futex wait */
-  syscall(SYS_futex, &global_val, 0, 4, NULL, 0, 0);
+  syscall(SYS_futex, (long)&global_val, (long)0, (long)4, (long)NULL, (long)0, (long)0);
   printf("Finished end!\n");
 
   return 0;

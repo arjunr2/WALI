@@ -170,6 +170,13 @@ sudo ./binfmt_register.sh
 This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
+## Notable Changes to Application Operation at Runtime
+
+Wasm enforces type-checking unlike C, so **type-unsafe C code may not produce the desired output at runtime**.
+In particular, we have observed the following common unsafe occurences:
+* **Indirect function invocation with function pointers**: Unlike C, Wasm's `call_indirect` performs a runtime type-check which will fail on function invocation with mismatched signatures.
+* **Variadic function types**: Functions that use variadic arguments *must* ensure argument type consistency (e.g. `syscall` arguments must all be typecast to `long`).
+
 ## Resources
 [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 
