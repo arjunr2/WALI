@@ -15,7 +15,7 @@ cat <<EOT > $SCRIPT_DIR/iwasm-wrapper
 ### Wrapper for running WASM programs by pointing to built iwasm in root WALI dir 
 
 VERBOSITY=\${WALI_VERBOSE:-0}
-exec $WALI_ROOT_DIR/iwasm -v=\$VERBOSITY --stack-size=524288 --max-threads=20 --env-file=$WALI_ROOT_DIR/.walienv "\$@"
+exec $WALI_ROOT_DIR/iwasm -v=\$VERBOSITY --stack-size=524288 --max-threads=100 --env-file=$WALI_ROOT_DIR/.walienv "\$@"
 EOT
 if [ $? -ne 0 ]; then
   echo "Error writing iwasm-wrapper"
