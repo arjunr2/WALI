@@ -8,8 +8,9 @@ from pathlib import Path
 
 from typing import List, Dict, Tuple, Any
 
-# Initialize primitive/complex types from template
-##########################
+""" 
+    Initialize primitive/complex types from template
+"""
 def parse_type_file(path):
     prog = re.compile(r'type ([^\s=]+)\s*=\s*(.*);')
     with open(path) as f:
@@ -21,7 +22,10 @@ sub = lambda k, ch: k.replace('-', ch)
 BASIC_TYPES = { sub(k, ' '): v for k, v in parse_type_file('templates/primitives.wit.template').items() }
 COMPLEX_TYPES = { sub(k, '_'): sub(v, ' ') if sub(v, ' ') in BASIC_TYPES else sub(v, '_') 
                     for k, v in parse_type_file('templates/complex.wit.template').items()}
-##########################
+COMBINED_TYPES = {**BASIC_TYPES, **COMPLEX_TYPES}
+WIT_PRIMITIVE_SET = set(BASIC_TYPES.values())
+
+
 
 
 
@@ -43,6 +47,18 @@ def ptr_anonymize(args):
     """
     return ['void*' if x[-1] == '*' and x[:-1] not in BASIC_TYPES else x for x in args]
 
+def rustify_args(args):
+    """
+        Convert argument types to Rust compatible types
+        Basically, "s<bitwidth> --> i<bitwidth>" while u<bitwidth> remains the same
+    """
+    def rs_simplify(v):
+        while v not in WIT_PRIMITIVE_SET:
+            v = COMBINED_TYPES.get(v, "UNDEF")
+        return v if v[0] != 's' else 'i' + v[1:]
+    
+    return ['i32' if x[-1] == '*' else rs_simplify(x) for x in args]
+
 
 def syscall_iter(syscall_info, stub_fn):
     buf = []
@@ -53,13 +69,15 @@ def syscall_iter(syscall_info, stub_fn):
     return filter(bool, buf)
 
 
-def gen_and_write(stub_name, syscall_info, outpath):
+def gen_and_write(stub_name, syscall_info, outpath, prelude="", postlude=""):
     """
         Helper method for common stub generation flow
     """
     buf = syscall_iter(syscall_info, stub_name)
     with open(outpath, 'w') as f:
+        f.write(prelude)
         f.write('\n'.join(buf))
+        f.write(postlude)
 
 def gen_libc_stubs(spath, syscall_info, archs):
     """
@@ -80,6 +98,57 @@ def gen_libc_stubs(spath, syscall_info, archs):
        
     gen_and_write(def_stub, syscall_info, spath / 'defs.out')
     gen_and_write(case_stub, syscall_info, spath / 'case.out')
+
+    """
+        Rust Libc Stubs
+    """
+    rpath = spath / 'rust'
+    rpath.mkdir(parents=True, exist_ok=True)
+
+    def rust_def_stub(nr, nargs, name, fn_name, args):
+        return '\n'.join([
+            "\t/* {} */".format(nr),
+            "\t#[link_name = \"SYS_{}\"]".format(fn_name),
+            "\tpub fn __syscall_SYS_{fn_name}({argtys}) -> ::c_long;".format(
+                fn_name = fn_name,
+                argtys = ', '.join(['a{}: {}'.format(i+1, j) 
+                                    for i, j in enumerate(rustify_args(args))
+                                    ])
+            )
+        ])
+
+    def rust_match_stub(nr, nargs, name, fn_name, args):
+        return "\t\tsuper::SYS_{name} => syscall_match_arm!(SYS_{fn_name}, args, {args}),".format(
+            name = name,
+            fn_name = fn_name,
+            args = ', '.join([f"a{x}" for x, _ in enumerate(args)])
+        ) if nargs else "\t\tsuper::SYS_{name} => unimplemented!({msg}),".format(
+            name = name,
+            msg = f"\"WALI syscall \'{name}\' ({nr}) unimplemented!\""
+        )
+
+    def_prelude = '\n'.join([
+        "#[link(wasm_import_module = \"wali\")]",
+        "extern \"C\" {",
+        ""
+    ])
+    def_postlude = "\n}"
+    gen_and_write(rust_def_stub, syscall_info, rpath / 'defs.out', def_prelude, def_postlude)
+
+    match_prelude = '\n'.join([
+        "#[no_mangle]",
+        "pub unsafe extern \"C\" fn syscall(num: ::c_long, mut args: ...) -> ::c_long {",
+        "\tuse core::unimplemented;",
+        "\tmatch num {",
+        ""
+    ])
+    match_postlude = '\n'.join([
+        "",
+        "\t\t_ => unimplemented!(\"WALI syscall number {} out-of-scope!\", num),",
+        "\t}",
+        "}"
+    ])
+    gen_and_write(rust_match_stub, syscall_info, rpath / 'match.out', match_prelude, match_postlude)
     
 
 def gen_wamr_stubs(spath, syscall_info, archs):

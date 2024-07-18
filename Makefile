@@ -9,6 +9,7 @@ COMPILE_PARALLEL := $(shell nproc --all)
 LINK_PARALLEL := $(shell echo "$$(free -g | sed -n '2p' | awk '{print $$2}') / 16" | bc)
 
 .PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all clean-llvm
+.PHONY: rustc
 
 default: iwasm
 
@@ -115,6 +116,17 @@ wali-compiler: llvm-base
 	cp $$LIBCLANG_RT_LIB $$DEST_RT_DIR/libclang_rt.builtins-wasm32.a
 	cp $$LIBCLANG_RT_LIB $$DEST_RT_DIR/wasi/libclang_rt.builtins-wasm32.a
 	
+
+# --- COMPILER PORTS --- #
+.ONESHELL:
+rustc:
+	cd compiler_ports/rust
+	./x setup compiler
+	python3 $(WALI_ROOT_DIR)/scripts/rustc_config.py -r $(WALI_ROOT_DIR)/compiler_ports/rust \
+		-m $(WALI_SYSROOT_DIR) -l $(WALI_LLVM_BIN_DIR)
+	cargo update -p libc
+	./x build
+	rustup toolchain link wali build/host/stage1
 
 # --- TESTS --- #
 tests: libc

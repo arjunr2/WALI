@@ -35,7 +35,7 @@ As an example, to run `sqlite3`:
 ```
 
 
-## Building the Entire Toolchain
+## Building the Toolchain
 
 Before proceeding, make sure all dependencies are up to date, as detailed in previous [section](#skip-the-talk-i-want-to-run-some-wali-apps):
 
@@ -52,7 +52,7 @@ If compiling WALI applications is not required and step 1 is required.
 We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
 For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
 
-To build the WAMR-WALI runtime:
+To build the WALI-enabled WAMR runtime:
 ```shell
 git submodule update --init wasm-micro-runtime
 make iwasm
@@ -60,18 +60,16 @@ make iwasm
 An `iwasm` symlink executable should be generated in the root directory
 
 
-### Building the Wasm-WALI Clang compiler
+### Building the WALI LLVM compiler
 
-We use LLVM Clang 16 with *compiler-rt* builtins for full wasm32 support.
-To build the llvm suite:
+To build the llvm-18 suite:
 
 ```shell
 git submodule update --init llvm-project
 make wali-compiler
 ```
 
-Future steps use this toolchain.
-Add the llvm build binary directory (`<root-directory>/llvm-project/build/bin`) to PATH for convenience.
+This is essential for future steps that rely on this build.
 
 
 ### Building WALI libc
@@ -85,7 +83,7 @@ git submodule update --init wali-musl
 make libc
 ```
 
-We currently support 64-bit architectures for x86-64, aarch64, and riscv64. In the future, we will expand
+We currently support 64-bit architectures for x86-64, aarch64, and riscv64, with hopes to expand
 to more architectures.
 
 
@@ -102,7 +100,7 @@ ln -sf wasm-micro-runtime/wamr-compiler/wamrc wamrc
 
 ## Compiling Applications to WALI
 
-### Standalones
+### C Standalones
 
 To compile C to WASM, refer to
 [compile-wali-standalone.sh](tests/compile-wali-standalone.sh):
@@ -124,6 +122,7 @@ Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we a
 in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
 
 To indepedently specify compile and link flags, refer to [compile-wali.sh](tests/compile-wali.sh) used for the test suite
+
 
 ### Building the Test Suite
 ```shell
@@ -149,6 +148,27 @@ you can use `./iwasm <path-to-wasm-file>` to execute the code.
 The [wasm-apps](wasm-apps) directory has several popular prebuilt binaries to run. You may also
 run the test suite binaries detailed [here](#building-the-test-suite)
 
+
+## Compiler Ports
+
+### Rust
+We support a custom Rust compiler with a `wasm32-wali64-linux-musl` target. 
+Existing `cargo` and  `rustup` and required for a successful build.
+To build `rustc`, run:
+
+```shell
+git submodule update --init compiler_ports/rust
+make rustc
+```
+
+This adds a new toolchain to `rustup` named `wali` with the new target.
+To compile applications:
+```shell
+cargo +wali build --target=wasm32-wali64-linux-musl
+```
+
+NOTE: Many applications will currently require a custom [libc](https://github.com/arjunr2/rust-libc.git) to
+be patched into `Cargo.toml` until potential upstreaming is possible.
 
 
 ## Miscellaneous
