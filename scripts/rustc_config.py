@@ -19,20 +19,16 @@ def update_config_toml(rust, muslroot, llvmbin):
         config = toml.load(f)
 
     build_config = {
-        'target': ["x86_64-unknown-linux-gnu", "wasm32-wali64-linux-musl"]
+        'target': ["x86_64-unknown-linux-gnu", "wasm32-linux-musl"]
     }
     wali_config = {
-        'wasm32-wali64-linux-musl': {
+        'wasm32-linux-musl': {
             'musl-root': absresolve(muslroot),
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
         },
         'x86_64-unknown-linux-gnu': {
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
         }
-    }
-
-    rust_deny = {
-        'deny-warnings': False
     }
 
     if 'build' not in config:
@@ -43,8 +39,6 @@ def update_config_toml(rust, muslroot, llvmbin):
     config['target'].update(wali_config)
     if 'rust' not in config:
         config['rust'] = {}
-    config['rust'].update(rust_deny)
-
 
     logging.info(f"Writing {config} to config.toml")
 
@@ -77,7 +71,7 @@ def update_cargo_toml(rust, muslroot, llvmbin):
 def add_wasm_linker_to_cargo(llvmbin):
     config_path = Path.home() / ".cargo/config.toml"
     wasm_linker = {
-        'wasm32-wali64-linux-musl': {
+        'wasm32-linux-musl': {
             'linker': absresolve(llvmbin / 'wasm-ld')
         }
     }
