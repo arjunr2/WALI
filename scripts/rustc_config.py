@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 import logging
+import subprocess
 import toml
 
 def create_parser():
@@ -18,8 +19,9 @@ def update_config_toml(rust, muslroot, llvmbin):
     with open(rust / 'config.toml', 'r') as f:
         config = toml.load(f)
 
+    host_platform = subprocess.check_output(f"{llvmbin}/llvm-config --host-target", shell=True, text=True).strip()
     build_config = {
-        'target': ["x86_64-unknown-linux-gnu", "wasm32-linux-musl"]
+        'target': [host_platform, "wasm32-linux-musl"]
     }
     wali_config = {
         'wasm32-linux-musl': {
@@ -32,7 +34,7 @@ def update_config_toml(rust, muslroot, llvmbin):
             'ar': absresolve(llvmbin / 'llvm-ar'),
             'ranlib': absresolve(llvmbin / 'llvm-ranlib')
         },
-        'x86_64-unknown-linux-gnu': {
+        host_platform: {
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
         }
     }
