@@ -69,6 +69,8 @@ libcxx: wali-compiler libc
 		-DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind"
 	cd $(LIBCXX_BUILD_DIR)
 	make -j$(COMPILE_PARALLEL)
+	cp libcxx/lib/* $(WALI_SYSROOT_DIR)/lib/
+	cp libcxx/include/* $(WALI_SYSROOT_DIR)/include/
 
 
 # --- WAMR RUNTIME/COMPILER --- #
@@ -120,11 +122,13 @@ wali-compiler: llvm-base
 # --- COMPILER PORTS --- #
 .ONESHELL:
 rustc:
+	export WASM_MUSL_SYSROOT=$(WALI_SYSROOT_DIR)
 	cd compiler_ports/rust
 	./x setup compiler
 	python3 $(WALI_ROOT_DIR)/scripts/rustc_config.py -r $(WALI_ROOT_DIR)/compiler_ports/rust \
 		-m $(WALI_SYSROOT_DIR) -l $(WALI_LLVM_BIN_DIR)
 	cargo update -p libc
+	cargo update --manifest-path src/bootstrap/Cargo.toml -p cc
 	./x build
 	rustup toolchain link wali build/host/stage1
 

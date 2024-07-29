@@ -25,6 +25,12 @@ def update_config_toml(rust, muslroot, llvmbin):
         'wasm32-linux-musl': {
             'musl-root': absresolve(muslroot),
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
+            'llvm-libunwind': 'system',
+            'crt-static': True,
+            'cc': absresolve(llvmbin / 'clang'),
+            'cxx': absresolve(llvmbin / 'clang++'),
+            'ar': absresolve(llvmbin / 'llvm-ar'),
+            'ranlib': absresolve(llvmbin / 'llvm-ranlib')
         },
         'x86_64-unknown-linux-gnu': {
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
@@ -37,8 +43,6 @@ def update_config_toml(rust, muslroot, llvmbin):
     if 'target' not in config:
         config['target'] = {}
     config['target'].update(wali_config)
-    if 'rust' not in config:
-        config['rust'] = {}
 
     logging.info(f"Writing {config} to config.toml")
 
@@ -46,7 +50,7 @@ def update_config_toml(rust, muslroot, llvmbin):
         toml.dump(config, f)
 
 # Cargo.toml update
-def update_cargo_toml(rust, muslroot, llvmbin):
+def update_base_cargo_toml(rust, muslroot, llvmbin):
     with open(rust / 'Cargo.toml', 'r') as f:
         cargo = toml.load(f)
     
@@ -62,17 +66,38 @@ def update_cargo_toml(rust, muslroot, llvmbin):
         cargo['patch']['crates-io'] = {}
     cargo['patch']['crates-io'].update(libc_patch)
 
-    logging.info(f"Writing {cargo} to Cargo.toml")
+    logging.info(f"Writing {cargo} to {rust}/Cargo.toml")
 
     with open(rust / 'Cargo.toml', 'w') as f:
         toml.dump(cargo, f)
 
-# Add wasm-ld as the default linker for Cargo.toml
+# Update Cargo.toml for bootstrap compiler
+def update_bootstrap_cargo_toml(bootstrap, muslroot, llvmbin):
+    with open(bootstrap / 'Cargo.toml', 'r') as f:
+        cargo = toml.load(f)
+
+    cc_patch = {
+        "cc": {
+            "git": "https://github.com/arjunr2/rust-cc.git"
+        }
+    }
+    if 'patch' not in cargo:
+        cargo['patch'] = {}
+    if 'crates-io' not in cargo['patch']:
+        cargo['patch']['crates-io'] = {}
+    cargo['patch']['crates-io'].update(cc_patch)
+
+    logging.info(f"Writing {cargo} to {bootstrap}/Cargo.toml")
+
+    with open(bootstrap / 'Cargo.toml', 'w') as f:
+        toml.dump(cargo, f)
+
+# Add default toolchain linker for Cargo config
 def add_wasm_linker_to_cargo(llvmbin):
     config_path = Path.home() / ".cargo/config.toml"
     wasm_linker = {
         'wasm32-linux-musl': {
-            'linker': absresolve(llvmbin / 'wasm-ld')
+            'linker':   absresolve(llvmbin / 'wasm-ld'),
         }
     }
 
@@ -98,7 +123,8 @@ def main():
     args = parser.parse_args()
     rust, muslroot, llvmbin = args.rustsrc, args.muslroot, args.llvmbin
     update_config_toml(rust, muslroot, llvmbin)
-    update_cargo_toml(rust, muslroot, llvmbin)
+    update_base_cargo_toml(rust, muslroot, llvmbin)
+    update_bootstrap_cargo_toml(rust / 'src/bootstrap', muslroot, llvmbin)
     add_wasm_linker_to_cargo(llvmbin)
 
 
