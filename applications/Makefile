@@ -116,6 +116,15 @@ bash:
 bash-clean:
 	rm -rf bash/build
 
-clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean lua-clean memcached-clean bash-clean
+python:
+	cd cpython;
+	CC="$(WALI_CC)" CFLAGS="($WALI_COMMON_CFLAGS)" LD="($WALI_LD)" LDFLAGS="($WALI_COMMON_LDFLAGS)" LIBS="-lpthread" HOSTRUNNER=$HOSTRUNNER ./configure
+	$(MAKE)
+
+python-clean:
+	$(MAKE) -C cpython clean
+
+
+clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean lua-clean memcached-clean bash-clean python-clean
 
 

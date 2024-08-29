@@ -52,3 +52,7 @@
 [submodule "compiler_ports/rust"]
 	path = compiler_ports/rust
 	url = https://github.com/arjunr2/rust.git
+[submodule "applications/cpython"]
+    path = applications/cpython
+    url = https://github.com:MilesConn/cpython.git
+    branch = wali
