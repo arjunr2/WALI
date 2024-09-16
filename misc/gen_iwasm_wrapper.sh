@@ -22,6 +22,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "Successfully generated iwasm-wrapper"
+chmod +x iwasm-wrapper
 
 # Generate the iwali
 cat <<EOT > $SCRIPT_DIR/iwali.conf
