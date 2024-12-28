@@ -5,8 +5,10 @@ LLVM_BUILD_DIR := $(WALI_LLVM_DIR)/build
 MUSL_BUILD_DIR := $(WALI_ROOT_DIR)/wali-musl
 LIBCXX_BUILD_DIR := $(WALI_ROOT_DIR)/libcxx
 
+MEMGB := $(shell echo $$(free -g | sed -n '2p' | awk '{print $$2}'))
+
 COMPILE_PARALLEL := $(shell nproc --all)
-LINK_PARALLEL := $(shell echo "$$(free -g | sed -n '2p' | awk '{print $$2}') / 16" | bc)
+LINK_PARALLEL := $(shell echo $$(($(MEMGB) < 16 ? 1 : $(MEMGB) / 16)))
 
 .PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all clean-llvm
 .PHONY: rustc
