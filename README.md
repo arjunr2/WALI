@@ -152,7 +152,7 @@ run the test suite binaries detailed [here](#building-the-test-suite)
 ## Compiler Ports
 
 ### Rust
-We support a custom Rust compiler with a `wasm32-wali64-linux-musl` target. 
+We support a custom Rust compiler with a `wasm32-wali-linux-musl` target. 
 Existing `cargo` and  `rustup` and required for a successful build.
 To build `rustc`, run:
 
@@ -164,7 +164,7 @@ make rustc
 This adds a new toolchain to `rustup` named `wali` with the new target.
 To compile applications:
 ```shell
-cargo +wali build --target=wasm32-wali64-linux-musl
+cargo +wali build --target=wasm32-wali-linux-musl
 ```
 
 NOTE: Many applications will currently require a custom [libc](https://github.com/arjunr2/rust-libc.git) to

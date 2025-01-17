@@ -9,22 +9,23 @@ def create_parser():
     parser.add_argument('-r', '--rustsrc', type=Path, required=True, help='Path to rust compiler source directory')
     parser.add_argument('-m', '--muslroot', type=Path, required=True, help='Path to musl sysroot directory')
     parser.add_argument('-l', '--llvmbin', type=Path, required=True, help='Path to llvm bin directory')
+    parser.add_argument('-t', '--target', type=str, default='wasm32-wali-linux-musl', help='Rustc target name that we are building')
     return parser
 
 def absresolve(p):
     return str(p.resolve())
 
 # Config.toml update
-def update_config_toml(rust, muslroot, llvmbin):
+def update_config_toml(rust, muslroot, llvmbin, rtarget):
     with open(rust / 'config.toml', 'r') as f:
         config = toml.load(f)
 
     host_platform = subprocess.check_output(f"{llvmbin}/llvm-config --host-target", shell=True, text=True).strip()
     build_config = {
-        'target': [host_platform, "wasm32-linux-musl"]
+        'target': [host_platform, rtarget]
     }
     wali_config = {
-        'wasm32-linux-musl': {
+        rtarget: {
             'musl-root': absresolve(muslroot),
             'llvm-config': absresolve(llvmbin / 'llvm-config'),
             'llvm-libunwind': 'system',
@@ -95,10 +96,10 @@ def update_bootstrap_cargo_toml(bootstrap, muslroot, llvmbin):
         toml.dump(cargo, f)
 
 # Add default toolchain linker for Cargo config
-def add_wasm_linker_to_cargo(llvmbin):
+def add_wasm_linker_to_cargo(llvmbin, rtarget):
     config_path = Path.home() / ".cargo/config.toml"
     wasm_linker = {
-        'wasm32-linux-musl': {
+        rtarget: {
             'linker':   absresolve(llvmbin / 'wasm-ld'),
         }
     }
@@ -123,11 +124,11 @@ def main():
         format='%(levelname)s: %(message)s')
     parser = create_parser()
     args = parser.parse_args()
-    rust, muslroot, llvmbin = args.rustsrc, args.muslroot, args.llvmbin
-    update_config_toml(rust, muslroot, llvmbin)
+    rust, muslroot, llvmbin, rtarget = args.rustsrc, args.muslroot, args.llvmbin, args.target
+    update_config_toml(rust, muslroot, llvmbin, rtarget)
     update_base_cargo_toml(rust, muslroot, llvmbin)
     update_bootstrap_cargo_toml(rust / 'src/bootstrap', muslroot, llvmbin)
-    add_wasm_linker_to_cargo(llvmbin)
+    add_wasm_linker_to_cargo(llvmbin, rtarget)
 
 
 if __name__ == '__main__':
