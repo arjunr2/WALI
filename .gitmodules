@@ -8,7 +8,7 @@
 [submodule "llvm-project"]
 	path = llvm-project
 	url = https://github.com/arjunr2/llvm-project.git
-	branch = release/16.x
+	branch = release/18.x
 [submodule "applications/sqlite"]
 	path = applications/sqlite
 	url = https://github.com/sqlite/sqlite.git
