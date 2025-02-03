@@ -23,7 +23,7 @@ libc:
 
 # NOTE: Catching Exceptions only seems to work when libcxx is compiled in Debug mode (O0) #
 .ONESHELL:
-libcxx: wali-compiler libc
+libcxx: libc
 	cmake -S $(WALI_LLVM_DIR)/runtimes -B $(LIBCXX_BUILD_DIR) \
 		-DCMAKE_BUILD_TYPE=Debug  \
 		-DCMAKE_C_COMPILER_WORKS=ON \
