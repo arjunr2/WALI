@@ -66,9 +66,13 @@ to more architectures.
 
 ### AoT Compiler
 
-Generates faster ahead-of time compiled executables. For our WAMR implementation, refer [here](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
-on steps to build and the AoT compiler.
+Generates faster ahead-of time compiled executables. For our WAMR implementation, build as:
+```
+make wamr-compiler
+```
 
+Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
+for any extra information on the build.
 Once completed, you can create a symlink from the root directory:
 ```shell
 ln -sf wasm-micro-runtime/wamr-compiler/wamrc wamrc
@@ -79,7 +83,7 @@ wamrc --help  # We require --enable-multi-thread flag for threads
 ## Adapting Build Systems to WALI
 
 We provide three configuration files with toolchain requirements, drastically easing plug-in into major builds
-1. Bash: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh)
+1. Bash: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh))
 2. Make: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
 3. CMake: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
 
