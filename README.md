@@ -19,7 +19,7 @@ and produce a baseline implementation in [WAMR](https://github.com/SilverLineFra
 Before proceeding, make sure all dependencies are installed with `sudo ./apt-install-deps.sh`. 
 There are four major toolchain components, that may be incrementally built based on requirements:
 
-*I just want to easily run WALI app!*:
+*I just want to run WALI apps!*:
 1. [WALI runtime](#wali-runtime)
 
 *I want to compile/build WALI apps!*:
