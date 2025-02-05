@@ -36,19 +36,17 @@ There are four major toolchain components, that may be incrementally built based
 
 We have a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali). To build:
 ```shell
-git submodule update --init wasm-micro-runtime
 make iwasm
 ```
 An `iwasm` symlink executable should be generated in the root directory that can execute WALI binaries (e.g. `./iwasm -v=0 --stack-size=524288 <path-to-wasm-file>`).
 
-Register Wasm as a [miscellaneous binary format](#wasm-as-a-miscellaneous-binary-format).
+**Highly Recommended Step**: Register Wasm as a [miscellaneous binary format](#wasm-as-a-miscellaneous-binary-format).
 See [Sample Applications](#sample-applications) for test binaries.
 
 
 ### WALI LLVM compiler
 
 ```shell
-git submodule update --init llvm-project
 make wali-compiler
 ```
 
@@ -59,7 +57,6 @@ make wali-compiler
 
 To build libc:
 ```shell
-git submodule update --init wali-musl
 make libc
 ```
 
@@ -79,9 +76,9 @@ wamrc --help  # We require --enable-multi-thread flag for threads
 ```
 
 
-## Targetting build toolchains to WALI
+## Adapting Build Systems to WALI
 
-We provide three configuration files with toolchain requirements, drastically easing plug-in into major build 
+We provide three configuration files with toolchain requirements, drastically easing plug-in into major builds
 1. Bash: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh)
 2. Make: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
 3. CMake: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
@@ -100,7 +97,6 @@ Existing `cargo` and  `rustup` and required for a successful build.
 To build `rustc`, run:
 
 ```shell
-git submodule update --init compiler_ports/rust
 make rustc
 ```
 
@@ -114,7 +110,7 @@ cargo +wali build --target=wasm32-wali-linux-musl
 be patched into `Cargo.toml` until potential upstreaming is possible.
 
 
-## WASM as a miscellaneous binary format!
+## WASM as a Miscellaneous Binary Format!
 
 This will **greatly** simplify all toolchain builds for WALI out-of-the-box.
 It is **required** to compile some [applications](applications) in our repo
@@ -131,7 +127,7 @@ More information about miscellaneous binary formats and troubleshooting can be f
 
 
 ## Resources
-* Wasm possess different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
+* Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
 * [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 * This [paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf) and its related work section, especially the bit labeled "Modeling and verifying system interfaces"
 
