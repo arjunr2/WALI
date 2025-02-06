@@ -3,4 +3,5 @@ wasm
 libcxx
 docs/linux*
 iwasm
+wamrc
 .walienv

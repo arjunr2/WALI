@@ -68,15 +68,14 @@ to more architectures.
 
 Generates faster ahead-of time compiled executables. For our WAMR implementation, build as:
 ```
-make wamr-compiler
+make wamrc
 ```
 
 Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
 for any extra information on the build.
-Once completed, you can create a symlink from the root directory:
+Once completed, a symlink to `wamrc` is generated in the root directory:
 ```shell
-ln -sf wasm-micro-runtime/wamr-compiler/wamrc wamrc
-wamrc --help  # We require --enable-multi-thread flag for threads
+wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We require --enable-multi-thread flag for threads
 ```
 
 
