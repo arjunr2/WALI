@@ -36,6 +36,7 @@ There are four major toolchain components, that may be incrementally built based
 
 We have a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali). To build:
 ```shell
+git submodule update --init wasm-micro-runtime
 make iwasm
 ```
 An `iwasm` symlink executable should be generated in the root directory that can execute WALI binaries (e.g. `./iwasm -v=0 --stack-size=524288 <path-to-wasm-file>`).
@@ -47,6 +48,7 @@ See [Sample Applications](#sample-applications) for test binaries.
 ### WALI LLVM compiler
 
 ```shell
+git submodule update --init llvm-project
 make wali-compiler
 ```
 
@@ -57,6 +59,7 @@ make wali-compiler
 
 To build libc:
 ```shell
+git submodule update --init wali-musl
 make libc
 ```
 
