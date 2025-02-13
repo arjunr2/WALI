@@ -40,9 +40,24 @@ git submodule update --init wasm-micro-runtime
 make iwasm
 ```
 An `iwasm` symlink executable should be generated in the root directory that can execute WALI binaries (e.g. `./iwasm -v=0 --stack-size=524288 <path-to-wasm-file>`).
-
-**Highly Recommended Step**: Register Wasm as a [miscellaneous binary format](#wasm-as-a-miscellaneous-binary-format).
 See [Sample Applications](#sample-applications) for test binaries.
+
+
+#### WASM as a Miscellaneous Binary Format!
+
+WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`)!
+This will simplify all WALI toolchain builds and is **required** to compile some [applications](applications) in our repo.
+To do this, run:
+
+```shell
+cd misc
+source gen_iwasm_wrapper.sh
+# Default binfmt_register does not survive reboots in the system
+# Specify '-p' option to register with systemd-binfmt for reboot survival
+sudo ./binfmt_register.sh -p
+```
+
+More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 
 ### WALI LLVM compiler
@@ -63,7 +78,7 @@ git submodule update --init wali-musl
 make libc
 ```
 
-We currently support 64-bit architectures for x86-64, aarch64, and riscv64, with hopes to expand
+We currently support 64-bit architectures (x86-64, aarch64, riscv64) with hopes to expand
 to more architectures. 
 
 
@@ -89,6 +104,7 @@ We provide three configuration files with toolchain requirements, drastically ea
 2. Make: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
 3. CMake: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
 
+
 ## Sample Applications
 
 * **Tests** can be built with `make tests`. WALI executables are located in `tests/wasm` -- corresponding native ELF files in `tests/elf` can be used to compare against the WASM output
@@ -99,7 +115,7 @@ We provide three configuration files with toolchain requirements, drastically ea
 
 ### Rust
 We support a custom Rust compiler with a `wasm32-wali-linux-musl` target. 
-Existing `cargo` and  `rustup` and required for a successful build.
+Existing `cargo` and  `rustup` are required for a successful build.
 To build `rustc`, run:
 
 ```shell
@@ -116,24 +132,10 @@ cargo +wali build --target=wasm32-wali-linux-musl
 be patched into `Cargo.toml` until potential upstreaming is possible.
 
 
-## WASM as a Miscellaneous Binary Format!
-
-This will **greatly** simplify all toolchain builds for WALI out-of-the-box.
-It is **required** to compile some [applications](applications) in our repo
-```shell
-cd misc
-source gen_iwasm_wrapper.sh
-# Default binfmt_register does not survive reboots in the system
-# Specify '-p' option to register with systemd-binfmt for reboot survival
-sudo ./binfmt_register.sh -p
-```
-
-This points Linux to `iwasm` for invoking any WASM/AoT files just like ELF files! (e.g. `./bash.wasm --norc`). 
-More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
-
 
 ## Resources
 * Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
+* [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
 * [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 * This [paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf) and its related work section, especially the bit labeled "Modeling and verifying system interfaces"
 
