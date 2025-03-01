@@ -13,69 +13,64 @@ by virtualizing high-level APIs and seamless build-run-deploy workflows of arbit
 We create a custom modified C standard library ([musl libc](https://github.com/arjunr2/wali-musl)) that uses WALI
 and produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali)
 
-## Skip the talk, I want to run some WALI apps!
 
-1. Install dependencies
-* Ninja
-* Make
-* Cmake
-* GCC
-* [WABT](https://github.com/WebAssembly/wabt)
+## Component Setup
 
-If using `apt`, run `sudo ./apt-install-deps.sh` to install above depedencies
+Before proceeding, make sure all dependencies are installed with `sudo ./apt-install-deps.sh`. 
+There are four major toolchain components, that may be incrementally built based on requirements:
 
-2. Build a WALI runtime following these [instructions](#building-wali-runtime)
+*I just want to run WALI apps!*:
+1. [WALI runtime](#wali-runtime)
 
-3. The [wasm-apps](wasm-apps) directory has several popular applications like Bash, Lua, and Sqlite
-with sample scripts/data for each app.
-As an example, to run `sqlite3`:
-```shell
-# Increase the stack size if the program runs out of space
-./iwasm -v=0 --stack-size=524288 wasm-apps/sqlite/sqlite3.wasm
-```
+*I want to compile/build WALI apps!*:
+
+2. [Clang compiler](#wali-llvm-compiler)
+3. [WALI Sysroot](#wali-sysroot)
+
+*I want to AoT compile WALI apps to go fast!*
+
+4. [AoT Compiler](#aot-compiler)
 
 
-## Building the Toolchain
+### WALI runtime
 
-Before proceeding, make sure all dependencies are up to date, as detailed in previous [section](#skip-the-talk-i-want-to-run-some-wali-apps):
-
-There are four major toolchain components: 
-1. WALI runtime
-2. Custom Clang compiler (C -> Wasm-WALI)
-3. C-standard library for WALI
-4. (Optional) AoT Compiler for WAMR (Wasm-WALI -> WAMR AoT)
-
-If compiling WALI applications is not required and step 1 is required.
-
-### Building WALI runtime
-
-We produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali).
-For details on how to implement these native APIs in WAMR, refer [here](https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/doc/export_native_api.md)
-
-To build the WALI-enabled WAMR runtime:
+We have a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali). To build:
 ```shell
 git submodule update --init wasm-micro-runtime
 make iwasm
 ```
-An `iwasm` symlink executable should be generated in the root directory
+An `iwasm` symlink executable should be generated in the root directory that can execute WALI binaries (e.g. `./iwasm -v=0 --stack-size=524288 <path-to-wasm-file>`).
+See [Sample Applications](#sample-applications) for test binaries.
 
 
-### Building the WALI LLVM compiler
+#### WASM as a Miscellaneous Binary Format!
 
-To build the llvm-18 suite:
+WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`)!
+This will simplify all WALI toolchain builds and is **required** to compile some [applications](applications) in our repo.
+To do this, run:
+
+```shell
+cd misc
+source gen_iwasm_wrapper.sh
+# Default binfmt_register does not survive reboots in the system
+# Specify '-p' option to register with systemd-binfmt for reboot survival
+sudo ./binfmt_register.sh -p
+```
+
+More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
+
+
+### WALI LLVM compiler
 
 ```shell
 git submodule update --init llvm-project
 make wali-compiler
 ```
 
-This is essential for future steps that rely on this build.
+**NOTE**: Building the LLVM suite takes a long time and can consume up to 150GB of disk. The compiler is essential if you want to rebuild libc or build applications.
 
 
-### Building WALI libc
-
-The [wali-musl](https://github.com/arjunr2/wali-musl) submodule has detailed information on prerequisites and 
-steps for compiling libc
+### WALI Sysroot
 
 To build libc:
 ```shell
@@ -83,81 +78,47 @@ git submodule update --init wali-musl
 make libc
 ```
 
-We currently support 64-bit architectures for x86-64, aarch64, and riscv64, with hopes to expand
-to more architectures.
+We currently support 64-bit architectures (x86-64, aarch64, riscv64) with hopes to expand
+to more architectures. 
 
 
-### (Optional) WAMR AoT Compiler
+### AoT Compiler
 
-Refer [here](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
-on steps to build the AoT compiler.
+Generates faster ahead-of time compiled executables. For our WAMR implementation, build as:
+```
+make wamrc
+```
 
-Once completed, you can create a symlink from the root directory:
+Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
+for any extra information on the build.
+Once completed, a symlink to `wamrc` is generated in the root directory:
 ```shell
-ln -sf wasm-micro-runtime/wamr-compiler/wamrc wamrc
+wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We require --enable-multi-thread flag for threads
 ```
 
 
-## Compiling Applications to WALI
+## Adapting Build Systems to WALI
 
-### C Standalones
-
-To compile C to WASM, refer to
-[compile-wali-standalone.sh](tests/compile-wali-standalone.sh):
-
-```shell
-# Compile standalone C file
-<path-to-WALI-clang> \
-  --target=wasm32-wasi-threads -O3 -pthread \
-  `# Sysroot and lib search path` \
-  --sysroot=<path-to-wali-sysroot> -L<path-to-wali-sysroot>/lib \
-  `# Enable wasm extension features`  \
-  -matomics -mbulk-memory -mmutable-globals -msign-ext  \
-  `# Linker flags for shared mem + threading` \
-  -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=67108864 \
-  <input-c-file> -o <output-wasm-file>
-```
-
-Since changes are yet to be made to `clang/wasm-ld` for the wali toolchain, we are using support enabled 
-in `wasi-threads` target. This will change once a `wasm32-linux` target is added for WALI.
-
-To indepedently specify compile and link flags, refer to [compile-wali.sh](tests/compile-wali.sh) used for the test suite
+We provide three configuration files with toolchain requirements, drastically easing plug-in into major builds
+1. Bash: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh))
+2. Make: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
+3. CMake: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
 
 
-### Building the Test Suite
-```shell
-make tests
-```
+## Sample Applications
 
-WALI executables are located in `tests/wasm`. 
-Native ELF files for the same in `tests/elf` can be used to compare against the WASM output
-
-
-### WASM Bytecode -> AoT Compilation
-
-Use the WAMR compiler `wamrc` with the `--enable-multi-thread` flag to generate threaded code
-
-
-## Running WALI-WASM code
-
-Use any Webassembly runtime that implements WALI to execute the above generated WASM code.
-
-If you built the baseline WAMR implementation from the Makefile,
-you can use `./iwasm <path-to-wasm-file>` to execute the code.
-
-The [wasm-apps](wasm-apps) directory has several popular prebuilt binaries to run. You may also
-run the test suite binaries detailed [here](#building-the-test-suite)
+* **Tests** can be built with `make tests`. WALI executables are located in `tests/wasm` -- corresponding native ELF files in `tests/elf` can be used to compare against the WASM output
+* **Apps**: The [sample-apps](sample-apps) directory has few several popular prebuilt binaries to run
 
 
 ## Compiler Ports
 
 ### Rust
 We support a custom Rust compiler with a `wasm32-wali-linux-musl` target. 
-Existing `cargo` and  `rustup` and required for a successful build.
+Existing `cargo` and  `rustup` are required for a successful build.
 To build `rustc`, run:
 
 ```shell
-git submodule update --init compiler_ports/rust
 make rustc
 ```
 
@@ -167,38 +128,14 @@ To compile applications:
 cargo +wali build --target=wasm32-wali-linux-musl
 ```
 
-NOTE: Many applications will currently require a custom [libc](https://github.com/arjunr2/rust-libc.git) to
+**NOTE**: Many applications will currently require a custom [libc](https://github.com/arjunr2/rust-libc.git) to
 be patched into `Cargo.toml` until potential upstreaming is possible.
 
 
-## Miscellaneous
-
-### Run WASM code like an ELF binary!
-
-Most Linux distros will allow registration of miscellaneous binary formats.
-This will **greatly** simplify all toolchain builds for WALI out-of-the-box and is highly recommended.
-This is **required** to compile some [applications](applications) in our repo
-To enable this, run the following:
-```shell
-cd misc
-source gen_iwasm_wrapper.sh
-# Default binfmt_register does not survive reboots in the system
-# Specify '-p' option to register with systemd-binfmt for reboot survival
-sudo ./binfmt_register.sh
-```
-
-This essentially points Linux to our `iwasm` interpreter to invoke any WASM/AoT file. 
-More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
-
-## Notable Changes to Application Operation at Runtime
-
-Wasm enforces type-checking unlike C, so **type-unsafe C code may not produce the desired output at runtime**.
-In particular, we have observed the following common unsafe occurences:
-* **Indirect function invocation with function pointers**: Unlike C, Wasm's `call_indirect` performs a runtime type-check which will fail on function invocation with mismatched signatures.
-* **Variadic function types**: Functions that use variadic arguments *must* ensure argument type consistency (e.g. `syscall` arguments must all be typecast to `long`).
 
 ## Resources
-[Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
-
-This paper (https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2022:wave.pdf) and its related work section, especially the bit labeled "Modeling and verifying system interfaces"
+* Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
+* [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
+* [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
+* This [paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf) and its related work section, especially the bit labeled "Modeling and verifying system interfaces"
 

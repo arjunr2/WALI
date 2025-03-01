@@ -26,12 +26,11 @@ zlib-clean:
 	$(MAKE) clean
 
 libevent:
-	cd $(WALI_LIB_SRC)/libevent;
-	cmake -DCMAKE_C_COMPILER=$(WALI_CC) -DCMAKE_C_FLAGS="$(WALI_COMMON_CFLAGS) -L$(WALI_SYSROOT_DIR)/lib" -DCMAKE_LINKER=$(WALI_LD) -DCMAKE_LD_FLAGS="$(WALI_COMMON_LDFLAGS)" -DCMAKE_AR=$(WALI_AR) -DCMAKE_RANLIB=$(WALI_RANLIB) -DEVENT__DISABLE_OPENSSL=ON -DEVENT__LIBRARY_TYPE=STATIC
+	cd $(WALI_LIB_SRC)/libevent
+	cmake -DCMAKE_VERBOSE_MAKEFILE=1 -DCMAKE_C_COMPILER=$(WALI_CC) -DCMAKE_C_FLAGS="$(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS)" -DCMAKE_LINKER=$(WALI_LD) -DCMAKE_LD_FLAGS="$(WALI_COMMON_LDFLAGS)" -DCMAKE_AR=$(WALI_AR) -DCMAKE_RANLIB=$(WALI_RANLIB) -DEVENT__DISABLE_OPENSSL=ON -DEVENT__LIBRARY_TYPE=STATIC
 	$(MAKE)
-
 libevent-clean:
-	rm -rf $(WALI_LIB_SRC)/libevent/build
+	rm -rf $(WALI_LIB_SRC)/libevent/bin $(WALI_LIB_SRC)/libevent/lib
 
 ncurses:
 	cd $(WALI_LIB_SRC)/ncurses;
@@ -125,7 +124,7 @@ uvwasi-clean:
 ## --- Applications --- ##
 vim: ncurses
 	cd vim;
-	$(MAKE) CC="$(WALI_CC) --target=x86_64" CClink="$(WALI_CC) $(WALI_COMMON_CFLAGS)" CFLAGS="$(WALI_COMMON_CFLAGS)" LDFLAGS="-L$(WALI_LIB_SRC)/ncurses/build/lib $(WALI_COMMON_LDFLAGS)" LD=$(WALI_LD) CONF_OPT_TERMINAL=--disable-terminal
+	$(MAKE) CC="$(WALI_CC)" CClink="$(WALI_CC) $(WALI_COMMON_CFLAGS)" CFLAGS="$(WALI_COMMON_CFLAGS) -Wno-incompatible-pointer-types" LDFLAGS="-L$(WALI_LIB_SRC)/ncurses/build/lib $(WALI_COMMON_LDFLAGS)" LD=$(WALI_LD) CONF_OPT_TERMINAL=--disable-terminal
 vim-clean: ncurses-clean
 	cd vim;
 	$(MAKE) clean
@@ -138,7 +137,10 @@ sqlite-clean:
 	rm -rf sqlite/build
 
 openssh: zlib
-	mkdir -p openssh/build; cd openssh/build;
+	mkdir -p openssh/build
+	cd openssh
+	autoreconf -i
+	cd build
 	../configure --without-openssl --with-zlib=$(WALI_LIB_SRC)/zlib CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS) $(WALI_COMMON_CFLAGS)" LIBS="-lpthread" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
 	$(MAKE)
 openssh-clean: zlib-clean

@@ -361,10 +361,6 @@ int main(int argc, char* argv[])
       pthread_create(&pub_tid, NULL, publish_thread, NULL);
     }
 
-    sem_destroy (&done_receiving);
-    sem_destroy (&stop_publish);
-    sem_destroy (&qos1_pubmutex);
-
     /* Merge all threads */
     for (int i = 0; i < NUM_SUBS; i++) {
       pthread_join(sub_tid, NULL);
@@ -375,6 +371,11 @@ int main(int argc, char* argv[])
     for (int i = 0; i < NUM_PUBS; i++) {
       pthread_join(pub_tid, NULL);
     }
+
+    sem_destroy (&done_receiving);
+    sem_destroy (&stop_publish);
+    sem_destroy (&qos1_pubmutex);
+
 
     LOG("Disconnecting MQTT\n");
     if ((rc = MQTTClient_disconnect(client, 10000)) != MQTTCLIENT_SUCCESS)  {

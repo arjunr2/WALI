@@ -1,6 +1,7 @@
 include wali_config.mk
 
 IWASM_BUILD_DIR := $(WALI_ROOT_DIR)/wasm-micro-runtime/product-mini/platforms/linux/build
+WAMRC_DIR := wasm-micro-runtime/wamr-compiler
 LLVM_BUILD_DIR := $(WALI_LLVM_DIR)/build
 MUSL_BUILD_DIR := $(WALI_ROOT_DIR)/wali-musl
 LIBCXX_BUILD_DIR := $(WALI_ROOT_DIR)/libcxx
@@ -10,7 +11,8 @@ MEMGB := $(shell echo $$(free -g | sed -n '2p' | awk '{print $$2}'))
 COMPILE_PARALLEL := $(shell nproc --all)
 LINK_PARALLEL := $(shell echo $$(($(MEMGB) < 16 ? 1 : $(MEMGB) / 16)))
 
-.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all clean-llvm
+
+.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-iwasm clean-all clean-llvm wamrc
 .PHONY: rustc
 
 default: iwasm
@@ -23,7 +25,7 @@ libc:
 
 # NOTE: Catching Exceptions only seems to work when libcxx is compiled in Debug mode (O0) #
 .ONESHELL:
-libcxx: wali-compiler libc
+libcxx: libc
 	cmake -S $(WALI_LLVM_DIR)/runtimes -B $(LIBCXX_BUILD_DIR) \
 		-DCMAKE_BUILD_TYPE=Debug  \
 		-DCMAKE_C_COMPILER_WORKS=ON \
@@ -90,12 +92,14 @@ iwasm: iwasm-dir
 	ln -fs $(IWASM_BUILD_DIR)/iwasm iwasm
 
 .ONESHELL:
-wamr-compiler:
-	cd wasm-micro-runtime/wamr-compiler
+wamrc:
+	cd $(WAMRC_DIR)
 	./build_llvm.sh
 	mkdir -p build && cd build
 	cmake -GNinja .. -DWAMR_BUILD_LIBC_WALI=1 -DWAMR_BUILD_GC=0
 	ninja
+	cd $(WALI_ROOT_DIR)
+	ln -sf $(WAMRC_DIR)/build/wamrc wamrc
 
 
 # --- LLVM COMPILER --- #
