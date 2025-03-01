@@ -53,3 +53,24 @@
 	path = compiler_ports/rust
 	url = https://github.com/arjunr2/rust.git
 	branch = wali-stable
+[submodule "applications/libs/libX11"]
+	path = applications/libs/libX11
+	url = https://gitlab.freedesktop.org/xorg/lib/libx11.git
+[submodule "applications/libs/libxau"]
+	path = applications/libs/libxau
+	url = https://gitlab.freedesktop.org/xorg/lib/libxau.git
+[submodule "applications/libs/libxcb"]
+	path = applications/libs/libxcb
+	url = https://gitlab.freedesktop.org/xorg/lib/libxcb.git
+[submodule "applications/libs/libxdmcp"]
+	path = applications/libs/libxdmcp
+	url = https://gitlab.freedesktop.org/xorg/lib/libxdmcp.git
+[submodule "applications/libs/libxtrans"]
+	path = applications/libs/libxtrans
+	url = https://gitlab.freedesktop.org/xorg/lib/libxtrans.git
+[submodule "applications/libs/xcbproto"]
+	path = applications/libs/xcbproto
+	url = https://gitlab.freedesktop.org/xorg/proto/xcbproto.git
+[submodule "applications/libs/xorgproto"]
+	path = applications/libs/xorgproto
+	url = https://gitlab.freedesktop.org/xorg/proto/xorgproto.git

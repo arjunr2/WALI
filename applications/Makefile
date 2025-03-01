@@ -6,12 +6,13 @@ MAKE = make
 WALI_LIB_SRC = $(shell pwd)/libs
 
 .PHONY: all clean vim sqlite openssh mqtt-app lua make memcached bash
-.PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi 
+.PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi libX11 libxtrans
+.PHONY: libxdmcp xorgproto xcbproto libxau libxcb x11test
 .PHONY: make-clean zlib-clean
 
 all: vim sqlite openssh mqtt-app lua make memcached bash
 
-libs: zlib libevent ncurses paho.mqtt.c uvwasi
+libs: zlib libevent ncurses paho.mqtt.c uvwasi libX11
 
 .ONESHELL:
 
@@ -38,6 +39,71 @@ ncurses:
 	$(MAKE)
 ncurses-clean:
 	rm -rf $(WALI_LIB_SRC)/ncurses/build
+
+xorgproto:
+	cd $(WALI_LIB_SRC)/xorgproto;
+	mkdir -p build; cd build;
+	mkdir -p install;
+	../configure --prefix=$(WALI_LIB_SRC)/xorgproto/build/install --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE) install
+xorgproto-clean:
+	rm -rf $(WALI_LIB_SRC)/xorgproto/build
+
+libxtrans:
+	cd $(WALI_LIB_SRC)/libxtrans;
+	mkdir -p build; cd build;
+	mkdir -p install;
+	../configure --prefix=$(WALI_LIB_SRC)/libxtrans/build/install --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE)
+	$(MAKE) install
+libxtrans-clean:
+	rm -rf $(WALI_LIB_SRC)/libxtrans/build
+
+xcbproto:
+	cd $(WALI_LIB_SRC)/xcbproto;
+	mkdir -p build; cd build;
+	../configure --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE)
+xcbproto-clean:
+	rm -rf $(WALI_LIB_SRC)/xcbproto/build
+
+libxau: xorgproto
+	cd $(WALI_LIB_SRC)/libxau;
+	mkdir -p build; cd build;
+	mkdir -p install;
+	../configure --prefix=$(WALI_LIB_SRC)/libxau/build/install --enable-static --disable-shared --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -I$(WALI_LIB_SRC)/xorgproto/build/install/include" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE)
+	$(MAKE) install
+libxau-clean:
+	rm -rf $(WALI_LIB_SRC)/libxau/build
+
+libxdmcp: xorgproto
+	cd $(WALI_LIB_SRC)/libxdmcp;
+	mkdir -p build; cd build;
+	../configure --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -I$(WALI_LIB_SRC)/xorgproto/build/install/include" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE)
+libxdmcp-clean:
+	rm -rf $(WALI_LIB_SRC)/libxdmcp/build	
+
+libxcb: libxau xorgproto
+	cd $(WALI_LIB_SRC)/libxcb;
+	mkdir -p build; cd build;
+	mkdir -p install;
+	../configure --prefix=$(WALI_LIB_SRC)/libxcb/build/install --enable-static --disable-shared --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -I$(WALI_LIB_SRC)/libxau/build/install/include -I$(WALI_LIB_SRC)/xorgproto/build/install/include" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE)
+	$(MAKE) install
+libxcb-clean:
+	rm -rf $(WALI_LIB_SRC)/libxcb/build	
+
+libX11: xorgproto libxcb libxtrans
+	cd $(WALI_LIB_SRC)/libX11;
+	mkdir -p build; cd build;
+	mkdir -p install;
+	../configure --prefix=$(WALI_LIB_SRC)/libX11/build/install --enable-malloc0returnsnull --enable-static --disable-shared --without-cxx --without-cxx-binding CC=$(WALI_CC) CC_FOR_BUILD=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -I$(WALI_LIB_SRC)/xorgproto/build/install/include -I$(WALI_LIB_SRC)/libxtrans/build/install/include -I$(WALI_LIB_SRC)/libxcb/build/install/include" BCC=$(WALI_CC) LD=$(WALI_LD) LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) cross_compiling=yes
+	$(MAKE) -j$(nproc)
+	$(MAKE) install
+libX11-clean:
+	rm -rf $(WALI_LIB_SRC)/libX11/build	
 
 paho.mqtt.c:
 	cd $(WALI_LIB_SRC)/paho.mqtt.c;
@@ -118,6 +184,13 @@ bash:
 bash-clean:
 	rm -rf bash/build
 
-clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean lua-clean memcached-clean bash-clean
+x11test: libX11
+	cd x11test;
+	$(MAKE) CC=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS) -I$(WALI_LIB_SRC)/libX11/build/install/include -I$(WALI_LIB_SRC)/xorgproto/build/install/include" LDFLAGS="-L$(WALI_LIB_SRC)/libX11/build/install/lib -L$(WALI_LIB_SRC)/libxcb/build/install/lib -L$(WALI_LIB_SRC)/libxau/build/install/lib $(WALI_COMMON_LDFLAGS)" LD=$(WALI_LD)
+x11test-clean:
+	cd x11test;
+	$(MAKE) clean
+
+clean: sqlite-clean openssh-clean vim-clean mqtt-app-clean uvwasi-clean lua-clean memcached-clean bash-clean xorgproto-clean xcbproto-clean libxau-clean libxtrans-clean libxdmcp-clean libxcb-clean libX11-clean x11test-clean
 
 
