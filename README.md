@@ -2,39 +2,39 @@
 
 ![WebAssembly Linux Interface](assets/main-logo.png?raw=true)
 
-This repo serves to prototype an implementation of the [WebAssembly Linux Interface](https://arxiv.org/abs/2312.03858). For current range of 
-support, refer [here](docs/support.md)
+This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembly with Thin Kernel Interfaces**](https://dl.acm.org/doi/abs/10.1145/3689031.3717470) (arxiv version available [here](https://arxiv.org/abs/2312.03858))
+
+This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
 
 ## Overview
-WALI is a complete(ish?) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
-down to even low-level system applications. 
-WALI adopts a layering approach to API design, establishing infrastructure for facilitating WebAssembly-oriented research 
-by virtualizing high-level APIs and seamless build-run-deploy workflows of arbitrary applications.
-We create a custom modified C standard library ([musl libc](https://github.com/arjunr2/wali-musl)) that uses WALI
-and produce a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali)
+WALI is a complete(ish) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
+down to prevalent, low-level Linux applications. 
+WALI adopts a layering approach to API design, allowing WASI (and other arbitrary Wasm APIs) to be virtualized over it, 
+establishing infrastructure for Wasm both in research and industry.
 
+Building and running Wasm binaries is now **trivial** with WALI, while improving ecosystem security
 
 ## Component Setup
 
 Before proceeding, make sure all dependencies are installed with `sudo ./apt-install-deps.sh`. 
 There are four major toolchain components, that may be incrementally built based on requirements:
 
-*I just want to run WALI apps!*:
+***I just want to run WALI apps!***:
 1. [WALI runtime](#wali-runtime)
 
-*I want to compile/build WALI apps!*:
+***I want to compile/build WALI apps!***:
 
 2. [Clang compiler](#wali-llvm-compiler)
 3. [WALI Sysroot](#wali-sysroot)
 
-*I want to AoT compile WALI apps to go fast!*
+***I want to AoT compile WALI apps to go fast!***
 
 4. [AoT Compiler](#aot-compiler)
 
 
 ### WALI runtime
 
-We have a baseline implementation in [WAMR](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali). To build:
+We include a baseline implementation in WAMR. To build:
 ```shell
 git submodule update --init wasm-micro-runtime
 make iwasm
@@ -89,7 +89,7 @@ Generates faster ahead-of time compiled executables. For our WAMR implementation
 make wamrc
 ```
 
-Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/a29e5c633c26a30e54373f658394fab2b95f394e/wamr-compiler)
+Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler)
 for any extra information on the build.
 Once completed, a symlink to `wamrc` is generated in the root directory:
 ```shell
@@ -137,5 +137,5 @@ be patched into `Cargo.toml` until potential upstreaming is possible.
 * Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
 * [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
-* This [paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf) and its related work section, especially the bit labeled "Modeling and verifying system interfaces"
+* Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)
 
