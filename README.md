@@ -20,19 +20,19 @@ Before proceeding, make sure all dependencies are installed with `sudo ./apt-ins
 There are four major toolchain components, that may be incrementally built based on requirements:
 
 ***I just want to run WALI apps!***:
-1. [WALI runtime](#wali-runtime)
+1. [WALI Engine](#1-wali-engine)
 
 ***I want to compile/build WALI apps!***:
 
-2. [Clang compiler](#wali-llvm-compiler)
-3. [WALI Sysroot](#wali-sysroot)
+2. [WALI LLVM Toolchain](#2-wali-llvm-toolchain)
+3. [WALI Sysroot](#3-wali-sysroot)
 
 ***I want to AoT compile WALI apps to go fast!***
 
-4. [AoT Compiler](#aot-compiler)
+4. [AoT Compiler](#4-aot-compiler)
 
 
-### WALI runtime
+### 1. WALI Engine
 
 We include a baseline implementation in WAMR. To build:
 ```shell
@@ -60,7 +60,7 @@ sudo ./binfmt_register.sh -p
 More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 
-### WALI LLVM compiler
+### 2. WALI LLVM Toolchain
 
 ```shell
 git submodule update --init llvm-project
@@ -70,7 +70,7 @@ make wali-compiler
 **NOTE**: Building the LLVM suite takes a long time and can consume up to 150GB of disk. The compiler is essential if you want to rebuild libc or build applications.
 
 
-### WALI Sysroot
+### 3. WALI Sysroot
 
 To build libc:
 ```shell
@@ -82,7 +82,7 @@ We currently support 64-bit architectures (x86-64, aarch64, riscv64) with hopes 
 to more architectures. 
 
 
-### AoT Compiler
+### 4. AoT Compiler
 
 Generates faster ahead-of time compiled executables. For our WAMR implementation, build as:
 ```
