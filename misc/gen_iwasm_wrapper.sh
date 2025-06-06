@@ -29,7 +29,7 @@ else
     WL_ENVFILE=\$WALI_ENVFILE
 fi
 
-exec $WALI_ROOT_DIR/iwasm -v=\$WL_VERBOSITY \$STRACE_ARG --stack-size=524288 --max-threads=100 --env-file=\$WL_ENVFILE "\$@"
+exec $WALI_ROOT_DIR/iwasm -v=\$WL_VERBOSITY \$STRACE_ARG --stack-size=4194304 --max-threads=100 --env-file=\$WL_ENVFILE "\$@"
 EOT
 if [ $? -ne 0 ]; then
   echo "Error writing iwasm-wrapper"
