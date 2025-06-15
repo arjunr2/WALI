@@ -74,3 +74,6 @@
 [submodule "applications/libs/xorgproto"]
 	path = applications/libs/xorgproto
 	url = https://gitlab.freedesktop.org/xorg/proto/xorgproto.git
+[submodule "applications/libs/openssl"]
+	path = applications/libs/openssl
+	url = https://github.com/openssl/openssl.git

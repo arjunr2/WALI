@@ -1,0 +1,17 @@
+diff --git a/Configurations/10-main.conf b/Configurations/10-main.conf
+index 0701b733ec..fbbae188dc 100644
+--- a/Configurations/10-main.conf
++++ b/Configurations/10-main.conf
+@@ -882,6 +882,12 @@ my %targets = (
+         CXX              => "clang++",
+         ex_libs          => add(threads("-latomic")),
+     },
++    "wasm32-wali" => {
++        inherit_from     => [ "linux-generic64" ],
++        lib_cppflags     => add("-DL_ENDIAN"),
++        bn_ops           => "THIRTY_TWO_BIT",
++        asm_arch         => 'wasm32',
++    },
+     "linux-x86_64" => {
+         inherit_from     => [ "linux-generic64" ],
+         cflags           => add("-m64"),

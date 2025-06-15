@@ -4,15 +4,17 @@ MAKE = make
 
 # --- Library path --- #
 WALI_LIB_SRC = $(shell pwd)/libs
+LIB_PATCH_DIR = $(WALI_LIB_SRC)/patches
+PATCH_COMMAND = git apply --reject
 
 .PHONY: all clean vim sqlite openssh mqtt-app lua make memcached bash
-.PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi libX11 libxtrans
+.PHONY: libs zlib libevent paho.mqtt.c ncurses uvwasi libX11 libxtrans openssl
 .PHONY: libxdmcp xorgproto xcbproto libxau libxcb x11test
 .PHONY: make-clean zlib-clean
 
 all: vim sqlite openssh mqtt-app lua make memcached bash
 
-libs: zlib libevent ncurses paho.mqtt.c uvwasi libX11
+libs: zlib libevent ncurses paho.mqtt.c uvwasi libX11 openssl
 
 .ONESHELL:
 
@@ -120,6 +122,16 @@ uvwasi:
 	$(MAKE)
 uvwasi-clean:
 	rm -rf $(WALI_LIB_SRC)/uvwasi/out
+
+openssl:
+	cd $(WALI_LIB_SRC)/openssl
+	$(PATCH_COMMAND) $(LIB_PATCH_DIR)/openssl.patch
+	mkdir -p build; cd build;
+	CC=$(WALI_CC) CFLAGS="$(WALI_COMMON_CFLAGS)" LDFLAGS="$(WALI_COMMON_LDFLAGS)" AR=$(WALI_AR) RANLIB=$(WALI_RANLIB) CXXFLAGS="$(WALI_COMMON_CFLAGS)" ../Configure --banner="wasm32-wali" -static no-asm no-async no-egd no-ktls no-module no-afalgeng no-secure-memory wasm32-wali
+	$(MAKE) -j
+
+openssl-clean:
+	rm -rf $(WALI_LIB_SRC)/openssl/build
 
 ## --- Applications --- ##
 vim: ncurses
