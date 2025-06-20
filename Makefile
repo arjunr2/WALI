@@ -130,6 +130,7 @@ wali-compiler: llvm-base
 rustc:
 	export WASM_MUSL_SYSROOT=$(WALI_SYSROOT_DIR)
 	cd compiler_ports/rust
+	rustup override set nightly
 	./x setup compiler
 	python3 $(WALI_ROOT_DIR)/scripts/rustc_config.py -r $(WALI_ROOT_DIR)/compiler_ports/rust \
 		-m $(WALI_SYSROOT_DIR) -l $(WALI_LLVM_BIN_DIR)
