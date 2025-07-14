@@ -97,12 +97,24 @@ wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We r
 ```
 
 
-## Adapting Build Systems to WALI
+## Building Applications with WALI
+
+### Building a "Hello World"
+
+To build a simple C file, you can run the following on a Bash shell:
+
+```shell
+# This file provides appropriate compilation flags as environment variables (e.g. WALI_CC, WALI_LD, WALI_CFLAGS, WALI_LDFLAGS)
+source wali_config.sh
+$WALI_CC $WALI_CFLAGS $WALI_LDFLAGS <c-file> -o <output-file>
+```
+
+### Build System Plugins
 
 We provide three configuration files with toolchain requirements, drastically easing plug-in into major builds
-1. Bash: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh))
-2. Make: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
-3. CMake: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
+1. **Shell**: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh))
+2. **Make**: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
+3. **CMake**: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
 
 
 ## Sample Applications
