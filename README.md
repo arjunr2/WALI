@@ -2,17 +2,11 @@
 
 ![WebAssembly Linux Interface](assets/main-logo.png?raw=true)
 
+***A (Nearly-Complete) Linux API for WebAssembly!***
+
 This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembly with Thin Kernel Interfaces**](https://dl.acm.org/doi/abs/10.1145/3689031.3717470) (arxiv version available [here](https://arxiv.org/abs/2312.03858))
 
 This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
-
-## Overview
-WALI is a complete(ish) abstraction over Linux for WebAssembly that aims to push lightweight virtualization
-down to prevalent, low-level Linux applications. 
-WALI adopts a layering approach to API design, allowing WASI (and other arbitrary Wasm APIs) to be virtualized over it, 
-establishing infrastructure for Wasm both in research and industry.
-
-Building and running Wasm binaries is now **trivial** with WALI, while improving ecosystem security
 
 ## Component Setup
 
@@ -150,9 +144,20 @@ be patched into `Cargo.toml` for the out-of-tree build.
 
 
 
+## Project Motivation
+The WALI for WebAssembly aims to push lightweight virtualization
+down to prevalent, low-level Linux applications. 
+WALI adopts a layering approach to API design, allowing WASI (and other arbitrary Wasm APIs) to be virtualized over it, 
+establishing infrastructure for Wasm both in research and industry.
+
+Building and running Wasm binaries is now **trivial** with WALI, while improving ecosystem security by layering Wasm APIs
+
+
 ## Resources
 * Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
 * [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 * Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)
+
+
 
