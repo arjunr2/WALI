@@ -22,7 +22,7 @@ dir:
 
 %.o: %.c
 	$(WALI_CC) --target=$(HOST_PLATFORM) -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
-	./compile-wali.sh -o $(WASM_DIR) -s $(WALI_SYSROOT_DIR) $<
+	./compile-wali.sh -o $(WASM_DIR) $<
 
 
 clean:
