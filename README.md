@@ -11,17 +11,17 @@ This repo contains all the compiler and engine prototypes for an implementation 
 ## Component Setup
 
 Before proceeding, make sure all dependencies are installed with `sudo ./apt-install-deps.sh`. 
-There are four major toolchain components, that may be incrementally built based on requirements:
+There are four major toolchain components, that may be incrementally built:
 
-***I just want to run WALI apps!***:
+***I just want to run WALI Wasm executables!***:
 1. [WALI Engine](#1-wali-engine)
 
-***I want to compile/build WALI apps!***:
+***I want to compile/build WALI executables!***:
 
 2. [WALI LLVM Toolchain](#2-wali-llvm-toolchain)
 3. [WALI Sysroot](#3-wali-sysroot)
 
-***I want to AoT compile WALI apps to go fast!***
+***I want to AoT compile the Wasm executables to go fast!***
 
 4. [AoT Compiler](#4-aot-compiler)
 
@@ -31,16 +31,16 @@ There are four major toolchain components, that may be incrementally built based
 We include a baseline implementation in WAMR. To build:
 ```shell
 git submodule update --init wasm-micro-runtime
+# Generates `iwasm` symlink in root directory
 make iwasm
 ```
-An `iwasm` symlink executable should be generated in the root directory that can execute WALI binaries (e.g. `./iwasm -v=0 --stack-size=524288 <path-to-wasm-file>`).
-See [Sample Applications](#sample-applications) for test binaries.
 
+See [Sample Applications](#sample-applications) for test binaries.
 
 #### WASM as a Miscellaneous Binary Format!
 
-WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`)!
-This will simplify all WALI toolchain builds and is **required** to compile some [applications](applications) in our repo.
+WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`).
+This simplifies all builds and is **necessary** to compile some [applications](applications) in our repo.
 To do this, run:
 
 ```shell
@@ -66,7 +66,6 @@ make wali-compiler
 
 ### 3. WALI Sysroot
 
-To build libc:
 ```shell
 git submodule update --init wali-musl
 make libc
@@ -78,14 +77,15 @@ to more architectures.
 
 ### 4. AoT Compiler
 
-Generates faster ahead-of time compiled executables. For our WAMR implementation, build as:
+Generates faster ahead-of time compiled executables. For our WAMR implementation, build with:
 ```
 make wamrc
 ```
 
-Refer to [WAMR compiler](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler)
-for any extra information on the build.
-Once completed, a symlink to `wamrc` is generated in the root directory:
+Refer to [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler) for more info.
+
+The `wamrc` symlink can be used as follows:
+
 ```shell
 wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We require --enable-multi-thread flag for threads
 ```
@@ -113,7 +113,7 @@ We provide three configuration files with toolchain requirements, drastically ea
 
 ## Sample Applications
 
-* **Tests** can be built with `make tests`. WALI executables are located in `tests/wasm` -- corresponding native ELF files in `tests/elf` can be used to compare against the WASM output
+* **Tests**: Build with `make tests`. Executables are located in `tests/wasm`.
 * **Apps**: The [sample-apps](sample-apps) directory has few several popular prebuilt binaries to run
 
 
