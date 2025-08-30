@@ -20,7 +20,7 @@ export WALI_RANLIB=$WALI_LLVM_BIN_DIR/llvm-ranlib
 WASM_FEATURES="-mcpu=generic -matomics -mbulk-memory -mexception-handling"
 export WALI_CFLAGS="--target=wasm32-wali-linux-musl -pthread --sysroot=$WALI_SYSROOT_DIR -fdeclspec -fwasm-exceptions $WASM_FEATURES"
 export WALI_CXXFLAGS="$WALI_CFLAGS -stdlib=libc++ -I$WALI_ROOT_DIR/libcxx/include/c++/v1"
-export WALI_LDFLAGS="-L$WALI_SYSROOT_DIR/lib -L$WALI_LIBCXX_DIR/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648"
+export WALI_LDFLAGS="-L$WALI_SYSROOT_DIR/lib -L$WALI_LIBCXX_DIR/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648 -Wl,--undefined=__walirt_wasm_memory_size"
 
 # Libclang RT
 export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/llvm-config --version | cut -d '.' -f 1)

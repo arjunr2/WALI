@@ -107,11 +107,7 @@ libcxx: libc
 		-DCMAKE_ASM_FLAGS="$(WALI_COMMON_CFLAGS)" \
 		-DCMAKE_CXX_FLAGS="-pthread -Wno-user-defined-literals $(WALI_COMMON_CFLAGS)" \
 		-DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind"
-	cd $(WALI_LIBCXX_DIR)
-	make -j$(COMPILE_PARALLEL)
-	cp libcxx/lib/* $(WALI_SYSROOT_DIR)/lib/
-	cp libcxx/include/* $(WALI_SYSROOT_DIR)/include/
-
+	make -C $(WALI_LIBCXX_DIR) -j$(COMPILE_PARALLEL)
 
 # --- WAMR RUNTIME/COMPILER --- #
 .ONESHELL:

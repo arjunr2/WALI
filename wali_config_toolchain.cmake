@@ -20,4 +20,4 @@ set (CMAKE_LINKER ${WALI_LLVM_BIN_DIR}/wasm-ld)
 # Flags
 set (CMAKE_C_FLAGS "--target=wasm32-wali-linux-musl -pthread --sysroot=${CMAKE_SYSROOT} ${WALI_WASM_FEATURE_FLAGS}")
 set (CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_C_FLAGS} -I${WALI_LIBCXX_DIR}/include/c++/v1")
-set (CMAKE_EXE_LINKER_FLAGS "-L${CMAKE_SYSROOT}/lib -L${WALI_LIBCXX_DIR}/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648)
+set (CMAKE_EXE_LINKER_FLAGS "-L${CMAKE_SYSROOT}/lib -L${WALI_LIBCXX_DIR}/lib -Wl,--shared-memory -Wl,--export-memory -Wl,--max-memory=2147483648 -Wl,--undefined=__walirt_wasm_memory_size")
