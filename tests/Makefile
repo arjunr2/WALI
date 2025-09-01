@@ -1,4 +1,4 @@
-include ../wali_config.mk
+include ../toolchains/wali.mk
 
 .PHONY: dir clean all
 
@@ -22,7 +22,8 @@ dir:
 
 %.o: %.c
 	$(WALI_CC) --target=$(HOST_PLATFORM) -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
-	./compile-wali.sh -o $(WASM_DIR) $<
+	$(WALI_CC) $(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -o $(WASM_DIR)/$*.wasm $<
+	wasm2wat --enable-threads $(WASM_DIR)/$*.wasm -o $(WASM_DIR)/$*.wat
 
 
 clean:

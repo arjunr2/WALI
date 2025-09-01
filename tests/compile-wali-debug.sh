@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Used during debugging to test compiler and linker independently
+
+source ../toolchains/wali.sh
+
+outdir=.
+verbose=""
+
+while getopts "vo:s:" OPT; do
+  case $OPT in
+    v) verbose=--verbose;;
+    o) outdir=$OPTARG;;
+    *) 
+      echo "Incorrect opt provided"
+      exit 1 ;;
+  esac
+done
+cfile=${@:$OPTIND:1}
+outbase=$outdir/$(basename $cfile .c)
+
+crtfile=$WALI_SYSROOT_DIR/lib/crt1.o 
+
+$WALI_CC $verbose $WALI_COMMON_CFLAGS $cfile -c -o $outbase.int.wasm
+wasm2wat --enable-threads $outbase.int.wasm -o $outbase.int.wat
+$WALI_LD $verbose --no-gc-sections --no-entry --shared-memory --export-memory --max-memory=67108864 --undefined=__walirt_wasm_memory_size --allow-undefined -L$WALI_SYSROOT_DIR/lib $outbase.int.wasm $crtfile -lc -lm $WALI_LIBCLANG_RT_LIB -o ${outbase}.wasm
+wasm2wat --enable-threads ${outbase}.wasm -o ${outbase}.wat

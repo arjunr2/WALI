@@ -8,9 +8,13 @@ This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembl
 
 This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
 
+## Initial Setup
+1. Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages
+
+2. Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
+
 ## Component Setup
 
-Before proceeding, make sure all dependencies are installed with `sudo ./apt-install-deps.sh`. 
 There are four major toolchain components, that may be incrementally built:
 
 ***I just want to run WALI Wasm executables!***:
@@ -35,23 +39,22 @@ git submodule update --init wasm-micro-runtime
 make iwasm
 ```
 
-See [Sample Applications](#sample-applications) for test binaries.
+See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
 
 #### WASM as a Miscellaneous Binary Format!
 
 WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`).
-This simplifies all builds and is **necessary** to compile some [applications](applications) in our repo.
+This is recommended since it simplifies execution and is **necessary** to build some [applications](applications) out-of-the-box.
 To do this, run:
 
 ```shell
 cd misc
 source gen_iwasm_wrapper.sh
-# Default binfmt_register does not survive reboots in the system
-# Specify '-p' option to register with systemd-binfmt for reboot survival
+# Specify '-p' option to register with systemd-binfmt for reboot survival. Default binfmt_register does not survive system reboots
 sudo ./binfmt_register.sh -p
 ```
 
-More information about miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
+For more info about miscellaneous binary formats and troubleshooting, see [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 
 ### 2. WALI LLVM Toolchain
@@ -71,13 +74,12 @@ git submodule update --init wali-musl
 make libc
 ```
 
-We currently support 64-bit architectures (x86-64, aarch64, riscv64) with hopes to expand
-to more architectures. 
+**NOTE**: Only the following 64-bit architectures are supported: `x86-64`, `aarch64`, `riscv64`. Future iterations will include a larger set of ISAs.
 
 
 ### 4. AoT Compiler
 
-Generates faster ahead-of time compiled executables. For our WAMR implementation, build with:
+Generates faster ahead-of time compiled executables. For the WAMR implementation, build with:
 ```
 make wamrc
 ```
@@ -91,31 +93,26 @@ wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We r
 ```
 
 
-## Building Applications with WALI
+## Building WALI Applications
 
-### Building a "Hello World"
-
-To build a simple C file, you can run the following on a Bash shell:
-
+Setup appropriate toolchain files:
 ```shell
-# This file provides appropriate compilation flags as environment variables (e.g. WALI_CC, WALI_LD, WALI_CFLAGS, WALI_LDFLAGS)
-source wali_config.sh
-$WALI_CC $WALI_CFLAGS $WALI_LDFLAGS <c-file> -o <output-file>
+python3 toolchains/gen_toolchains.py
+```
+For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
+
+### Hello World
+
+You can use the convenience bash script in the [examples](examples) directory. For instance:
+```shell
+cd examples
+./compile-wali-standalone.sh -o printf.wasm printf.c
+# Run the binary. Can just run `printf.wasm` is miscellaneous binary format is setup
+../iwasm printf.wasm
 ```
 
-### Build System Plugins
-
-We provide three configuration files with toolchain requirements, drastically easing plug-in into major builds
-1. **Shell**: Source the [wali\_config.sh](wali_config.sh) (see [tests/compile-wali.sh](tests/compile-wali.sh))
-2. **Make**: Include [wali\_config.mk](wali_config.mk) (see [applications/Makefile](applications/Makefile))
-3. **CMake**: The [wali\_config\_toolchain.cmake](wali_config_toolchain.cmake) file can be used directly in `CMAKE\_TOOLCHAIN\_FILE`
-
-
-## Sample Applications
-
-* **Tests**: Build with `make tests`. Executables are located in `tests/wasm`.
-* **Apps**: The [sample-apps](sample-apps) directory has few several popular prebuilt binaries to run
-
+### Tests
+Run `make tests`. WALI executables are generated in `tests/wasm`
 
 ## Compiler Ports
 

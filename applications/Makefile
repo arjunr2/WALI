@@ -1,4 +1,4 @@
-include ../wali_config.mk
+include ../toolchains/wali.mk
 
 MAKE = make
 

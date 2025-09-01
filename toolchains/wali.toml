@@ -1,0 +1,29 @@
+# wali.toml — single source of truth for all configs
+
+[target]
+triple = "wasm32-wali-linux-musl"
+
+[build_dirs]
+# "root" directory for builds is a must, and relative to WALI root; the root itself is computed per toolchain file
+root  = "build"
+# All below directories are relative to 'root'
+llvm   = "llvm"
+sysroot    = "sysroot"
+libcxx     = "libcxx"
+
+[features]
+
+[flags]
+extra_cflags  = ["-O0", "-pthread", "-fdeclspec", "-fwasm-exceptions"]
+extra_cxxflags = []
+# Used as "-W{value}
+warning_cflags = ["no-implicit-function-declaration", "no-int-conversion", "no-incompatible-function-pointer-types"]
+wasm_features = ["-mcpu=generic", "-matomics", "-mbulk-memory", "-mexception-handling"]
+
+[flags.link]
+# Linker flags : "-Wl,--{key}" for bools, else "-Wl,--{key}={value}"
+shared-memory = true
+export-memory = true
+max-memory    = 2147483648
+# To prevent linker optimization of helper RT lib exports for WALI 
+undefined = ["__walirt_wasm_memory_size"]

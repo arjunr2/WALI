@@ -1,4 +1,4 @@
-include wali_config.mk
+include toolchains/wali.mk
 
 MEMGB := $(shell echo $$(free -g | sed -n '2p' | awk '{print $$2}'))
 
@@ -143,12 +143,9 @@ llvm-base: | build_dir
 
 .ONESHELL:
 wali-compiler: llvm-base
-	LLVM_MAJOR_VERSION=`$(WALI_LLVM_BIN_DIR)/llvm-config --version | cut -d '.' -f 1`
-	LIBCLANG_RT_LIB=$(WALI_ROOT_DIR)/misc/libclang_rt/llvm-$$LLVM_MAJOR_VERSION.libclang_rt.builtins-wasm32.a
-	DEST_RT_DIR=$(WALI_LLVM_DIR)/lib/clang/$$LLVM_MAJOR_VERSION/lib
-	mkdir -p $(WALI_LLVM_DIR)/lib/clang/$$LLVM_MAJOR_VERSION/lib/linux
-	cp $$LIBCLANG_RT_LIB $$DEST_RT_DIR/libclang_rt.builtins-wasm32.a
-	cp $$LIBCLANG_RT_LIB $$DEST_RT_DIR/linux/libclang_rt.builtins-wasm32.a
+	LIBCLANG_RT_LIB=$(WALI_ROOT_DIR)/misc/libclang_rt/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32.a
+	mkdir -p $(dir $(WALI_LIBCLANG_RT_LIB))
+	cp $$LIBCLANG_RT_LIB $(WALI_LIBCLANG_RT_LIB)
 	
 
 # --- COMPILER PORTS --- #
