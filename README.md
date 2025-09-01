@@ -108,7 +108,7 @@ You can use the convenience bash script in the [examples](examples) directory. F
 ```shell
 cd examples
 ./compile-wali-standalone.sh -o printf.wasm printf.c
-# Run the binary. Can just run `printf.wasm` is miscellaneous binary format is setup
+# Run the binary. Can just run `printf.wasm` if miscellaneous binary format is setup
 ../iwasm printf.wasm
 ```
 
