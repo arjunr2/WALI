@@ -84,13 +84,14 @@ Generates faster ahead-of time compiled executables. For the WAMR implementation
 make wamrc
 ```
 
-Refer to [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler) for more info.
-
 The `wamrc` symlink can be used as follows:
 
 ```shell
-wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>  # We require --enable-multi-thread flag for threads
+# --enable-multi-thread flag is needed for thread support
+wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>
 ```
+
+Refer to [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler) for more info.
 
 
 ## Building WALI Applications
