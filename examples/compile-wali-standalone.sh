@@ -20,4 +20,5 @@ done
 cfile=${@:$OPTIND:1}
 
 # Compile and link
+set -x
 $WALI_CC $WALI_COMMON_CFLAGS $WALI_COMMON_LDFLAGS $cfile -o $outfile $verbose
