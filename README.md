@@ -9,9 +9,8 @@ This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembl
 This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
 
 ## Initial Setup
-1. Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages
 
-2. Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
+Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
 
 ## Component Setup
 
@@ -32,16 +31,19 @@ There are four major toolchain components, that may be incrementally built:
 
 ### 1. WALI Engine
 
-We include a baseline implementation in WAMR. To build:
+We include a baseline implementation in WAMR. 
+See [examples/precompiled](examples/precompiled) after building for runnable WALI binaries.
+
+#### Native Linux Host
+
+Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages. Then build with:
 ```shell
 git submodule update --init wasm-micro-runtime
 # Generates `iwasm` symlink in root directory
 make iwasm
 ```
 
-See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
-
-#### WASM as a Miscellaneous Binary Format!
+##### WASM as a Miscellaneous Binary Format (Optional but Recommended)
 
 WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`).
 This is recommended since it simplifies execution and is **necessary** to build some [applications](applications) out-of-the-box.
@@ -55,6 +57,19 @@ sudo ./binfmt_register.sh -p
 ```
 
 For more info about miscellaneous binary formats and troubleshooting, see [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
+
+
+#### Non-Linux Host (Docker Environment)
+
+To build the image:
+```shell
+docker build -t wali -f runtime.Dockerfile .
+```
+
+You can then run WALI binaries with the image:
+```shell
+docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
+```
 
 
 ### 2. WALI LLVM Toolchain

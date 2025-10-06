@@ -124,9 +124,9 @@ def main():
         export WALI_COMMON_CXXFLAGS="{common_cxxflags.format(CFLAGSVAR='${WALI_COMMON_CFLAGS}', LIBCXXVAR='${WALI_LIBCXX_DIR}')}"
         export WALI_COMMON_LDFLAGS="{common_ldflags.format(SYSROOTVAR='${WALI_SYSROOT_DIR}', LIBCXXVAR='${WALI_LIBCXX_DIR}')}"
 
-        # Libclang RT
-        export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/{llvm_config} --version | cut -d '.' -f 1)
-        export WALI_LIBCLANG_RT_LIB=$WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
+        # Libclang RT: Uncomment this only after llvm is already built, if needed.
+        # export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/{llvm_config} --version | cut -d '.' -f 1)
+        # export WALI_LIBCLANG_RT_LIB=$WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
     """)
 
     # -------------------
