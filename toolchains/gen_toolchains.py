@@ -86,13 +86,13 @@ def main():
         WALI_LLVM_MAJOR_VERSION = $(shell $(WALI_LLVM_BIN_DIR)/{llvm_config} --version | cut -d '.' -f 1)
         WALI_LIBCLANG_RT_LIB = $(WALI_LLVM_DIR)/lib/clang/$(WALI_LLVM_MAJOR_VERSION)/lib/{target}/libclang_rt.builtins.a
 
-        .PHONY: print-vars
-        print-vars:
-        \t@echo WALI_ROOT_DIR=$(WALI_ROOT_DIR)
-        \t@echo WALI_CC=$(WALI_CC)
-        \t@echo WALI_CFLAGS=$(WALI_COMMON_CFLAGS)
-        \t@echo WALI_CXXFLAGS=$(WALI_COMMON_CXXFLAGS)
-        \t@echo WALI_LDFLAGS=$(WALI_COMMON_LDFLAGS)
+        #.PHONY: print-vars
+        #print-vars:
+        #\t@echo WALI_ROOT_DIR=$(WALI_ROOT_DIR)
+        #\t@echo WALI_CC=$(WALI_CC)
+        #\t@echo WALI_CFLAGS=$(WALI_COMMON_CFLAGS)
+        #\t@echo WALI_CXXFLAGS=$(WALI_COMMON_CXXFLAGS)
+        #\t@echo WALI_LDFLAGS=$(WALI_COMMON_LDFLAGS)
     """)
 
     # -------------------

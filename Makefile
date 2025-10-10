@@ -56,8 +56,8 @@ musl_config:
 libc: | build_dir musl_config
 	make -C $(MUSL_SOURCE_DIR) -j$(COMPILE_PARALLEL) install
 	# For crt files for clang auto-detection
-	mkdir -p $(WALI_SYSROOT_DIR)/lib/wasm32-linux-musl
-	cp $(WALI_SYSROOT_DIR)/lib/*.o $(WALI_SYSROOT_DIR)/lib/wasm32-linux-musl
+	mkdir -p $(WALI_SYSROOT_DIR)/lib/wasm32-linux-muslwali
+	cp $(WALI_SYSROOT_DIR)/lib/*.o $(WALI_SYSROOT_DIR)/lib/wasm32-linux-muslwali
 
 # NOTE: Catching Exceptions only seems to work when libcxx is compiled in Debug mode (O0) #
 .ONESHELL:
