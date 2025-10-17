@@ -7,8 +7,7 @@
 	branch = wali
 [submodule "llvm-project"]
 	path = llvm-project
-	url = https://github.com/arjunr2/llvm-project.git
-	branch = release/18.x
+	url = https://github.com/llvm/llvm-project.git
 [submodule "applications/sqlite"]
 	path = applications/sqlite
 	url = https://github.com/sqlite/sqlite.git
