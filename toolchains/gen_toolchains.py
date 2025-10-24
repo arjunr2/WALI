@@ -17,6 +17,11 @@ def main():
         cfg = tomllib.load(f)
 
     target = cfg["target"]["triple"]
+    triple_split = target.split('-')
+    if len(triple_split) != 4:
+        print("[target.triple] requires full 4-tuple specification (arch-vendor-os-env)", file=sys.stderr)
+        sys.exit(1)
+    target_novendor = '-'.join([triple_split[0]] + triple_split[2:])
 
     paths  = cfg["build_dirs"]
     build_dir = paths["root"]
@@ -81,6 +86,8 @@ def main():
         WALI_COMMON_CFLAGS   := {common_cflags.format(SYSROOTVAR='$(WALI_SYSROOT_DIR)')}
         WALI_COMMON_CXXFLAGS := {common_cxxflags.format(CFLAGSVAR='$(WALI_COMMON_CFLAGS)', LIBCXXVAR='$(WALI_LIBCXX_DIR)')}
         WALI_COMMON_LDFLAGS  := {common_ldflags.format(SYSROOTVAR='$(WALI_SYSROOT_DIR)', LIBCXXVAR='$(WALI_LIBCXX_DIR)')}
+        WALI_TARGET          := {target}
+        WALI_TARGET_NOVENDOR := {target_novendor}
 
         # --- Libclang RT --- #
         WALI_LLVM_MAJOR_VERSION = $(shell $(WALI_LLVM_BIN_DIR)/{llvm_config} --version | cut -d '.' -f 1)
@@ -123,6 +130,8 @@ def main():
         export WALI_COMMON_CFLAGS="{common_cflags.format(SYSROOTVAR='${WALI_SYSROOT_DIR}')}"
         export WALI_COMMON_CXXFLAGS="{common_cxxflags.format(CFLAGSVAR='${WALI_COMMON_CFLAGS}', LIBCXXVAR='${WALI_LIBCXX_DIR}')}"
         export WALI_COMMON_LDFLAGS="{common_ldflags.format(SYSROOTVAR='${WALI_SYSROOT_DIR}', LIBCXXVAR='${WALI_LIBCXX_DIR}')}"
+        export WALI_TARGET={target}
+        export WALI_TARGET_NOVENDOR={target_novendor}
 
         # Libclang RT: Uncomment this only after llvm is already built, if needed.
         # export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/{llvm_config} --version | cut -d '.' -f 1)
