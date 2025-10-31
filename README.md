@@ -9,9 +9,8 @@ This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembl
 This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
 
 ## Initial Setup
-1. Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages
 
-2. Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
+Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
 
 ## Component Setup
 
@@ -32,16 +31,19 @@ There are four major toolchain components, that may be incrementally built:
 
 ### 1. WALI Engine
 
-We include a baseline implementation in WAMR. To build:
+We include a baseline implementation in WAMR. 
+See [examples/precompiled](examples/precompiled) after building for runnable WALI binaries.
+
+#### Native Linux Host
+
+Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages. Then build with:
 ```shell
 git submodule update --init wasm-micro-runtime
 # Generates `iwasm` symlink in root directory
 make iwasm
 ```
 
-See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
-
-#### WASM as a Miscellaneous Binary Format!
+##### WASM as a Miscellaneous Binary Format (Optional but Recommended)
 
 WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`).
 This is recommended since it simplifies execution and is **necessary** to build some [applications](applications) out-of-the-box.
@@ -57,10 +59,23 @@ sudo ./binfmt_register.sh -p
 For more info about miscellaneous binary formats and troubleshooting, see [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 
+#### Non-Linux Host (Docker Environment)
+
+To build the image:
+```shell
+docker build -t wali -f runtime.Dockerfile .
+```
+
+You can then run WALI binaries with the image:
+```shell
+docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
+```
+
+
 ### 2. WALI LLVM Toolchain
 
 ```shell
-git submodule update --init llvm-project
+git submodule update --init --depth=1 llvm-project
 make wali-compiler
 ```
 
@@ -96,11 +111,9 @@ Refer to [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-
 
 ## Building WALI Applications
 
-Setup appropriate toolchain files:
-```shell
-python3 toolchains/gen_toolchains.py
-```
-For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
+Ensure [initial setup](#initial-setup) is completed. 
+
+> For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
 
 ### Hello World
 
@@ -112,15 +125,18 @@ cd examples
 ../iwasm printf.wasm
 ```
 
-### Tests
-Run `make tests`. WALI executables are generated in `tests/wasm`
+### Building C Tests
+```shell
+# WALI executables are located in `./tests/wasm`
+make tests
+```
 
 ## Compiler Ports
 
 ### Rust
 
 > **Note**: Preliminary support for a [`wasm32-wali-linux-musl`](https://doc.rust-lang.org/nightly/rustc/platform-support/wasm32-wali-linux.html) target has been upstreamed to rustc! 
-> Support for this target requires several ecosystem components to ratchet up to something usable long-term stability, and may hence currently be broken. 
+> Support for this target requires several ecosystem components to ratchet up to something usable for long-term stability, and may currently be broken. 
 > Use the below out-of-tree build process for rustc if you need a stable target as a proof-of-concept.
 
 We support a custom Rust compiler with a `wasm32-wali-linux-musl` target. 
@@ -150,12 +166,9 @@ establishing infrastructure for Wasm both in research and industry.
 
 Building and running Wasm binaries is now **trivial** with WALI, while improving ecosystem security by layering Wasm APIs
 
+> Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
 
 ## Resources
-* Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
 * [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 * Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)
-
-
-

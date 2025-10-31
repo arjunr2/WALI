@@ -17,13 +17,13 @@ int main() {
  int val = 42;
  int stat;
  for (int i = 0; i < 10; i++) {
-   if (stat = pthread_create(tid + i, NULL, thread_routine, &val)) {
+   if (stat = pthread_create(tid + i, NULL, thread_routine, (void*)&val)) {
      printf("Pthread create error: %d\n", stat);
    }
  }
  for (int i = 0; i < 10; i++) {
   int *res;
-  pthread_join(tid[i], &res);
+  pthread_join(tid[i], (void**)&res);
   printf("res join: %d\n", *res);
  }
  return 0;
