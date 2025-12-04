@@ -19,11 +19,13 @@ LLVM_SOURCE_DIR := $(WALI_ROOT_DIR)/llvm-project
 MUSL_SOURCE_DIR := $(WALI_ROOT_DIR)/wali-musl
 IWASM_SOURCE_DIR := $(WALI_ROOT_DIR)/wasm-micro-runtime/product-mini/platforms/linux
 WAMRC_SOURCE_DIR := wasm-micro-runtime/wamr-compiler
+LIBWALI_SOURCE_DIR := $(WALI_ROOT_DIR)/stand-alone-wali/
 
 # Engine build artifact directories
 WALI_WAMR_BUILD_DIR := $(WALI_BUILD_DIR)/wamr
 WALI_IWASM_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/iwasm
 WALI_WAMRC_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/wamrc
+WALI_LIBWALI_BUILD_DIR := $(WALI_BUILD_DIR)/libwali
 
 .PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-runtime clean-all clean-llvm wamrc
 .PHONY: rustc
@@ -38,6 +40,9 @@ build_dir:
 
 iwasm_build_dir:
 	mkdir -p $(WALI_IWASM_BUILD_DIR)
+
+libwali_build_dir:
+	mkdir -p $(WALI_LIBWALI_BUILD_DIR)
 
 wamrc_build_dir:
 	mkdir -p $(WALI_WAMRC_BUILD_DIR)
@@ -129,6 +134,11 @@ iwasm: | iwasm_build_dir
 	ln -sf $(WALI_IWASM_BUILD_DIR)/iwasm .
 
 .ONESHELL:
+libwali: | libwali_build_dir
+	cmake -S $(LIBWALI_SOURCE_DIR) -B $(WALI_LIBWALI_BUILD_DIR) -GNinja -DWASM_MICRO_RUNTIME_PATH=$(WALI_ROOT_DIR)/wasm-micro-runtime/
+	ninja -C $(WALI_LIBWALI_BUILD_DIR)
+
+.ONESHELL:
 wamrc: | wamrc_build_dir
 	cd $(WAMRC_SOURCE_DIR)
 	./build_llvm.sh
@@ -153,7 +163,7 @@ llvm-base: | build_dir
 wali-compiler: llvm-base
 	mkdir -p $(dir $(WALI_LIBCLANG_RT_LIB))
 	cp $(WALI_ROOT_DIR)/misc/libclang_rt/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32.a $(WALI_LIBCLANG_RT_LIB)
-	
+
 
 # --- COMPILER PORTS --- #
 .ONESHELL:

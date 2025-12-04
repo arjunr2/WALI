@@ -76,3 +76,6 @@
 [submodule "applications/libs/openssl"]
 	path = applications/libs/openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "stand-alone-wali"]
+	path = stand-alone-wali
+	url = git@github.com:woodsmc/stand-alone-wali.git
