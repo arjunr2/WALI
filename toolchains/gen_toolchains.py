@@ -163,9 +163,9 @@ def main():
         set -gx WALI_RANLIB $WALI_LLVM_BIN_DIR/{ranlib}
 
         # Compile/Link Flags
-        set -gx WALI_COMMON_CFLAGS "{common_cflags.format(SYSROOTVAR='$WALI_SYSROOT_DIR')}"
-        set -gx WALI_COMMON_CXXFLAGS "{common_cxxflags.format(CFLAGSVAR='$WALI_COMMON_CFLAGS', LIBCXXVAR='$WALI_LIBCXX_DIR')}"
-        set -gx WALI_COMMON_LDFLAGS "{common_ldflags.format(SYSROOTVAR='$WALI_SYSROOT_DIR', LIBCXXVAR='$WALI_LIBCXX_DIR')}"
+        set -gx WALI_COMMON_CFLAGS {common_cflags.format(SYSROOTVAR='$WALI_SYSROOT_DIR')}
+        set -gx WALI_COMMON_CXXFLAGS {common_cxxflags.format(CFLAGSVAR='$WALI_COMMON_CFLAGS', LIBCXXVAR='$WALI_LIBCXX_DIR')}
+        set -gx WALI_COMMON_LDFLAGS {common_ldflags.format(SYSROOTVAR='$WALI_SYSROOT_DIR', LIBCXXVAR='$WALI_LIBCXX_DIR')}
         set -gx WALI_TARGET {target}
         set -gx WALI_TARGET_NOVENDOR {target_novendor}
 
