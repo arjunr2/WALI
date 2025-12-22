@@ -4,13 +4,13 @@
 
 ***A (Nearly-Complete) Linux API for WebAssembly!***
 
-This is a result of work published at *EuroSys 2025* on [**Empowering WebAssembly with Thin Kernel Interfaces**](https://dl.acm.org/doi/abs/10.1145/3689031.3717470) (arxiv version available [here](https://arxiv.org/abs/2312.03858))
-
-This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface*. A list of supported syscalls can be found [here](docs/support.md)
+This work is published at *EuroSys 2025* on [**Empowering WebAssembly with Thin Kernel Interfaces**](https://dl.acm.org/doi/abs/10.1145/3689031.3717470).
+This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface* and a brief description of the project's [goals](docs/goals.md). The list of currently supported syscalls can be found [here](docs/support.md)
 
 ## Initial Setup
 
-Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
+* Clone the repository: `git clone https://github.com/arjunr2/WALI.git` 
+* Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
 
 ## Component Setup
 
@@ -32,42 +32,35 @@ There are four major toolchain components, that may be incrementally built:
 ### 1. WALI Engine
 
 We include a baseline implementation in WAMR. 
-See [examples/precompiled](examples/precompiled) after building for runnable WALI binaries.
+See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
 
 #### Native Linux Host
-
-Install dependencies with `sudo ./apt-install-deps.sh` or equivalent packages. Then build with:
 ```shell
+# Install dependencies
+sudo ./apt-install-deps.sh
 git submodule update --init wasm-micro-runtime
 # Generates `iwasm` symlink in root directory
 make iwasm
 ```
 
-##### WASM as a Miscellaneous Binary Format (Optional but Recommended)
-
-WALI Wasm/AoT binaries can be executed like ELF files with `iwasm` (e.g. `./bash.wasm --norc`).
-This is recommended since it simplifies execution and is **necessary** to build some [applications](applications) out-of-the-box.
+*[Optional, but Recommended] Wasm as a Miscellaneous Binary Format*: By registering Wasm/AoT binaries as a miscellenous binary format with the above engine, `.wasm` files can be executed like ELF files (e.g. `./bash.wasm --norc`).
+This is **necessary** to build some [applications](applications) that execute intermediate binaries.
 To do this, run:
-
 ```shell
-cd misc
-source gen_iwasm_wrapper.sh
 # Specify '-p' option to register with systemd-binfmt for reboot survival. Default binfmt_register does not survive system reboots
-sudo ./binfmt_register.sh -p
+sudo ./toolchains/binfmt/binfmt_register.sh -p
 ```
 
-For more info about miscellaneous binary formats and troubleshooting, see [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
+More info on miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
 
 
-#### Non-Linux Host (Docker Environment)
 
-To build the image:
+#### Docker Environment for Non-Linux Hosts
+
 ```shell
+# Building the image
 docker build -t wali -f runtime.Dockerfile .
-```
-
-You can then run WALI binaries with the image:
-```shell
+# Running binaries with the image
 docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
 ```
 
@@ -79,7 +72,7 @@ git submodule update --init --depth=1 llvm-project
 make wali-compiler
 ```
 
-**NOTE**: Building the LLVM suite takes a long time and can consume up to 150GB of disk. The compiler is essential if you want to rebuild libc or build applications.
+> **Note**: Building the LLVM suite takes a long time and can consume up to 150GB of disk.
 
 
 ### 3. WALI Sysroot
@@ -89,86 +82,49 @@ git submodule update --init wali-musl
 make libc
 ```
 
-**NOTE**: Only the following 64-bit architectures are supported: `x86-64`, `aarch64`, `riscv64`. Future iterations will include a larger set of ISAs.
+> **Note**: Only the following 64-bit architectures are supported: `x86-64`, `aarch64`, `riscv64`. Future iterations will include a larger set of ISAs.
 
 
 ### 4. AoT Compiler
 
-Generates faster ahead-of time compiled executables. For the WAMR implementation, build with:
-```
-make wamrc
-```
-
-The `wamrc` symlink can be used as follows:
-
+Generate faster ahead-of time (AoT) compiled executables. For the WAMR 
+implementation, additional details can be found on the [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler):
 ```shell
-# --enable-multi-thread flag is needed for thread support
+# Build wamrc
+make wamrc
+# Using wamrc
 wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>
 ```
 
-Refer to [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler) for more info.
 
 
 ## Building WALI Applications
 
 Ensure [initial setup](#initial-setup) is completed. 
 
-> For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
+> **Note**: For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
 
-### Hello World
+**Hello World**
 
-You can use the convenience bash script in the [examples](examples) directory. For instance:
 ```shell
 cd examples
-./compile-wali-standalone.sh -o printf.wasm printf.c
-# Run the binary. Can just run `printf.wasm` if miscellaneous binary format is setup
-../iwasm printf.wasm
+# This script sets up standard build flags for the compiler toolchain.
+# For WALI binaries without main/start functions, refer to `print_nostart.c` instead
+./compile-wali-standalone.sh -o print.wasm print.c
+# Run the binary (or `./print.wasm` if miscellaneous binary format is setup)
+../iwasm print.wasm
 ```
 
-### Building C Tests
+**Unit Tests**
 ```shell
 # WALI executables are located in `./tests/wasm`
 make tests
 ```
 
-## Compiler Ports
 
-### Rust
-
-> **Note**: Preliminary support for a [`wasm32-wali-linux-musl`](https://doc.rust-lang.org/nightly/rustc/platform-support/wasm32-wali-linux.html) target has been upstreamed to rustc! 
-> Support for this target requires several ecosystem components to ratchet up to something usable for long-term stability, and may currently be broken. 
-> Use the below out-of-tree build process for rustc if you need a stable target as a proof-of-concept.
-
-We support a custom Rust compiler with a `wasm32-wali-linux-musl` target. 
-Existing `cargo` and  `rustup` are required for a successful build.
-To build `rustc`, run:
-
-```shell
-make rustc
-```
-
-This adds a new toolchain to `rustup` named `wali` with the new target.
-To compile applications:
-```shell
-cargo +wali build --target=wasm32-wali-linux-musl
-```
-
-> **Note**: Many applications will currently require a custom [libc](https://github.com/arjunr2/rust-libc.git) to
-be patched into `Cargo.toml` for the out-of-tree build.
-
-
-
-## Project Motivation
-The WALI for WebAssembly aims to push lightweight virtualization
-down to prevalent, low-level Linux applications. 
-WALI adopts a layering approach to API design, allowing WASI (and other arbitrary Wasm APIs) to be virtualized over it, 
-establishing infrastructure for Wasm both in research and industry.
-
-Building and running Wasm binaries is now **trivial** with WALI, while improving ecosystem security by layering Wasm APIs
-
-> Wasm possesses different runtime properties than some lower level languages like C (type-safety, sandboxing, etc.). The operation of WALI on these applications may differ as listed [here](docs/constraints.md)
-
-## Resources
+## Additional Resources
+* [Compiler ports](compiler_ports/README.md) of WALI for other languages.
+* [Constraints](docs/constraints.md) of WALI
+* [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing) 
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
-* [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing)
 * Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)

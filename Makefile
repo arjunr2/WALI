@@ -152,7 +152,7 @@ llvm-base: | build_dir
 .ONESHELL:
 wali-compiler: llvm-base
 	mkdir -p $(dir $(WALI_LIBCLANG_RT_LIB))
-	cp $(WALI_ROOT_DIR)/misc/libclang_rt/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32.a $(WALI_LIBCLANG_RT_LIB)
+	cp $(WALI_ROOT_DIR)/toolchains/rt_builtins/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32-wali.a $(WALI_LIBCLANG_RT_LIB)
 	
 
 # --- COMPILER PORTS --- #

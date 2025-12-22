@@ -2,7 +2,7 @@
 # Generates the default iwasm-wrapper script required by binfmt_register.sh
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-source $SCRIPT_DIR/../toolchains/wali.sh
+source $SCRIPT_DIR/../wali.sh
 
 # Save default environment variables in ".walienv" in root WALI dir
 env &> $WALI_ROOT_DIR/.walienv
@@ -36,7 +36,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "Successfully generated iwasm-wrapper"
-chmod +x iwasm-wrapper
+chmod +x $SCRIPT_DIR/iwasm-wrapper
 
 # Generate the iwali
 cat <<EOT > $SCRIPT_DIR/iwali.conf

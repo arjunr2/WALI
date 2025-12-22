@@ -3,7 +3,7 @@
 # Requires 'sudo' to run 
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-source $SCRIPT_DIR/../toolchains/wali.sh
+source $SCRIPT_DIR/../wali.sh
 
 # Whether to enable a permanent setup across reboots
 permanent=0  # 0 for false, 1 for true

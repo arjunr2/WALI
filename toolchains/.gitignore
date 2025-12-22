@@ -2,3 +2,5 @@ wali.sh
 wali.cmake
 wali.mk
 wali.fish
+iwasm-wrapper
+iwali.conf

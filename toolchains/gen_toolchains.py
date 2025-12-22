@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os, textwrap
+import sys, os, textwrap, subprocess
 from pathlib import Path
 import tomllib
 
@@ -212,6 +212,14 @@ def main():
     os.chmod(filepath / "wali.fish", 0o755)
 
     print(f"Generated toolchains: {filepath}/wali.{{mk,sh,fish,cmake}}")
+
+    # Run gen_iwasm_wrapper.sh
+    wrapper_script = filepath / "binfmt" / "gen_iwasm_wrapper.sh"
+    if wrapper_script.exists():
+        print(f"Running {wrapper_script}...")
+        subprocess.run(["bash", str(wrapper_script)], check=True, env=os.environ)
+    else:
+        print(f"Warning: {wrapper_script} not found.", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
