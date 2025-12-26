@@ -7,28 +7,28 @@
 
 // Custom exported startup routine that calls wali.__init
 __attribute__((export_name("custom_wali_startup")))
-void startup() {
+int startup() {
   // Engine initialization routine.
   // Must be called before any WALI-based routine is executed
-  void __wali_init(void) __attribute((
+  int __wali_init(void) __attribute((
     __import_module__("wali"),
     __import_name__("__init")
   ));
 
-  __wali_init();
+  return __wali_init();
 }
 
 // Custom exported startup routine that calls wali.__deinit
 __attribute__((export_name("custom_wali_cleanup")))
-void cleanup() {
+int cleanup() {
   // Engine deinitialization routine
   // Must be called 
-  void __wali_deinit(void) __attribute((
+  int __wali_deinit(void) __attribute((
     __import_module__("wali"),
     __import_name__("__deinit")
   ));
 
-  __wali_deinit();
+  return __wali_deinit();
 }
 
 
