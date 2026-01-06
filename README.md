@@ -97,14 +97,11 @@ wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>
 ```
 
 
-
 ## Building WALI Applications
 
-Ensure [initial setup](#initial-setup) is completed. 
+> **Note**: Ensure [initial setup](#initial-setup) is completed. For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
 
-> **Note**: For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
-
-**Hello World**
+A simple "hello" world can be built as below:
 
 ```shell
 cd examples
@@ -114,12 +111,18 @@ cd examples
 # Run the binary (or `./print.wasm` if miscellaneous binary format is setup)
 ../iwasm print.wasm
 ```
+You can find more sample programs in [examples/mini](examples/mini/).
 
-**Unit Tests**
+
+## Testing
+
+To build and run the unit test suite:
 ```shell
-# WALI executables are located in `./tests/wasm`
-make tests
+cd tests
+# Ensure iwasm, libc, and compiler toolchains were all built prior to this
+make && python3 run_tests.py
 ```
+
 
 
 ## Additional Resources

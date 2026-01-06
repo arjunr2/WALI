@@ -37,6 +37,3 @@ $(ELF_DIR)/%: unit/%.c
 
 clean:
 	rm -rf $(BIN_DIR) *.so
-
-test: all
-	python3 run_tests.py
