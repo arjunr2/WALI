@@ -1,3 +1,2 @@
-elf
-wasm
-!startup
+bin
+*.so

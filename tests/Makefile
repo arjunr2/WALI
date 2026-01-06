@@ -1,38 +1,42 @@
 include ../toolchains/wali.mk
 
-.PHONY: dir clean all elf
+.PHONY: dir clean all test
 
-# For ELF
-ELF_LFLAGS := -lm -lpthread
+BIN_DIR := bin
+WASM_DIR := $(BIN_DIR)/unit/wasm
+ELF_DIR := $(BIN_DIR)/unit/elf
 
-WASM_DIR := wasm
-ELF_DIR := elf
+# Flags
+# We append our specific flags to the common ones
+CFLAGS_TEST_WASM = $(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -I. -Icommon -nostartfiles -Wl,--no-entry -Wl,--allow-undefined
+# For native, we need to include current dir for headers
+CFLAGS_TEST_NATIVE = -I. -Icommon -O2
 
-SRC_C := $(wildcard *.c)
-# Generate ELF files only on linux platforms
-ifeq ($(UNAME_S),Linux)
-	SRC_O := $(SRC_C:.c=.o)
-endif
+# Native lib flags
+IWASM_ROOT = ../wasm-micro-runtime
 
-SRC_WASM := $(SRC_C:.c=.wasm)
+SRC_C := $(wildcard unit/test_*.c)
+SRC_WASM := $(patsubst unit/%.c, $(WASM_DIR)/%.wasm, $(SRC_C))
+SRC_ELF := $(patsubst unit/%.c, $(ELF_DIR)/%, $(SRC_C))
 
 HOST_PLATFORM := $(shell $(WALI_LLVM_BIN_DIR)/llvm-config --host-target)
 
-all: dir $(SRC_WASM) $(SRC_O)
+all: libnative_lib.so $(SRC_WASM) $(SRC_ELF)
 
-dir:
-	mkdir -p $(WASM_DIR)
-	mkdir -p $(ELF_DIR)
+libnative_lib.so: native_lib.c
+	clang -I$(IWASM_ROOT)/core/iwasm/include -fPIC -shared -o $@ $< 
 
-%.o: %.c
-	$(WALI_CC) --target=$(HOST_PLATFORM) -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
+$(WASM_DIR)/%.wasm: unit/%.c
+	@mkdir -p $(dir $@)
+	$(WALI_CC) $(CFLAGS_TEST_WASM) -o $@ $<
+	wasm2wat --enable-threads $@ -o $(@:.wasm=.wat)
 
-%.wasm: %.c
-	$(WALI_CC) $(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -o $(WASM_DIR)/$*.wasm $<
-	wasm2wat --enable-threads $(WASM_DIR)/$*.wasm -o $(WASM_DIR)/$*.wat
-
+$(ELF_DIR)/%: unit/%.c
+	@mkdir -p $(dir $@)
+	$(WALI_CC) --target=$(HOST_PLATFORM) $(CFLAGS_TEST_NATIVE) -o $@ $< -lm -lpthread
 
 clean:
-	rm -rf $(WASM_DIR)
-	rm -rf $(ELF_DIR)
+	rm -rf $(BIN_DIR) *.so
 
+test: all
+	python3 run_tests.py
