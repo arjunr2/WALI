@@ -14,22 +14,14 @@ This repo contains all the compiler and engine prototypes for an implementation 
 
 ## Component Setup
 
-There are four major toolchain components, that may be incrementally built:
+Parts of this project may be incrementally built based on needs:
 
-***I just want to run WALI Wasm executables!***:
-1. [WALI Engine](#1-wali-engine)
-
-***I want to compile/build WALI executables!***:
-
-2. [WALI LLVM Toolchain](#2-wali-llvm-toolchain)
-3. [WALI Sysroot](#3-wali-sysroot)
-
-***I want to AoT compile the Wasm executables to go fast!***
-
-4. [AoT Compiler](#4-aot-compiler)
+* ***I want to run WALI Wasm executables!***: [WALI Engine](#wali-engine)
+* ***I want to compile/build WALI executables!***: [Compile Toolchain](#compiler-toolchain)
+* ***I want to AoT compile the Wasm executables to go fast!***: [AoT Compiler](#aot-compiler)
 
 
-### 1. WALI Engine
+### WALI Engine
 
 We include a baseline implementation in WAMR. 
 See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
@@ -65,8 +57,9 @@ docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
 ```
 
 
-### 2. WALI LLVM Toolchain
+### Compile Toolchain
 
+**1. LLVM backend for WALI** 
 ```shell
 git submodule update --init --depth=1 llvm-project
 make wali-compiler
@@ -74,9 +67,7 @@ make wali-compiler
 
 > **Note**: Building the LLVM suite takes a long time and can consume up to 150GB of disk.
 
-
-### 3. WALI Sysroot
-
+**2. Libc Sysroot**
 ```shell
 git submodule update --init wali-musl
 make libc
@@ -85,7 +76,7 @@ make libc
 > **Note**: Only the following 64-bit architectures are supported: `x86-64`, `aarch64`, `riscv64`. Future iterations will include a larger set of ISAs.
 
 
-### 4. AoT Compiler
+### AoT Compiler
 
 Generate faster ahead-of time (AoT) compiled executables. For the WAMR 
 implementation, additional details can be found on the [WAMR compiler docs](https://github.com/SilverLineFramework/wasm-micro-runtime/tree/wali/wamr-compiler):
@@ -95,7 +86,7 @@ make wamrc
 # Using wamrc
 wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>
 ```
-
+AoT files for WAMR can be run from the command line just like Wasm files.
 
 ## Building WALI Applications
 
