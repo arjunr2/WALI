@@ -1,4 +1,4 @@
-#include "wali_start.h"
+#include "wali_start.c"
 
 void test(void) {
   return;

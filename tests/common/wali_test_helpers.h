@@ -44,12 +44,38 @@ static void wali_proc_exit(int code) {
 #else // Native implementation
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 static int wali_test_setup(void *ptr, uint32_t len) {
-  // Native implementation of the check
-  printf("[Native] Checking buffer at %p with len: %u\n", ptr, len);
-  // We can add alignment checks here if we want to match the Wasm behavior strictly,
-  // but native pointers might not be aligned to 64k.
+  const char *filepath = getenv("WALI_TEST_RESULT_FILE");
+  if (!filepath) {
+      printf("[Native] WALI_TEST_RESULT_FILE not set. Using in-memory buffer.\n");
+      return 0; // Fallback to normal memory
+  }
+
+  int fd = open(filepath, O_RDWR | O_CREAT, 0666);
+  if (fd < 0) {
+      perror("[Native] open");
+      return -1;
+  }
+  if (ftruncate(fd, len) != 0) {
+      perror("[Native] ftruncate");
+      close(fd);
+      return -1;
+  }
+  
+  void *res = mmap(ptr, len, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+  close(fd);
+  
+  if (res == MAP_FAILED) {
+      perror("[Native] mmap");
+      return -1;
+  }
+
   return 0;
 }
 

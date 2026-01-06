@@ -15,7 +15,7 @@ CFLAGS_TEST_NATIVE = -I. -Icommon -O2
 # Native lib flags
 IWASM_ROOT = ../wasm-micro-runtime
 
-SRC_C := $(wildcard unit/test_*.c)
+SRC_C := $(wildcard unit/*.c)
 SRC_WASM := $(patsubst unit/%.c, $(WASM_DIR)/%.wasm, $(SRC_C))
 SRC_ELF := $(patsubst unit/%.c, $(ELF_DIR)/%, $(SRC_C))
 
@@ -23,8 +23,8 @@ HOST_PLATFORM := $(shell $(WALI_LLVM_BIN_DIR)/llvm-config --host-target)
 
 all: libnative_lib.so $(SRC_WASM) $(SRC_ELF)
 
-libnative_lib.so: native_lib.c
-	clang -I$(IWASM_ROOT)/core/iwasm/include -fPIC -shared -o $@ $< 
+libnative_lib.so: common/native_lib.c
+	clang -I$(IWASM_ROOT)/core/iwasm/include -L$(WALI_BUILD_DIR)/wamr/iwasm/ -fPIC -shared -o $@ $< -lvmlib
 
 $(WASM_DIR)/%.wasm: unit/%.c
 	@mkdir -p $(dir $@)
