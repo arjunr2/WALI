@@ -64,6 +64,7 @@ interface syscalls {
 	type ptr-fd-set = ptr;
 	type ptr-gid-t = ptr;
 	type ptr-int = ptr;
+	type ptr-ptr-char = ptr;
 	type ptr-sigset-t = ptr;
 	type ptr-socklen-t = ptr;
 	type ptr-stack-t = ptr;
@@ -391,8 +392,8 @@ interface syscalls {
 	SYS-getsockopt: func(a1: s32, a2: s32, a3: s32, a4: ptr-void, a5: ptr-socklen-t) -> syscall-result;
 	// [57] fork()
 	SYS-fork: func() -> syscall-result;
-	// [59] execve(char*, char*, char*)
-	SYS-execve: func(a1: ptr-char, a2: ptr-char, a3: ptr-char) -> syscall-result;
+	// [59] execve(char*, char**, char**)
+	SYS-execve: func(a1: ptr-char, a2: ptr-ptr-char, a3: ptr-ptr-char) -> syscall-result;
 	// [60] exit(int)
 	SYS-exit: func(a1: s32) -> syscall-result;
 	// [61] wait4(pid_t, int*, int, struct rusage*)
@@ -565,14 +566,14 @@ interface syscalls {
 	SYS-dup3: func(a1: s32, a2: s32, a3: s32) -> syscall-result;
 	// [293] pipe2(int*, int)
 	SYS-pipe2: func(a1: ptr-int, a2: s32) -> syscall-result;
-	// [302] prlimit64(int, int, struct rlimit*, struct rlimit*)
-	SYS-prlimit64: func(a1: s32, a2: s32, a3: ptr-struct-rlimit, a4: ptr-struct-rlimit) -> syscall-result;
+	// [302] prlimit64(pid_t, int, struct rlimit*, struct rlimit*)
+	SYS-prlimit64: func(a1: pid-t, a2: s32, a3: ptr-struct-rlimit, a4: ptr-struct-rlimit) -> syscall-result;
 	// [316] renameat2(int, char*, int, char*, int)
 	SYS-renameat2: func(a1: s32, a2: ptr-char, a3: s32, a4: ptr-char, a5: s32) -> syscall-result;
 	// [318] getrandom(void*, size_t, int)
 	SYS-getrandom: func(a1: ptr-void, a2: size-t, a3: s32) -> syscall-result;
-	// [332] statx(int, char*, int, int, struct statx*)
-	SYS-statx: func(a1: s32, a2: ptr-char, a3: s32, a4: s32, a5: ptr-struct-statx) -> syscall-result;
+	// [332] statx(int, char*, int, unsigned int, struct statx*)
+	SYS-statx: func(a1: s32, a2: ptr-char, a3: s32, a4: unsigned-int, a5: ptr-struct-statx) -> syscall-result;
 	// [439] faccessat2(int, char*, int, int)
 	SYS-faccessat2: func(a1: s32, a2: ptr-char, a3: s32, a4: s32) -> syscall-result;
 }

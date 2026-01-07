@@ -223,10 +223,15 @@ def gen_wit_stubs(spath, syscall_info, archs):
         ) 
         return '\n'.join([l1, l2]) if nargs else ""
 
+    def transform_ptr_arg(arg):
+        arg_no_ptr = arg.rstrip('*')
+        ptr_indirection = len(arg) - len(arg_no_ptr)
+        return ("ptr-" * ptr_indirection) + arg_no_ptr
+
     for sc in syscall_info:
         orig_args = get_scargs(sc, False)
         args = [x.strip().replace(' ', '-').replace('_', '-') for x in orig_args]
-        args = [f"ptr-{x[:-1]}" if x[-1] == '*' else x for x in args]
+        args = [transform_ptr_arg(x) for x in args]
         up_types = set([x for x in args if x.startswith('ptr-')])
         fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
         uniq_ptr_types.update(up_types)
@@ -250,9 +255,16 @@ def gen_wit_stubs(spath, syscall_info, archs):
     with open('templates/records.wit.template') as f:
         record_content = f.read()
     record_types = set(re.findall(r'record (\S+)', record_content))
-    sc_ptr_types = set([x[4:] for x in uniq_ptr_types if x.startswith('ptr-') and \
-            x[4:] not in BASIC_TYPES and x[4:] not in comp_types \
-            and x[4:] != 'void' and x[4:] != 'char'])
+    sc_ptr_types = set()
+    for x in uniq_ptr_types:
+        x_no_ptr = x
+        ptr_indirection = 0
+        while x_no_ptr.startswith("ptr-"):
+            x_no_ptr = x_no_ptr.removeprefix("ptr-")
+            ptr_indirection += 1
+        if x_no_ptr not in BASIC_TYPES and x_no_ptr not in comp_types and x_no_ptr != 'void' and x_no_ptr != 'char':
+            sc_ptr_types.add(x_no_ptr)
+
     missing_types = sc_ptr_types.difference(record_types)
     if missing_types:
         logging.warning(f"Missing Records for Complex Types: {missing_types}")
@@ -321,7 +333,7 @@ def gen_markdown_stubs(spath, syscall_info, archs):
         'aarch64': 'arm64',
     }
     arch_supp = {arch_remap[x] if x in arch_remap else x for x in arch_supp}
-    arch_calls = [set(syscalls.syscalls['archs'][v].keys()) for v in arch_supp]
+    arch_calls = [set(syscalls.load_arch_table(v).keys()) for v in arch_supp]
     arch_call_set = set().union(*arch_calls)
 
     df = pd.DataFrame.from_dict(syscall_info)

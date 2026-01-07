@@ -59,7 +59,7 @@ Number of supported syscalls: **142**
 | setsockopt        |        5 | int              | int                 | int               | void\*               | socklen\_t        |            |
 | getsockopt        |        5 | int              | int                 | int               | void\*               | socklen\_t\*       |            |
 | fork              |        0 |                  |                     |                   |                     |                  |            |
-| execve            |        3 | char\*            | char\*               | char\*             |                     |                  |            |
+| execve            |        3 | char\*            | char\*\*              | char\*\*            |                     |                  |            |
 | exit              |        1 | int              |                     |                   |                     |                  |            |
 | wait4             |        4 | pid\_t            | int\*                | int               | struct rusage\*      |                  |            |
 | kill              |        2 | pid\_t            | int                 |                   |                     |                  |            |
@@ -146,10 +146,10 @@ Number of supported syscalls: **142**
 | epoll\_create1     |        1 | int              |                     |                   |                     |                  |            |
 | dup3              |        3 | int              | int                 | int               |                     |                  |            |
 | pipe2             |        2 | int\*             | int                 |                   |                     |                  |            |
-| prlimit64         |        4 | int              | int                 | struct rlimit\*    | struct rlimit\*      |                  |            |
+| prlimit64         |        4 | pid\_t            | int                 | struct rlimit\*    | struct rlimit\*      |                  |            |
 | renameat2         |        5 | int              | char\*               | int               | char\*               | int              |            |
 | getrandom         |        3 | void\*            | size\_t              | int               |                     |                  |            |
-| statx             |        5 | int              | char\*               | int               | int                 | struct statx\*    |            |
+| statx             |        5 | int              | char\*               | int               | unsigned int        | struct statx\*    |            |
 | faccessat2        |        4 | int              | char\*               | int               | int                 |                  |            |
 
 ## Currently Unsupported Syscalls
@@ -206,6 +206,7 @@ Number of supported syscalls: **142**
 * getresuid
 * gettimeofday
 * getxattr
+* getxattrat
 * init\_module
 * inotify\_add\_watch
 * inotify\_init
@@ -233,11 +234,16 @@ Number of supported syscalls: **142**
 * landlock\_restrict\_self
 * lchown
 * lgetxattr
+* listmount
 * listxattr
+* listxattrat
 * llistxattr
 * lookup\_dcookie
 * lremovexattr
 * lsetxattr
+* lsm\_get\_self\_attr
+* lsm\_list\_modules
+* lsm\_set\_self\_attr
 * map\_shadow\_stack
 * mbind
 * membarrier
@@ -261,6 +267,7 @@ Number of supported syscalls: **142**
 * mq\_timedreceive
 * mq\_timedsend
 * mq\_unlink
+* mseal
 * msgctl
 * msgget
 * msgrcv
@@ -270,6 +277,7 @@ Number of supported syscalls: **142**
 * name\_to\_handle\_at
 * open\_by\_handle\_at
 * open\_tree
+* open\_tree\_attr
 * openat2
 * pause
 * perf\_event\_open
@@ -297,6 +305,7 @@ Number of supported syscalls: **142**
 * recvmmsg
 * remap\_file\_pages
 * removexattr
+* removexattrat
 * renameat
 * request\_key
 * restart\_syscall
@@ -335,6 +344,7 @@ Number of supported syscalls: **142**
 * setpriority
 * settimeofday
 * setxattr
+* setxattrat
 * shmat
 * shmctl
 * shmdt
@@ -342,6 +352,7 @@ Number of supported syscalls: **142**
 * signalfd
 * signalfd4
 * splice
+* statmount
 * swapoff
 * swapon
 * sync
@@ -364,6 +375,7 @@ Number of supported syscalls: **142**
 * truncate
 * umount2
 * unshare
+* uretprobe
 * userfaultfd
 * ustat
 * utimes

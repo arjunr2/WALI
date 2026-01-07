@@ -408,10 +408,11 @@ _syscall_list: List[Syscall] = [
 ]
 
 SYSCALLS: Dict[str, Syscall] = {s.name: s for s in _syscall_list}
-
 assert len(SYSCALLS) == len(_syscall_list), "Duplicate entries for same syscall detected"
 
-if __name__ == "__main__":
+
+# Utility functions for exporting syscall data
+def dump_syscalls_to_csv():
     import csv
     
     header = [
@@ -450,5 +451,16 @@ if __name__ == "__main__":
                 nr_rv
             ]
             writer.writerow(row)
-            
-    print(f"Wrote {len(_syscall_list)} definitions to {filename}")
+
+# Simple main for check validity of spec
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Process syscall definitions.")
+    parser.add_argument("-d", "--dump", action="store_true", help="Dump syscalls to CSV (csvs/syscall_full_format.csv)")
+    args = parser.parse_args()
+    if args.dump:
+        dump_syscalls_to_csv()
+        print(f"Wrote {len(_syscall_list)} definitions to csvs/syscall_full_format.csv")
+    else:
+        print(f"Loaded spec successfully; {len(SYSCALLS)} syscall definitions.")
