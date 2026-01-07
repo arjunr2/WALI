@@ -342,9 +342,9 @@ def gen_markdown_stubs(spath, syscall_info, archs):
         str(len(supp_format_df))
         ).replace(
         '[[SUPPORTED_SYSCALLS_STUB]]', 
-        supp_format_df.to_markdown(index=False).replace('*', '\*').replace('_', '\_')
+        supp_format_df.to_markdown(index=False).replace('*', r'\*').replace('_', r'\_')
         ).replace(
-        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list).replace('_', '\_'))
+        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list).replace('_', r'\_'))
 
     with open(spath / 'support.md', 'w') as f:
         f.write(fill_temp)
@@ -374,7 +374,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def parse_csv(filepath: str) -> Tuple[Dict[str, Any], List[str]]:
-    df = pd.read_csv(filepath, skiprows=1, keep_default_na=False)
+    df = pd.read_csv(filepath, skiprows=0, keep_default_na=False)
     archs = [k[:-3] for k in df.filter(regex=(".+_NR")).columns]
     dfilter = [x for x in df.to_dict(orient='records') if x['Syscall']]
     logging.debug(dfilter)
