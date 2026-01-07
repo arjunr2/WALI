@@ -25,9 +25,6 @@ void test(void) {
   
   const char *path = "/dev/null";
   int fd = wali_open(path, O_RDONLY, 0);
-#ifdef __wasm__
-  *((int *)result_buffer) = 0xdead;
-#endif
   
   // Store result in result_buffer
   // Format: [int32: status] (0 for success, -1 for fail)
