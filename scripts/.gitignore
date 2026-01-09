@@ -4,8 +4,5 @@ riscv64_syscalls_undefined.out
 aarch64_undefined_consolidate.out
 sorted_syscall_conversion.csv
 *.profile
-libc
-wamr
-wit
-arch-diff
-markdown
+autogen/
+__pycache__

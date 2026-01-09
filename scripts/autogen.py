@@ -1,411 +1,419 @@
 import re
-import pandas as pd
-import csv
 import argparse
 import logging
 import system_calls
 from pathlib import Path
+from dataclasses import dataclass, fields
+from typing import List, Dict, Any, Callable, Set, Optional, Tuple, Type
 
-from typing import List, Dict, Tuple, Any
+# Import definition objects
+from syscall_definitions import SYSCALLS, Syscall, Nrs, ScArg
+from type_system import TypeSystem
 
-""" 
-    Initialize primitive/complex types from template
-"""
-def parse_type_file(path):
-    prog = re.compile(r'type ([^\s=]+)\s*=\s*(.*);')
-    with open(path) as f:
-        content = f.read()
-    return dict(prog.findall(content))
+@dataclass
+class GeneratorContext:
+    ts: TypeSystem
+    archs: List[str]
+    syscalls: Dict[str, Syscall]
 
-sub = lambda k, ch: k.replace('-', ch)
-
-BASIC_TYPES = { sub(k, ' '): v for k, v in parse_type_file('templates/primitives.wit.template').items() }
-COMPLEX_TYPES = { sub(k, '_'): sub(v, ' ') if sub(v, ' ') in BASIC_TYPES else sub(v, '_') 
-                    for k, v in parse_type_file('templates/complex.wit.template').items()}
-COMBINED_TYPES = {**BASIC_TYPES, **COMPLEX_TYPES}
-WIT_PRIMITIVE_SET = set(BASIC_TYPES.values())
-
-
-
+    @classmethod
+    def create(cls) -> 'GeneratorContext':
+        logging.info("Creating context...")
+        # Load Type System
+        ts = TypeSystem.load(Path('templates'))
+        archs = [f.name for f in fields(Nrs)]
+        return cls(ts, archs, SYSCALLS)
 
 
-def get_scargs(x, replace_complex: bool = True):
-    """
-        System Call arguments processed as basic types
-    """
-    if not x['# Args']:
-        return []
-    args = [x["a"+str(i+1)] for i in range(int(x['# Args']))]
-    arg_sub = [COMPLEX_TYPES.get(arg, "UNDEF") if arg[-1] != '*' and arg not in BASIC_TYPES \
-        else arg for arg in args] if replace_complex else args
-    return arg_sub
+# --- Base Generator ---
+class StubGenerator:
+    def __init__(self, spath: Path, context: GeneratorContext):
+        self.spath = spath
+        self.spath.mkdir(parents=True, exist_ok=True)
+        self.ctx = context
 
+    @property
+    def ts(self) -> TypeSystem:
+        return self.ctx.ts
 
-def ptr_anonymize(args):
-    """
-        Anonymize pointer argument types to void*
-    """
-    return ['void*' if x[-1] == '*' and x[:-1] not in BASIC_TYPES else x for x in args]
-
-def rustify_args(args):
-    """
-        Convert argument types to Rust compatible types
-        Basically, "s<bitwidth> --> i<bitwidth>" while u<bitwidth> remains the same
-    """
-    def rs_simplify(v):
-        while v not in WIT_PRIMITIVE_SET:
-            v = COMBINED_TYPES.get(v, "UNDEF")
-        return v if v[0] != 's' else 'i' + v[1:]
+    @property
+    def archs(self) -> List[str]:
+        return self.ctx.archs
     
-    return ['i32' if x[-1] == '*' else rs_simplify(x) for x in args]
+    @property
+    def syscalls(self) -> Dict[str, Syscall]:
+        return self.ctx.syscalls
+
+    def generate(self):
+        raise NotImplementedError
+
+    def write_file(self, filename: str, content: str):
+        """Writes content to file at self.spath / filename."""
+        with open(self.spath / filename, 'w') as f:
+            f.write(content)
+
+    def gen_and_write(self, stub_fn: Callable, filename: str, include_unimplemented_calls: bool = False, prelude: str = "", postlude: str = ""):
+        # Call stubs for each syscall
+        buf = [stub_fn(sc) for sc in self.syscalls.values() if include_unimplemented_calls or sc.implemented]
+        # Construct content: prelude + joined stubs + postlude
+        content_parts = []
+        if prelude: content_parts.append(prelude)
+        content_parts.append('\n'.join(buf))
+        if postlude: content_parts.append(postlude)
+        self.write_file(filename, '\n'.join(content_parts))
 
 
-def syscall_iter(syscall_info, stub_fn):
-    buf = []
-    for sc in syscall_info:
-        args = get_scargs(sc)
-        fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
-        buf.append(stub_fn(sc['NR'], sc['# Args'], sc['Syscall'], fn_name, args))
-    return filter(bool, buf)
+# --- Specific Generators ---
+
+class LibcGenerator(StubGenerator):
+    def generate(self):
+        self._gen_c_stubs()
+        self._gen_rust_stubs()
+
+    def _ptr_anonymize(self, args: List[ScArg]) -> List[str]:
+        """Anonymize pointer argument types to void* for non-basic pointer types."""
+        def f(arg: ScArg):
+            (indir, base) = arg.ptr_split(max=1)
+            return 'void*' if indir > 0 and not base.is_basic_type(self.ts) else arg
+        
+        return [f(arg) for arg in args]
+
+    def rustify_args(self, sc: Syscall) -> List[str]:
+        """Convert argument types to Rust compatible types"""
+        def f(arg: ScArg):
+            if arg.is_ptr():
+                return 'i32'
+            while arg not in self.ts.wit_primitive_set:
+                arg = self.ts.combined_types.get(arg, "UNDEF")
+            return arg if not arg.startswith('s') else 'i' + arg[1:]
+        
+        return [f(x) for x in sc.args_reduce(self.ts)]
 
 
-def gen_and_write(stub_name, syscall_info, outpath, prelude="", postlude=""):
-    """
-        Helper method for common stub generation flow
-    """
-    buf = syscall_iter(syscall_info, stub_name)
-    with open(outpath, 'w') as f:
-        f.write(prelude)
-        f.write('\n'.join(buf))
-        f.write(postlude)
+    def _gen_c_stubs(self):
+        def def_stub(sc: Syscall):
+            arglist = ','.join(self._ptr_anonymize(sc.args_reduce(self.ts)))
+            return f"WALI_SYSCALL_DEF ({sc.name}, {arglist});"
 
-def gen_libc_stubs(spath, syscall_info, archs):
-    """
-        --------------------------------------------------------------
-        Libc WALI: Declarations and Case-statement for syscall-by-number 
-        --------------------------------------------------------------
-    """
-    def def_stub(nr, nargs, name, fn_name, args):
-        return "WALI_SYSCALL_DEF ({fn_name}, {arglist});".format(
-                    fn_name = fn_name, 
-                    arglist = ','.join(ptr_anonymize(args)))
-    def case_stub(nr, nargs, name, fn_name, args):
-        return "\t\tCASE_SYSCALL ({name}, {fn_name}, {arglist});".format(
-            name = name, 
-            fn_name = fn_name, 
-            arglist = ','.join(['({})a{}'.format(j, i+1) 
-                for i, j in enumerate(ptr_anonymize(args))])) if nargs else ""
-       
-    gen_and_write(def_stub, syscall_info, spath / 'defs.out')
-    gen_and_write(case_stub, syscall_info, spath / 'case.out')
+        def case_stub(sc: Syscall):
+            anon_args = self._ptr_anonymize(sc.args_reduce(self.ts))
+            arglist = ','.join([f"({typ})a{i+1}" for i, typ in enumerate(anon_args)])
+            return f"\t\tCASE_SYSCALL ({sc.name}, {sc.name}, {arglist});"
 
-    """
-        Rust Libc Stubs
-    """
-    rpath = spath / 'rust'
-    rpath.mkdir(parents=True, exist_ok=True)
+        self.gen_and_write(def_stub, 'defs.out', True)
+        self.gen_and_write(case_stub, 'case.out')
 
-    def rust_def_stub(nr, nargs, name, fn_name, args):
-        return '\n'.join([
-            "\t/* {} */".format(nr),
-            "\t#[link_name = \"SYS_{}\"]".format(fn_name),
-            "\tpub fn __syscall_SYS_{fn_name}({argtys}) -> ::c_long;".format(
-                fn_name = fn_name,
-                argtys = ', '.join(['a{}: {}'.format(i+1, j) 
-                                    for i, j in enumerate(rustify_args(args))
-                                    ])
+    def _gen_rust_stubs(self):
+        rpath = self.spath / 'rust'
+        rpath.mkdir(parents=True, exist_ok=True)
+
+
+        def rust_def_stub(sc: Syscall):
+            rust_args = self.rustify_args(sc)
+            argtys = ', '.join([f"a{i+1}: {typ}" for i, typ in enumerate(rust_args)])
+            return '\n'.join([
+                f"\t/* {sc.nr} */",
+                f"\t#[link_name = \"SYS_{sc.name}\"]",
+                f"\tpub fn __syscall_SYS_{sc.name}({argtys}) -> ::c_long;"
+            ])
+
+        def rust_match_stub(sc: Syscall):
+            if sc.implemented:
+                call_args = ', '.join([f"a{x}" for x, _ in enumerate(sc.args_reduce(self.ts))])
+                return f"\t\tsuper::SYS_{sc.name} => syscall_match_arm!(SYS_{sc.name}, args, {call_args}),"
+            else:
+                return f"\t\tsuper::SYS_{sc.name} => unimplemented!(\"WALI syscall '{sc.name}' ({sc.nr}) unimplemented!\"),"
+
+        def_prelude = "\n".join([
+            "// --- Autogenerated from WALI/scripts/autogen.py ---",
+            "#[link(wasm_import_module = \"wali\")]",
+            "extern \"C\" {",
+            ""
+        ])
+        def_postlude = "\n}"
+        
+        # We need a slightly custom writer for rust subdirectory or override gen_and_write
+        # But base class gen_and_write writes to self.spath / filename.
+        # We can pass 'rust/defs.out' as filename.
+        self.gen_and_write(rust_def_stub, 'rust/defs.out', False, def_prelude, def_postlude)
+
+        match_prelude = "\n".join([
+            "#[no_mangle]",
+            "pub unsafe extern \"C\" fn syscall(num: ::c_long, mut args: ...) -> ::c_long {",
+            "\tuse core::unimplemented;",
+            "\tmatch num {",
+            ""
+        ])
+        match_postlude = "\n".join([
+            "",
+            "\t\t_ => unimplemented!(\"WALI syscall number {} out-of-scope!\", num),",
+            "\t}",
+            "}"
+        ])
+        self.gen_and_write(rust_match_stub, 'rust/match.out', True, match_prelude, match_postlude)
+
+
+class WamrGenerator(StubGenerator):
+    def generate(self):
+        def declr_stub(sc: Syscall):
+            arglist = ''.join([f", long a{i+1}" for i, _ in enumerate(sc.args_reduce(self.ts))])
+            return f"long wali_syscall_{sc.name} (wasm_exec_env_t exec_env{arglist});"
+
+        def impl_stub(sc: Syscall):
+            args_red = sc.args_reduce(self.ts)
+            arglist_def = ''.join([f", long a{i+1}" for i, _ in enumerate(args_red)])
+            
+            # Construct return call args
+            ret_args = []
+            for i, argty in enumerate(args_red):
+                if argty.endswith('*'):
+                    ret_args.append(f", MADDR(a{i+1})")
+                else:
+                    ret_args.append(f", a{i+1}")
+            ret_arglist = ''.join(ret_args)
+            
+            lines = [
+                f"// {sc.nr} TODO",
+                f"long wali_syscall_{sc.name} (wasm_exec_env_t exec_env{arglist_def}) {{",
+                f"\tSC({sc.nr} ,{sc.name});",
+                f"\tERRSC({sc.name});",
+                f"\tRETURN(__syscall{len(args_red)}(SYS_{sc.name}{ret_arglist}));",
+                "}\n"
+            ]
+            return '\n'.join(lines)
+
+        def symbols_stub(sc: Syscall):
+            def gen_native_args(args_list):
+                params = ''.join(["I" if x.endswith("long long") or x.endswith("long") else "i" for x in args_list])
+                return f"\"({params})I\""
+
+            return "\tNSYMBOL ( {: >20}, {: >30}, {: >12} ),".format(
+                "SYS_" + sc.name,
+                "wali_syscall_" + sc.name,
+                gen_native_args(sc.args_reduce(self.ts))
             )
-        ]) if nargs else ""
 
-    def rust_match_stub(nr, nargs, name, fn_name, args):
-        return "\t\tsuper::SYS_{name} => syscall_match_arm!(SYS_{fn_name}, args, {args}),".format(
-            name = name,
-            fn_name = fn_name,
-            args = ', '.join([f"a{x}" for x, _ in enumerate(args)])
-        ) if nargs else "\t\tsuper::SYS_{name} => unimplemented!({msg}),".format(
-            name = name,
-            msg = f"\"WALI syscall \'{name}\' ({nr}) unimplemented!\""
+        self.gen_and_write(declr_stub, 'declr.out', True)
+        self.gen_and_write(impl_stub, 'impl.out')
+        self.gen_and_write(symbols_stub, 'symbols.out')
+
+
+class WitGenerator(StubGenerator):
+    def generate(self):
+        buf = []
+        uniq_ptr_types = set()
+
+        def transform_ptr_arg(arg):
+            arg_no_ptr = arg.rstrip('*')
+            ptr_indirection = len(arg) - len(arg_no_ptr)
+            return ("ptr-" * ptr_indirection) + arg_no_ptr
+
+        for sc in self.syscalls.values():
+            args = [x.strip().replace(' ', '-').replace('_', '-') for x in sc.args]
+            args = [transform_ptr_arg(x) for x in args]
+            
+            up_types = set([x for x in args if x.startswith('ptr-')])
+            uniq_ptr_types.update(up_types)
+
+            if sc.num_args:
+                l1 = f"\t// [{sc.nr}] {sc.name}({', '.join(sc.args)})"
+                wit_args = ', '.join([
+                    f"a{i+1}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
+                    for i, arg in enumerate(args)
+                ])
+                l2 = f"\tSYS-{sc.name.replace('_', '-')}: func({wit_args}) -> syscall-result;"
+                buf.append(l1 + '\n' + l2)
+
+        buf = list(filter(bool, buf))
+        
+        self._generate_wit_file(buf, uniq_ptr_types)
+
+    def _generate_wit_file(self, buf, uniq_ptr_types):
+        rep = lambda p: p.replace('_', '-').replace(' ', '-')
+        comp_types = {'syscall-result': 's64'}
+        for k, v in (self.ts.basic_types | self.ts.complex_types).items():
+             val = rep(v) if not v.startswith('Array') else v.replace('_', '-')
+             comp_types[rep(k)] = val
+
+        type_if = ["interface types {"] + \
+                  [f"\ttype {k} = {v};" for k, v in comp_types.items()] + \
+                  ["}"]
+
+        # Process Records
+        # Assuming templates dir relative to CWD
+        try:
+            with open('templates/records.wit.template') as f:
+                record_content = f.read()
+        except FileNotFoundError:
+            logging.error("templates/records.wit.template not found")
+            record_content = ""
+
+        record_types = set(re.findall(r'record (\S+)', record_content))
+        sc_ptr_types = set()
+        
+        for x in uniq_ptr_types:
+            x_no_ptr = x
+            while x_no_ptr.startswith("ptr-"):
+                x_no_ptr = x_no_ptr.replace("ptr-", "", 1)
+            
+            # Helper to check validity
+            is_skippable = (x_no_ptr in self.ts.basic_types or 
+                            x_no_ptr in comp_types or 
+                            x_no_ptr in ['void', 'char'])
+            if not is_skippable:
+                sc_ptr_types.add(x_no_ptr)
+
+        missing_types = sc_ptr_types.difference(record_types)
+        if missing_types:
+            logging.warning(f"Missing Records for Complex Types: {missing_types}")
+        else:
+            logging.info("Successfully bound all records")
+        
+        sc_prelude = (
+            ["interface syscalls {"] +
+            [f"\tuse types.{{{', '.join(comp_types)}}};"] +
+            ["\t/// Readable pointer types"] +
+            [f"\ttype {x} = ptr;" for x in sorted(uniq_ptr_types)] +
+            ["", "\t/// Record types"] +
+            ["\t" + '\n\t'.join(record_content.split('\n'))] +
+            [""]
         )
 
-    def_prelude = '\n'.join([
-        "// --- Autogenerated from WALI/scripts/autogen.py ---",
-        "#[link(wasm_import_module = \"wali\")]",
-        "extern \"C\" {",
-        ""
-    ])
-    def_postlude = "\n}"
-    gen_and_write(rust_def_stub, syscall_info, rpath / 'defs.out', def_prelude, def_postlude)
+        sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
 
-    match_prelude = '\n'.join([
-        "#[no_mangle]",
-        "pub unsafe extern \"C\" fn syscall(num: ::c_long, mut args: ...) -> ::c_long {",
-        "\tuse core::unimplemented;",
-        "\tmatch num {",
-        ""
-    ])
-    match_postlude = '\n'.join([
-        "",
-        "\t\t_ => unimplemented!(\"WALI syscall number {} out-of-scope!\", num),",
-        "\t}",
-        "}"
-    ])
-    gen_and_write(rust_match_stub, syscall_info, rpath / 'match.out', match_prelude, match_postlude)
-    
+        try:
+            with open('templates/wali.wit.template', 'r') as f:
+                template = f.read()
+        except FileNotFoundError:
+             template = "[[TYPES_STUB]]\n[[SYSCALLS_STUB]]"
 
-def gen_wamr_stubs(spath, syscall_info, archs):
-    """
-        --------------------------------------------------------------
-        WAMR WALI: Declarations, Linking Symbols, and Implementation 
-        --------------------------------------------------------------
-    """
-    def declr_stub(nr, nargs, name, fn_name, args):
-        return "long wali_syscall_{fn_name} (wasm_exec_env_t exec_env{arglist});".format(
-                fn_name = fn_name,
-                arglist = ''.join([', long a{}'.format(i+1) for i, j in enumerate(args)]))
-
-    def impl_stub(nr, nargs, name, fn_name, args):
-        lines = [f"// {nr} TODO",
-                "long wali_syscall_{fn_name} (wasm_exec_env_t exec_env{arglist}) {{".format(
-                    fn_name = fn_name, 
-                    arglist = ''.join([f", long a{i+1}" for i, j in enumerate(args)])),
-
-                f"\tSC({nr} ,{fn_name});",
-                f"\tERRSC({fn_name});",
-                "\tRETURN(__syscall{num_args}(SYS_{fn_name}{arglist}));".format(
-                    num_args = len(args),
-                    fn_name = fn_name,
-                    arglist = ''.join([f", a{i+1}" if argty[-1] != '*' else f", MADDR(a{i+1})"
-                        for i, argty in enumerate(args)])),
-                
-                "}\n"
-                ] if nargs else [""]
-        return '\n'.join(lines)
-
-
-    def gen_native_args(args):
-        return "\"({params}){res}\"".format(
-            params = ''.join(["I" if x.endswith("long long") or x.endswith("long") else "i" for x in args]),
-            res = "I"
-            )
-        
-    def symbols_stub(nr, nargs, name, fn_name, args):
-        return "\tNSYMBOL ( {: >20}, {: >30}, {: >12} ),".format(
-                    "SYS_" + fn_name,
-                    "wali_syscall_" + fn_name,
-                    gen_native_args(args)
-                ) if nargs else ""
-
-    gen_and_write(declr_stub, syscall_info, spath / 'declr.out')
-    gen_and_write(impl_stub, syscall_info, spath / 'impl.out')
-    gen_and_write(symbols_stub, syscall_info, spath / 'symbols.out')
-
-
-def gen_wit_stubs(spath, syscall_info, archs):
-    """
-        --------------------------------------------------------------
-        WIT WALI Syscall Interface Declaration
-        --------------------------------------------------------------
-    """
-    # Outputs
-    buf = []
-    uniq_ptr_types = set()
-
-    def wit_sc_def(nr, nargs, fn_name, args, orig_args):
-        l1 = "\t// [{nr}] {fn_name}({orig_args})".format(
-            nr = nr,
-            fn_name = fn_name,
-            orig_args = ', '.join(orig_args))
-        l2 = "\tSYS-{fn_name}: func({arglist}) -> syscall-result;".format(
-            fn_name = fn_name.replace('_', '-'),
-            arglist = ', '.join(["a{}: {}".format(
-                        i+1, BASIC_TYPES[arg] if arg in BASIC_TYPES else arg) 
-                        for i, arg in enumerate(args)])
-        ) 
-        return '\n'.join([l1, l2]) if nargs else ""
-
-    def transform_ptr_arg(arg):
-        arg_no_ptr = arg.rstrip('*')
-        ptr_indirection = len(arg) - len(arg_no_ptr)
-        return ("ptr-" * ptr_indirection) + arg_no_ptr
-
-    for sc in syscall_info:
-        orig_args = get_scargs(sc, False)
-        args = [x.strip().replace(' ', '-').replace('_', '-') for x in orig_args]
-        args = [transform_ptr_arg(x) for x in args]
-        up_types = set([x for x in args if x.startswith('ptr-')])
-        fn_name = sc['Aliases'] if sc['Aliases'] else sc['Syscall']
-        uniq_ptr_types.update(up_types)
-        buf.append(wit_sc_def(sc['NR'], sc['# Args'], fn_name, args, orig_args))
-
-    buf = list(filter(bool, buf))
-
-
-    ### Generate types and syscall interface
-    rep = lambda p: p.replace('_', '-').replace(' ', '-')
-    comp_types = {
-        'syscall-result': 's64',
-        **{rep(k): rep(v) if not v.startswith('Array') else v.replace('_','-') \
-            for k, v in (BASIC_TYPES | COMPLEX_TYPES).items() }
-    }
-    type_if = ["interface types {"] + \
-              ["\ttype {} = {};".format(k, v) for k, v in comp_types.items()] + \
-            ["}"]
-
-    # Match set of record bindings for complex pointer types used in syscalls
-    with open('templates/records.wit.template') as f:
-        record_content = f.read()
-    record_types = set(re.findall(r'record (\S+)', record_content))
-    sc_ptr_types = set()
-    for x in uniq_ptr_types:
-        x_no_ptr = x
-        ptr_indirection = 0
-        while x_no_ptr.startswith("ptr-"):
-            x_no_ptr = x_no_ptr.removeprefix("ptr-")
-            ptr_indirection += 1
-        if x_no_ptr not in BASIC_TYPES and x_no_ptr not in comp_types and x_no_ptr != 'void' and x_no_ptr != 'char':
-            sc_ptr_types.add(x_no_ptr)
-
-    missing_types = sc_ptr_types.difference(record_types)
-    if missing_types:
-        logging.warning(f"Missing Records for Complex Types: {missing_types}")
-    else:
-        logging.info(f"Successfully bound all records")
-    
-    sc_prelude = ["interface syscalls {"] + \
-                ["\tuse types.{{{}}};".format(', '.join([k for k in comp_types]))] + \
-                ["\t/// Readable pointer types"] + \
-                ["\ttype {} = ptr;".format(x) for x in sorted(uniq_ptr_types)] + \
-                [""] + \
-                ["\t/// Record types"] + \
-                ["\t" + '\n\t'.join(record_content.split('\n'))] + \
-                [""]
-
-    
-    sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
-
-    # Fill in template
-    with open('templates/wali.wit.template', 'r') as f:
-        template = f.read()
-
-    fill_temp = template.replace(
-        '[[TYPES_STUB]]', '\n'.join(type_if)
+        fill_temp = template.replace(
+            '[[TYPES_STUB]]', '\n'.join(type_if)
         ).replace(
-        '[[SYSCALLS_STUB]]', '\n'.join(sc_if))
+            '[[SYSCALLS_STUB]]', '\n'.join(sc_if)
+        )
 
-    with open(spath / 'wali.wit',  'w') as f:
         def matchrep(matchobj):
             num_elem, ty = matchobj.groups()
             return "tuple<{}>".format(','.join([ty] * int(num_elem)))
-        ## TEMPORARY: No fixed-length arrays in WIT
-        # Written as Array[num_elem, type] ---convert---> tuple<type, type, ...>
-        fill_temp = re.sub(r'Array\[\s*(\d+),\s*(\S+)\s*\]', 
-                            matchrep, fill_temp)
-        f.write(fill_temp)
+
+        # TEMPORARY: No fixed-length arrays in WIT
+        fill_temp = re.sub(r'Array\[\s*(\d+),\s*(\S+)\s*\]', matchrep, fill_temp)
+        
+        self.write_file('wali.wit', fill_temp)
 
 
+class MarkdownGenerator(StubGenerator):
+    def generate(self):
+        syscalls_lib = system_calls.syscalls()
+        arch_remap = {'rv64': 'riscv64'}
+        arch_supp_mapped = {arch_remap.get(x, x) for x in self.archs}
+        
+        arch_calls = [set(syscalls_lib.load_arch_table(v).keys()) for v in arch_supp_mapped]
+        arch_call_set = set().union(*arch_calls)
 
+        # Build list of dicts for pandas-free table generation or just bare formatting
+        # Note: raw_syscalls is now List[Syscall] objects
+        
+        # Supported set: where args are present (implemented)
+        supp_sc = [s for s in self.syscalls.values() if s.implemented]
+        supp_set = set(s.name for s in supp_sc)
+        
+        # Generate markdown table
+        # Columns: Syscall, # Args, a1..a6
+        header = "| Syscall | # Args | a1 | a2 | a3 | a4 | a5 | a6 |"
+        sep = "| --- | --- | --- | --- | --- | --- | --- | --- |"
+        rows = []
+        for s in supp_sc:
+            args = s.args
+            nargs = len(args)
+            # Pad args to 6
+            padded_args = args + [''] * (6 - nargs)
+            # Escape strings
+            def esc(x): return str(x).replace('*', r'\*').replace('_', r'\_')
+            
+            row_vals = [esc(s.name), str(nargs)] + [esc(a) for a in padded_args]
+            rows.append("| " + " | ".join(row_vals) + " |")
+        
+        md_table = "\n".join([header, sep] + rows)
 
-def gen_arch_diff_stubs(spath, syscall_info, archs):
-    """
-        --------------------------------------------------------------
-        Cross-Architecture syscall differences
-        --------------------------------------------------------------
-    """
-    bufs = {x: [] for x in archs}
-    for sc in syscall_info:
-        for arch in archs:
-            if sc[f"{arch}_NR"] and int(sc[f"{arch}_NR"]) == -1:
-                bufs[arch].append(sc["Syscall"])
-    for arch, buf in bufs.items():
-        with open(spath / f"{arch}_undefined.out", 'w') as f:
-            f.write('\n'.join(buf))
+        unsupp_set = arch_call_set.difference(supp_set)
+        unsupp_list = [f"* {x}" for x in sorted(unsupp_set)]
 
+        try:
+            with open('templates/support.md.template', 'r') as f:
+                template = f.read()
+        except FileNotFoundError:
+            template = ""
 
-def gen_markdown_stubs(spath, syscall_info, archs):
-    """
-        --------------------------------------------------------------
-        Markdown tracking syscall support
-        --------------------------------------------------------------
-    """
-    syscalls = system_calls.syscalls()
-    arch_supp = archs + ['x86_64']
-    arch_remap = {
-        'aarch64': 'arm64',
-    }
-    arch_supp = {arch_remap[x] if x in arch_remap else x for x in arch_supp}
-    arch_calls = [set(syscalls.load_arch_table(v).keys()) for v in arch_supp]
-    arch_call_set = set().union(*arch_calls)
-
-    df = pd.DataFrame.from_dict(syscall_info)
-    # Get supported and unsupported set
-    supp_set = set([s['Syscall'] for s in syscall_info if s['# Args']])
-    supp_df = df[df['Syscall'].isin(supp_set)]
-    supp_format_df = supp_df[['Syscall', '# Args', *[f"a{x+1}" for x in range(6)]]]
-
-    unsupp_set = arch_call_set.difference(supp_set)
-    unsupp_list = ["* {}".format(x) for x in sorted(unsupp_set)]
-
-    # Fill in template
-    with open('templates/support.md.template', 'r') as f:
-        template = f.read()
-
-    fill_temp = template.replace(
-        '[[NUM_SUPPORTED_SYSCALLS_STUB]]', 
-        str(len(supp_format_df))
+        fill_temp = template.replace(
+            '[[NUM_SUPPORTED_SYSCALLS_STUB]]', 
+            str(len(supp_sc))
         ).replace(
-        '[[SUPPORTED_SYSCALLS_STUB]]', 
-        supp_format_df.to_markdown(index=False).replace('*', r'\*').replace('_', r'\_')
+            '[[SUPPORTED_SYSCALLS_STUB]]', 
+            md_table
         ).replace(
-        '[[UNSUPPORTED_SYSCALLS_STUB]]', '\n'.join(unsupp_list).replace('_', r'\_'))
+            '[[UNSUPPORTED_SYSCALLS_STUB]]', 
+            '\n'.join(unsupp_list).replace('_', r'\_')
+        )
 
-    with open(spath / 'support.md', 'w') as f:
-        f.write(fill_temp)
-    
+        self.write_file('support.md', fill_temp)
 
 
-stub_classes = {
-    'libc': gen_libc_stubs,
-    'wamr': gen_wamr_stubs,
-    'wit': gen_wit_stubs,
-    'arch-diff': gen_arch_diff_stubs,
-    'markdown': gen_markdown_stubs
+# --- Registry & Main ---
+
+GENERATORS = {
+    'libc': LibcGenerator,
+    'wamr': WamrGenerator,
+    'wit': WitGenerator,
+    'markdown': MarkdownGenerator
 }
 
 def parse_args() -> argparse.Namespace:
-    """
-        Argument parsing for CLI
-    """
-    parser = argparse.ArgumentParser(prog='wali-autogen', description="Generate WALI descriptions/implementations/stubs for different uses")
-    parser.add_argument('--file', '-f', help='CSV file containing syscall format', default='csvs/syscall_full_format.csv')
-    parser.add_argument('--verbose', '-v', help='Logging verbosity', choices=range(6), type=int, default=4)
-    parser.add_argument('stubs', nargs='*', choices=list(stub_classes.keys())+['all'], default='all')
+    parser = argparse.ArgumentParser(
+        prog='wali-autogen', 
+        description="Generate WALI descriptions/implementations/stubs"
+    )
+    parser.add_argument('--verbose', '-v', 
+                        help='Logging verbosity', 
+                        choices=range(6), type=int, default=4)
+    parser.add_argument('stubs', 
+                        nargs='*', 
+                        choices=list(GENERATORS.keys())+['all'], 
+                        default='all')
     p = parser.parse_args()
-    if p.stubs == 'all' or (type(p.stubs) is list and 'all' in p.stubs):
-        p.stubs = stub_classes.keys()
-    return p
-
-
-def parse_csv(filepath: str) -> Tuple[Dict[str, Any], List[str]]:
-    df = pd.read_csv(filepath, skiprows=0, keep_default_na=False)
-    archs = [k[:-3] for k in df.filter(regex=(".+_NR")).columns]
-    dfilter = [x for x in df.to_dict(orient='records') if x['Syscall']]
-    logging.debug(dfilter)
-    return dfilter, archs
     
+    if p.stubs == 'all' or (isinstance(p.stubs, list) and 'all' in p.stubs):
+        p.stubs = list(GENERATORS.keys())
+    # Ensure list
+    if isinstance(p.stubs, str):
+        p.stubs = [p.stubs]
+        
+    return p
 
 def main():
     args = parse_args()
-    logging.basicConfig(level=logging.getLevelName((6-args.verbose)*10) if args.verbose != 0 else logging.NOTSET, 
-        format='%(levelname)s: %(message)s')
-    syscall_info, archs = parse_csv(args.file)
-    
-    logging.info(f"Basic Types: {BASIC_TYPES}")
-    logging.info(f"Complex Types: {COMPLEX_TYPES}")
-    for stub in args.stubs:
-        spath = Path(stub)
-        logging.info(f"Generating {stub} stubs")
-        spath.mkdir(parents=True, exist_ok=True)
-        stub_classes[stub](spath, syscall_info, archs)
+    log_level = logging.getLevelName((6-args.verbose)*10) if args.verbose != 0 else logging.NOTSET
+    logging.basicConfig(level=log_level, format='%(levelname)s: %(message)s')
+
+    # Initialize shared context
+    ctx = GeneratorContext.create()
+
+    for stub_name in args.stubs:
+        if stub_name not in GENERATORS:
+            logging.warning(f"Unknown stub type: {stub_name}")
+            continue
+            
+        logging.info(f"Generating {stub_name} stubs")
+        spath = Path('autogen') / stub_name
+        
+        # Instantiate and run generator
+        GeneratorClass = GENERATORS[stub_name]
+        try:
+            gen = GeneratorClass(spath, ctx)
+            gen.generate()
+        except Exception as e:
+            logging.error(f"Failed to generate {stub_name}: {e}", exc_info=True)
 
 if __name__ == '__main__':
     main()

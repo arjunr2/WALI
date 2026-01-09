@@ -340,8 +340,6 @@ interface syscalls {
 	SYS-pipe: func(a1: ptr-int) -> syscall-result;
 	// [23] select(int, fd_set*, fd_set*, fd_set*, struct timeval*)
 	SYS-select: func(a1: s32, a2: ptr-fd-set, a3: ptr-fd-set, a4: ptr-fd-set, a5: ptr-struct-timeval) -> syscall-result;
-	// [24] sched_yield()
-	SYS-sched-yield: func() -> syscall-result;
 	// [25] mremap(void*, size_t, size_t, int, void*)
 	SYS-mremap: func(a1: ptr-void, a2: size-t, a3: size-t, a4: s32, a5: ptr-void) -> syscall-result;
 	// [26] msync(void*, size_t, int)
@@ -358,8 +356,6 @@ interface syscalls {
 	SYS-alarm: func(a1: s32) -> syscall-result;
 	// [38] setitimer(int, struct itimerval*, struct itimerval*)
 	SYS-setitimer: func(a1: s32, a2: ptr-struct-itimerval, a3: ptr-struct-itimerval) -> syscall-result;
-	// [39] getpid()
-	SYS-getpid: func() -> syscall-result;
 	// [41] socket(int, int, int)
 	SYS-socket: func(a1: s32, a2: s32, a3: s32) -> syscall-result;
 	// [42] connect(int, struct sockaddr*, socklen_t)
@@ -390,8 +386,6 @@ interface syscalls {
 	SYS-setsockopt: func(a1: s32, a2: s32, a3: s32, a4: ptr-void, a5: socklen-t) -> syscall-result;
 	// [55] getsockopt(int, int, int, void*, socklen_t*)
 	SYS-getsockopt: func(a1: s32, a2: s32, a3: s32, a4: ptr-void, a5: ptr-socklen-t) -> syscall-result;
-	// [57] fork()
-	SYS-fork: func() -> syscall-result;
 	// [59] execve(char*, char**, char**)
 	SYS-execve: func(a1: ptr-char, a2: ptr-ptr-char, a3: ptr-ptr-char) -> syscall-result;
 	// [60] exit(int)
@@ -450,24 +444,12 @@ interface syscalls {
 	SYS-getrusage: func(a1: s32, a2: ptr-struct-rusage) -> syscall-result;
 	// [99] sysinfo(struct sysinfo*)
 	SYS-sysinfo: func(a1: ptr-struct-sysinfo) -> syscall-result;
-	// [102] getuid()
-	SYS-getuid: func() -> syscall-result;
-	// [104] getgid()
-	SYS-getgid: func() -> syscall-result;
 	// [105] setuid(uid_t)
 	SYS-setuid: func(a1: uid-t) -> syscall-result;
 	// [106] setgid(gid_t)
 	SYS-setgid: func(a1: gid-t) -> syscall-result;
-	// [107] geteuid()
-	SYS-geteuid: func() -> syscall-result;
-	// [108] getegid()
-	SYS-getegid: func() -> syscall-result;
 	// [109] setpgid(pid_t, pid_t)
 	SYS-setpgid: func(a1: pid-t, a2: pid-t) -> syscall-result;
-	// [110] getppid()
-	SYS-getppid: func() -> syscall-result;
-	// [112] setsid()
-	SYS-setsid: func() -> syscall-result;
 	// [113] setreuid(uid_t, uid_t)
 	SYS-setreuid: func(a1: uid-t, a2: uid-t) -> syscall-result;
 	// [114] setregid(gid_t, gid_t)
@@ -502,8 +484,6 @@ interface syscalls {
 	SYS-setrlimit: func(a1: s32, a2: ptr-struct-rlimit) -> syscall-result;
 	// [161] chroot(char*)
 	SYS-chroot: func(a1: ptr-char) -> syscall-result;
-	// [186] gettid()
-	SYS-gettid: func() -> syscall-result;
 	// [200] tkill(int, int)
 	SYS-tkill: func(a1: s32, a2: s32) -> syscall-result;
 	// [202] futex(int*, int, int, struct timespec*, int*, int)
@@ -532,8 +512,8 @@ interface syscalls {
 	SYS-mkdirat: func(a1: s32, a2: ptr-char, a3: mode-t) -> syscall-result;
 	// [260] fchownat(int, char*, uid_t, gid_t, int)
 	SYS-fchownat: func(a1: s32, a2: ptr-char, a3: uid-t, a4: gid-t, a5: s32) -> syscall-result;
-	// [262] fstatat(int, char*, struct stat*, int)
-	SYS-fstatat: func(a1: s32, a2: ptr-char, a3: ptr-struct-stat, a4: s32) -> syscall-result;
+	// [262] newfstatat(int, char*, struct stat*, int)
+	SYS-newfstatat: func(a1: s32, a2: ptr-char, a3: ptr-struct-stat, a4: s32) -> syscall-result;
 	// [263] unlinkat(int, char*, int)
 	SYS-unlinkat: func(a1: s32, a2: ptr-char, a3: s32) -> syscall-result;
 	// [265] linkat(int, char*, int, char*, int)

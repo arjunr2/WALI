@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, NamedTuple, Dict
+from type_system import TypeSystem
 
 @dataclass
 class Nrs:
@@ -7,11 +8,30 @@ class Nrs:
     arm64: int = -1
     rv64: int = -1
 
+class ScArg(str):
+    def is_ptr(self) -> bool:
+        return self.endswith('*')
+
+    def is_basic_type(self, ts: TypeSystem) -> bool:
+        return self in ts.basic_types
+    
+    def ptr_split(self, max: int | None = None) -> Tuple[int, 'ScArg']:
+        """Returns a split of the number of pointer indirections and base type."""
+        a = self.rstrip('*')
+        indirection = len(self) - len(a)
+        if max is not None and indirection > max:
+            a += '*' * (indirection - max)
+        return (len(self) - len(a), ScArg(a))
+
+
+
 @dataclass
 class Syscall:
     name: str
     nrs: Nrs
-    args: List[str] = field(default_factory=list)
+    args: List[ScArg] = field(default_factory=list)
+    # Arguments reduces to their basic types
+    args_reduced: List[str] = field(default_factory=list)
     aliases: List[str] = field(default_factory=list)
     unused_aliases: List[str] = field(default_factory=list)
     implemented: bool = False
@@ -25,6 +45,11 @@ class Syscall:
     def num_args(self) -> int:
         return len(self.args)
 
+    def args_reduce(self, ts: TypeSystem, replace_complex: bool = True) -> List[ScArg]:
+        '''Returns argument list with complex types reduce by their base types.'''
+        return [ScArg(ts.complex_types.get(arg, "UNDEF")) if not arg.is_ptr() and not arg.is_basic_type(ts) else arg for arg in self.args]
+
+
 # -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
@@ -35,7 +60,7 @@ def unimpl(name: str, nrs: Nrs) -> Syscall:
 
 def impl(name: str, args: List[str], nrs: Nrs, **kwargs) -> Syscall:
     """Full creation helper for fully defined (implemented) syscalls."""
-    return Syscall(name=name, nrs=nrs, args=args, implemented=True, **kwargs)
+    return Syscall(name=name, nrs=nrs, args=[ScArg(a) for a in args], implemented=True, **kwargs)
 
 # -----------------------------------------------------------------------------
 # Definitions
