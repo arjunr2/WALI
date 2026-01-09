@@ -2,6 +2,7 @@
 #define WALI_TEST_HELPERS_H
 
 #include <stdint.h>
+#include <string.h>
 
 // Buffer for test setup - 64KB aligned to 64KB
 static uint8_t result_buffer[65536] __attribute__((aligned(65536)));
@@ -30,6 +31,8 @@ static int wali_init(void) {
   if (wali_test_setup(result_buffer, sizeof(result_buffer)) != 0) {
     return -1;
   }
+  // Initialize to non-zero to detect missing writes
+  memset(result_buffer, 0xCC, sizeof(result_buffer));
   return __imported_wali_init();
 }
 
@@ -53,7 +56,7 @@ static void wali_proc_exit(int code) {
 static int wali_test_setup(void *ptr, uint32_t len) {
   const char *filepath = getenv("WALI_TEST_RESULT_FILE");
   if (!filepath) {
-      printf("[Native] WALI_TEST_RESULT_FILE not set. Using in-memory buffer.\n");
+      if (getenv("WALI_TEST_VERBOSE")) printf("[Native] WALI_TEST_RESULT_FILE not set. Using in-memory buffer.\n");
       return 0; // Fallback to normal memory
   }
 
@@ -83,8 +86,11 @@ static int wali_init(void) {
   if (wali_test_setup(result_buffer, sizeof(result_buffer)) != 0) {
     return -1;
   }
+  // Initialize to non-zero to detect missing writes
+  memset(result_buffer, 0xCC, sizeof(result_buffer));
   return 0;
 }
+
 
 static int wali_deinit() {
   return 0;

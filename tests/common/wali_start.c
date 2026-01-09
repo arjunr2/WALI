@@ -6,6 +6,10 @@
 // Declaration of the test function implemented by each unit test
 void test(void);
 
+// If building the test wrapper, we skip the main definition
+// The wrapper provides its own main and calls setups/cleanup
+#ifndef WALI_TEST_WRAPPER
+
 /* Definition of the main/start function */
 #ifdef __wasm__
 // We export "_start" for the Wasm entrypoint
@@ -30,5 +34,8 @@ fail:
   return 0;
 #endif
 }
+
+#endif // WALI_TEST_WRAPPER
+
 
 #endif /* WALI_START_H_ */
