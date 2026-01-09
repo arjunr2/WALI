@@ -16,6 +16,7 @@ world linux {
 /// Representation of Linux syscall interface types
 interface types {
 	type syscall-result = s64;
+	type char = u8;
 	type int = s32;
 	type long = s64;
 	type long-long = s64;
@@ -57,7 +58,7 @@ interface types {
 
 /// Raw user-space Linux syscall wrappers
 interface syscalls {
-	use types.{syscall-result, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
+	use types.{syscall-result, char, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
 	/// Readable pointer types
 	type ptr-char = ptr;
 	type ptr-cpu-set-t = ptr;
@@ -84,6 +85,7 @@ interface syscalls {
 	type ptr-struct-sysinfo = ptr;
 	type ptr-struct-timespec = ptr;
 	type ptr-struct-timeval = ptr;
+	type ptr-struct-timezone = ptr;
 	type ptr-struct-utimbuf = ptr;
 	type ptr-struct-utsname = ptr;
 	type ptr-void = ptr;
@@ -97,6 +99,11 @@ interface syscalls {
 	record struct-timeval {
 	  tv-sec: time-t,
 	  tv-usec: suseconds-t
+	}
+	
+	record struct-timezone {
+	  tz-minuteswest: int,
+	  tz-dsttime: int
 	}
 	
 	record stack-t {
@@ -406,8 +413,6 @@ interface syscalls {
 	SYS-fdatasync: func(a1: s32) -> syscall-result;
 	// [77] ftruncate(int, off_t)
 	SYS-ftruncate: func(a1: s32, a2: off-t) -> syscall-result;
-	// [78] getdents(int, struct dirent*, int)
-	SYS-getdents: func(a1: s32, a2: ptr-struct-dirent, a3: s32) -> syscall-result;
 	// [79] getcwd(char*, size_t)
 	SYS-getcwd: func(a1: ptr-char, a2: size-t) -> syscall-result;
 	// [80] chdir(char*)
@@ -438,6 +443,8 @@ interface syscalls {
 	SYS-fchown: func(a1: s32, a2: uid-t, a3: gid-t) -> syscall-result;
 	// [95] umask(mode_t)
 	SYS-umask: func(a1: mode-t) -> syscall-result;
+	// [96] gettimeofday(struct timeval*, struct timezone*)
+	SYS-gettimeofday: func(a1: ptr-struct-timeval, a2: ptr-struct-timezone) -> syscall-result;
 	// [97] getrlimit(int, struct rlimit*)
 	SYS-getrlimit: func(a1: s32, a2: ptr-struct-rlimit) -> syscall-result;
 	// [98] getrusage(int, struct rusage*)

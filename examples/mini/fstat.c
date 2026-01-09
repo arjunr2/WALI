@@ -3,7 +3,7 @@
 int main()
 {
     struct stat sb;
-    char path[] = "compile-wali.sh";
+    char path[] = "compile-wali-debug.sh";
 
     int fd = open(path, O_RDONLY);
 

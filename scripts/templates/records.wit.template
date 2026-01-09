@@ -8,6 +8,11 @@ record struct-timeval {
   tv-usec: suseconds-t
 }
 
+record struct-timezone {
+  tz-minuteswest: int,
+  tz-dsttime: int
+}
+
 record stack-t {
   ss-sp: ptr-void,
   ss-flags: s32,

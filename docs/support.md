@@ -69,7 +69,6 @@ Number of supported syscalls: **142**
 | fsync | 1 | int |  |  |  |  |  |
 | fdatasync | 1 | int |  |  |  |  |  |
 | ftruncate | 2 | int | off\_t |  |  |  |  |
-| getdents | 3 | int | struct dirent\* | int |  |  |  |
 | getcwd | 2 | char\* | size\_t |  |  |  |  |
 | chdir | 1 | char\* |  |  |  |  |  |
 | fchdir | 1 | int |  |  |  |  |  |
@@ -85,6 +84,7 @@ Number of supported syscalls: **142**
 | chown | 3 | char\* | uid\_t | gid\_t |  |  |  |
 | fchown | 3 | int | uid\_t | gid\_t |  |  |  |
 | umask | 1 | mode\_t |  |  |  |  |  |
+| gettimeofday | 2 | struct timeval\* | struct timezone\* |  |  |  |  |
 | getrlimit | 2 | int | struct rlimit\* |  |  |  |  |
 | getrusage | 2 | int | struct rusage\* |  |  |  |  |
 | sysinfo | 1 | struct sysinfo\* |  |  |  |  |  |
@@ -199,12 +199,12 @@ Number of supported syscalls: **142**
 * get\_robust\_list
 * get\_thread\_area
 * getcpu
+* getdents
 * getitimer
 * getpgrp
 * getpriority
 * getresgid
 * getresuid
-* gettimeofday
 * getxattr
 * getxattrat
 * init\_module

@@ -1,5 +1,5 @@
 /// Primitive types (64-bit Linux)
-
+type char = u8;
 type int = s32;
 type long = s64;
 type long-long = s64;
