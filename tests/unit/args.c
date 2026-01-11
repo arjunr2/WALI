@@ -6,16 +6,10 @@
 #include <string.h>
 
 int test(void) {
-    if (get_args() != 0) {
-        printf("Failed to get args\n");
+    if (test_init_args() != 0) {
         return -1;
     }
 
-    printf("[Test] argc=%d\n", argc);
-    for(int i=0; i<argc; i++) {
-        printf("[Test] argv[%d]=%s\n", i, argv[i]);
-    }
-    
     // We expect certain args based on the CMDs above
     // Return 0 if we see expected args, -1 otherwise
     if (argc >= 2) {

@@ -11,34 +11,64 @@ RED = '\033[91m'
 RESET = '\033[0m'
 BOLD = '\033[1m'
 
+def parse_env_str(env_str, env_dict):
+    """
+    Parses a string like "KEY=VAL KEY2=VAL2" and updates env_dict.
+    Uses shlex to handle quoted values.
+    """
+    try:
+        parts = shlex.split(env_str)
+        for part in parts:
+            if '=' in part:
+                k, v = part.split('=', 1)
+                env_dict[k] = v
+    except:
+        pass
+
 def parse_runs(source_file):
     setup_configs = []
     test_arg_configs = []
     explicit_runs = []
 
     if not os.path.exists(source_file):
-        return [{'setup': [], 'args': []}]
+        return [{'setup': [], 'args': [], 'env': {}}]
         
     with open(source_file, 'r') as f:
         for line in f:
             line = line.strip()
-            # Support // SETUP: args
+            # Support // SETUP: env=".." arg1 arg2
             if line.startswith("// SETUP:"):
-                args_str = line[len("// SETUP:"):].strip()
-                setup_configs.append(shlex.split(args_str))
-            # Support // TEST_ARGS: args (Test Args)
+                parts = shlex.split(line[len("// SETUP:"):].strip())
+                config = {'args': [], 'env': {}}
+                for p in parts:
+                    if p.startswith("env="):
+                        parse_env_str(p[4:], config['env'])
+                    else:
+                        config['args'].append(p)
+                setup_configs.append(config)
+
+            # Support // TEST_ARGS: env=".." arg1 arg2
             elif line.startswith("// TEST_ARGS:"):
-                 args_str = line[len("// TEST_ARGS:"):].strip()
-                 test_arg_configs.append(shlex.split(args_str))
-            # Support // CMD: setup=".." args=".." (or simply "arg" for both)
+                 parts = shlex.split(line[len("// TEST_ARGS:"):].strip())
+                 config = {'args': [], 'env': {}}
+                 for p in parts:
+                    if p.startswith("env="):
+                        parse_env_str(p[4:], config['env'])
+                    else:
+                        config['args'].append(p)
+                 test_arg_configs.append(config)
+
+            # Support // CMD: setup=".." args=".." env=".." (or simply "arg" for both)
             elif line.startswith("// CMD:"):
                 parts = shlex.split(line[len("// CMD:"):].strip())
-                cmd = {'setup': [], 'args': []}
+                cmd = {'setup': [], 'args': [], 'env': {}}
                 for p in parts:
                     if p.startswith("setup="):
                         cmd['setup'].extend(shlex.split(p.split("=", 1)[1]))
                     elif p.startswith("args="):
                         cmd['args'].extend(shlex.split(p.split("=", 1)[1]))
+                    elif p.startswith("env="):
+                        parse_env_str(p.split("=", 1)[1], cmd['env'])
                     else:
                         cmd['setup'].append(p)
                         cmd['args'].append(p)
@@ -49,24 +79,28 @@ def parse_runs(source_file):
     
     # If we have pool configs, generate cartesian product
     if setup_configs or test_arg_configs:
-        if not setup_configs: setup_configs = [[]]
-        if not test_arg_configs: test_arg_configs = [[]]
+        if not setup_configs: setup_configs = [{'args': [], 'env': {}}]
+        if not test_arg_configs: test_arg_configs = [{'args': [], 'env': {}}]
         
         for s in setup_configs:
             for t in test_arg_configs:
-                final_runs.append({'setup': s, 'args': t})
+                # Merge envs (test overrides setup)
+                merged_env = s['env'].copy()
+                merged_env.update(t['env'])
+                final_runs.append({'setup': s['args'], 'args': t['args'], 'env': merged_env})
     
     # Add explicit runs
     final_runs.extend(explicit_runs)
     
     if not final_runs:
-        return [{'setup': [], 'args': []}]
+        return [{'setup': [], 'args': [], 'env': {}}]
         
     return final_runs
 
 def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     run_args_setup = run_config['setup']
     run_args_test = run_config['args']
+    run_env = run_config.get('env', {})
 
     # Paths
     wasm_file = f"bin/unit/wasm/{base_name}.wasm"
@@ -80,8 +114,11 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     result_file = f"/tmp/wali_test_{base_name}_{run_idx}.bin"
     if os.path.exists(result_file):
         os.remove(result_file)
+    
+    # Setup Native Env
     env = os.environ.copy()
     env["WALI_TEST_RESULT_FILE"] = result_file
+    env.update(run_env)
 
     # Hooks
     hooks_bin = f"bin/unit/elf/{base_name}_hooks"
@@ -131,6 +168,14 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     iwasm_flags = []
     if verbose:
         iwasm_flags.append("-v=5")
+    
+    # Generate Env File for WALI
+    env_file_path = f"/tmp/wali_env_{base_name}_{run_idx}.env"
+    with open(env_file_path, "w") as f:
+        for k, v in run_env.items():
+            f.write(f"{k}={v}\n")
+            
+    iwasm_flags.append(f"--env-file={env_file_path}")
         
     iwasm_cmd = ["../iwasm"] + iwasm_flags + ["--native-lib=" + native_lib, wasm_file] + run_args_test
     
@@ -155,6 +200,10 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
              subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass
+            
+    # Cleanup env file
+    if os.path.exists(env_file_path):
+        os.remove(env_file_path)
 
     # Read/Clean Wasm Results
     wasm_result_data = b""
@@ -198,18 +247,21 @@ def run_test_suite(test_path, verbose):
     
     all_passed = True
     failed_runs = []
+    passed_count = 0
     
     for i, run_args in enumerate(runs):
         success, result_data = run_test_case_execution(base_name, run_args, verbose, i, len(runs))
-        if not success:
+        if success:
+            passed_count += 1
+        else:
             all_passed = False
             failed_runs.append((i, run_args, result_data))
             
     if all_passed:
-        print(f"{GREEN}PASS{RESET}")
+        print(f"{GREEN}PASS ({passed_count}/{len(runs)}){RESET}")
         return True
     else:
-        print(f"{RED}FAIL{RESET}")
+        print(f"{RED}FAIL ({passed_count}/{len(runs)}){RESET}")
         for idx, args, result_info in failed_runs:
              if isinstance(result_info, str):
                  print(f"  Run {idx+1} Failed: {args}")

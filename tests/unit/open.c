@@ -66,8 +66,7 @@ int wali_open(const char *pathname, int flags, int mode) {
 
 int test(void) {
   // Get args
-  if (get_args() != 0) {
-    printf("Failed to get args\n");
+  if (test_init_args() != 0) {
     return -1;
   }
 
@@ -76,8 +75,6 @@ int test(void) {
   if (argc > 1) {
     path = argv[1];
   }
-
-  printf("Opening file: %s\n", path);
 
   int fd = wali_open(path, O_RDONLY, 0);
 

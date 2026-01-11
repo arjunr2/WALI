@@ -1,8 +1,12 @@
 #ifndef WALI_TEST_HELPERS_H
 #define WALI_TEST_HELPERS_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
 
 // Buffer for test setup - 64KB aligned to 64KB
 static uint8_t result_buffer[65536] __attribute__((aligned(65536)));
@@ -61,9 +65,36 @@ static void wali_proc_exit(int code) {
 char wasm_args[256][1024];
 char *wasm_argv_ptrs[256];
 
+extern int putenv(char *string);
 
-// Arg parsing placeholders if needed later
-static int get_args(void) {
+/* Environment Variable handling */
+__attribute__((__import_module__("wali"), __import_name__("__get_init_envfile")))
+int __imported_wali_get_init_envfile(char* buf, int buf_len);
+
+static int test_init_env(void) {
+  char line[1024];
+  int found = __imported_wali_get_init_envfile(line, sizeof(line)) != 0;
+  if (!found) {
+     return 0; // Not an error if just not set
+  }
+
+  FILE *f = fopen(line, "r");
+  if (!f) return 1;
+
+  while (fgets(line, sizeof(line), f)) {
+      size_t len = strlen(line);
+      if (len >= 1023) {
+          fclose(f);
+          return 1; // Line too long
+      }
+      if (len > 0 && line[len-1] == '\n') line[len-1] = '\0';
+      putenv(line);
+  }
+  fclose(f);
+  return 0;
+}
+
+static int test_init_args(void) {
   int c = __imported_wali_cl_get_argc();
   if (c > 256) {
     return 1;
@@ -137,7 +168,11 @@ static void wali_proc_exit(int code) {
   exit(code);
 }
 
-static int get_args(void) {
+static int test_init_env(void) {
+  return 0;
+}
+
+static int test_init_args(void) {
   // Native already has argc/argv sets
   return 0;
 }
