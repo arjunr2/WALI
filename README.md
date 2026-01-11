@@ -114,6 +114,5 @@ make && python3 run_tests.py
 ## Additional Resources
 * [Compiler ports](compiler_ports/README.md) of WALI for other languages.
 * [Constraints](docs/constraints.md) of WALI
-* [Syscall Information Table](https://docs.google.com/spreadsheets/d/1__2NqMqGLHdjFFYonkF49IkGgfv62TJCpZuXqhXwnlc/edit?usp=sharing) 
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
 * Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)

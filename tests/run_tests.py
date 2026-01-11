@@ -61,10 +61,12 @@ def parse_runs(source_file):
             # Support // CMD: setup=".." args=".." env=".." (or simply "arg" for both)
             elif line.startswith("// CMD:"):
                 parts = shlex.split(line[len("// CMD:"):].strip())
-                cmd = {'setup': [], 'args': [], 'env': {}}
+                cmd = {'setup': [], 'cleanup': [], 'args': [], 'env': {}}
                 for p in parts:
                     if p.startswith("setup="):
                         cmd['setup'].extend(shlex.split(p.split("=", 1)[1]))
+                    elif p.startswith("cleanup="):
+                        cmd['cleanup'].extend(shlex.split(p.split("=", 1)[1]))
                     elif p.startswith("args="):
                         cmd['args'].extend(shlex.split(p.split("=", 1)[1]))
                     elif p.startswith("env="):
@@ -87,18 +89,22 @@ def parse_runs(source_file):
                 # Merge envs (test overrides setup)
                 merged_env = s['env'].copy()
                 merged_env.update(t['env'])
-                final_runs.append({'setup': s['args'], 'args': t['args'], 'env': merged_env})
+                final_runs.append({'setup': s['args'], 'cleanup': [], 'args': t['args'], 'env': merged_env})
     
     # Add explicit runs
     final_runs.extend(explicit_runs)
     
     if not final_runs:
-        return [{'setup': [], 'args': [], 'env': {}}]
+        return [{'setup': [], 'cleanup': [], 'args': [], 'env': {}}]
         
     return final_runs
 
 def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     run_args_setup = run_config['setup']
+    run_args_cleanup = run_config.get('cleanup', [])
+    if not run_args_cleanup:
+        run_args_cleanup = run_args_setup
+        
     run_args_test = run_config['args']
     run_env = run_config.get('env', {})
 
@@ -151,8 +157,8 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     # Hooks cleanup
     if hooks_bin:
         try:
-            # hooks_bin cleanup [setup_args...]
-            cleanup_cmd = [hooks_bin, "cleanup"] + run_args_setup
+            # hooks_bin cleanup [cleanup_args...]
+            cleanup_cmd = [hooks_bin, "cleanup"] + run_args_cleanup
             subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass
@@ -196,7 +202,7 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
 
     if hooks_bin:
         try:
-             cleanup_cmd = [hooks_bin, "cleanup"] + run_args_setup
+             cleanup_cmd = [hooks_bin, "cleanup"] + run_args_cleanup
              subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass
