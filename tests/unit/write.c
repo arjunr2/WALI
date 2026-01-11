@@ -38,7 +38,7 @@ int wali_close(int fd) {
 }
 #endif
 
-void test(void) {
+int test(void) {
   // Test Case: Write to /dev/null
   // Expected: success, written bytes == requested bytes
   
@@ -49,7 +49,7 @@ void test(void) {
   int status = (fd >= 0) ? 0 : -1;
   *((int *)result_buffer) = status;
   
-  if (fd < 0) return;
+  if (fd < 0) return 0;
 
   const char *msg = "Hello WALI";
   size_t len = 10;
@@ -58,4 +58,5 @@ void test(void) {
   wali_close(fd);
 
   *(((int *)result_buffer) + 1) = written;
+  return 0;
 }

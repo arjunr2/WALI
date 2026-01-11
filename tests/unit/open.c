@@ -1,3 +1,7 @@
+// SETUP: wali_test_file.txt
+// CMD: "other_file.txt"
+// CMD: "custom_file.txt"
+
 #include "wali_start.c"
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -6,8 +10,6 @@
 
 #ifdef WALI_TEST_WRAPPER
 // Setup/Cleanup hooks
-// RUN: wali_test_file.txt
-// RUN: other_file.txt
 
 int test_setup(int argc, char **argv) {
     const char *fname = "wali_test_file.txt";
@@ -62,9 +64,21 @@ int wali_open(const char *pathname, int flags, int mode) {
 }
 #endif
 
-void test(void) {
-  // Test Case: Open wali_test_file.txt (created by setup)
+int test(void) {
+  // Get args
+  if (get_args() != 0) {
+    printf("Failed to get args\n");
+    return -1;
+  }
+
+  // Test Case: Open file specified in args, or default
   const char *path = "wali_test_file.txt";
+  if (argc > 1) {
+    path = argv[1];
+  }
+
+  printf("Opening file: %s\n", path);
+
   int fd = wali_open(path, O_RDONLY, 0);
 
   // Store result in result_buffer
@@ -73,4 +87,5 @@ void test(void) {
   // Let's store 0 if success, -1 if fail
   int status = (fd >= 0) ? 0 : -1;
   *((int *)result_buffer) = status;
+  return 0;
 }

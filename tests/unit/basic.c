@@ -1,5 +1,5 @@
 #include "wali_start.c"
 
-void test(void) {
-  return;
+int test(void) {
+  return 0;
 }

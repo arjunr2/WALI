@@ -12,27 +12,62 @@ RESET = '\033[0m'
 BOLD = '\033[1m'
 
 def parse_runs(source_file):
-    runs = []
+    setup_configs = []
+    test_arg_configs = []
+    explicit_runs = []
+
     if not os.path.exists(source_file):
-        return [[]]
+        return [{'setup': [], 'args': []}]
         
     with open(source_file, 'r') as f:
         for line in f:
             line = line.strip()
-            # Support // RUN: args
-            if line.startswith("// RUN:"):
-                args_str = line[len("// RUN:"):].strip()
-                runs.append(shlex.split(args_str))
-            # Support /* RUN: args */
-            elif line.startswith("/* RUN:") and line.endswith("*/"):
-                 args_str = line[len("/* RUN:"): -len("*/")].strip()
-                 runs.append(shlex.split(args_str))
-                 
-    if not runs:
-        return [[]]
-    return runs
+            # Support // SETUP: args
+            if line.startswith("// SETUP:"):
+                args_str = line[len("// SETUP:"):].strip()
+                setup_configs.append(shlex.split(args_str))
+            # Support // TEST_ARGS: args (Test Args)
+            elif line.startswith("// TEST_ARGS:"):
+                 args_str = line[len("// TEST_ARGS:"):].strip()
+                 test_arg_configs.append(shlex.split(args_str))
+            # Support // CMD: setup=".." args=".." (or simply "arg" for both)
+            elif line.startswith("// CMD:"):
+                parts = shlex.split(line[len("// CMD:"):].strip())
+                cmd = {'setup': [], 'args': []}
+                for p in parts:
+                    if p.startswith("setup="):
+                        cmd['setup'].extend(shlex.split(p.split("=", 1)[1]))
+                    elif p.startswith("args="):
+                        cmd['args'].extend(shlex.split(p.split("=", 1)[1]))
+                    else:
+                        cmd['setup'].append(p)
+                        cmd['args'].append(p)
+                explicit_runs.append(cmd)
 
-def run_test_case_execution(base_name, run_args, verbose, run_idx, num_runs):
+    # Generate combinations
+    final_runs = []
+    
+    # If we have pool configs, generate cartesian product
+    if setup_configs or test_arg_configs:
+        if not setup_configs: setup_configs = [[]]
+        if not test_arg_configs: test_arg_configs = [[]]
+        
+        for s in setup_configs:
+            for t in test_arg_configs:
+                final_runs.append({'setup': s, 'args': t})
+    
+    # Add explicit runs
+    final_runs.extend(explicit_runs)
+    
+    if not final_runs:
+        return [{'setup': [], 'args': []}]
+        
+    return final_runs
+
+def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
+    run_args_setup = run_config['setup']
+    run_args_test = run_config['args']
+
     # Paths
     wasm_file = f"bin/unit/wasm/{base_name}.wasm"
     native_file = f"bin/unit/elf/{base_name}"
@@ -61,9 +96,11 @@ def run_test_case_execution(base_name, run_args, verbose, run_idx, num_runs):
     
     # Prepend hooks setup
     if hooks_bin:
-        # hooks_bin setup [run_args...] -- [cmd...]
-        native_cmd = [hooks_bin, "setup"] + run_args + ["--"] + native_cmd
-    
+        # hooks_bin setup [setup_args...] -- [cmd... test_args...]
+        native_cmd = [hooks_bin, "setup"] + run_args_setup + ["--"] + native_cmd + run_args_test
+    else:
+        native_cmd = native_cmd + run_args_test
+
     try:
         native_out = subprocess.check_output(
             native_cmd, 
@@ -77,8 +114,8 @@ def run_test_case_execution(base_name, run_args, verbose, run_idx, num_runs):
     # Hooks cleanup
     if hooks_bin:
         try:
-            # hooks_bin cleanup [run_args...]
-            cleanup_cmd = [hooks_bin, "cleanup"] + run_args
+            # hooks_bin cleanup [setup_args...]
+            cleanup_cmd = [hooks_bin, "cleanup"] + run_args_setup
             subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass
@@ -95,10 +132,10 @@ def run_test_case_execution(base_name, run_args, verbose, run_idx, num_runs):
     if verbose:
         iwasm_flags.append("-v=5")
         
-    iwasm_cmd = ["../iwasm"] + iwasm_flags + ["--native-lib=" + native_lib, wasm_file]
+    iwasm_cmd = ["../iwasm"] + iwasm_flags + ["--native-lib=" + native_lib, wasm_file] + run_args_test
     
     if hooks_bin:
-        iwasm_cmd = [hooks_bin, "setup"] + run_args + ["--"] + iwasm_cmd
+        iwasm_cmd = [hooks_bin, "setup"] + run_args_setup + ["--"] + iwasm_cmd
 
     wasm_returncode = 0
     wasm_out = ""
@@ -114,7 +151,7 @@ def run_test_case_execution(base_name, run_args, verbose, run_idx, num_runs):
 
     if hooks_bin:
         try:
-             cleanup_cmd = [hooks_bin, "cleanup"] + run_args
+             cleanup_cmd = [hooks_bin, "cleanup"] + run_args_setup
              subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except:
             pass

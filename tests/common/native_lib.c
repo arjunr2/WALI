@@ -4,7 +4,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include "wasm_export.h"
+
+/****************************************************************************
+ * env module
+ ****************************************************************************/
 
 // 1. The actual logic
 static int wali_test_setup(wasm_exec_env_t exec_env, uint32_t offset, uint32_t len) {
