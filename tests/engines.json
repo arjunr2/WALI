@@ -1,0 +1,13 @@
+[
+  {
+    "name": "iwasm",
+    "command": "../iwasm",
+    "args": [
+      "{verbose}",
+      "--env-file={env_file}",
+      "--native-lib={native_lib}",
+      "{wasm_file}"
+    ],
+    "verbose_arg": "-v=5"
+  }
+]

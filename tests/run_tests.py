@@ -4,6 +4,8 @@ import sys
 import glob
 import argparse
 import shlex
+import json
+import re
 
 # Colors
 GREEN = '\033[92m'
@@ -99,7 +101,7 @@ def parse_runs(source_file):
         
     return final_runs
 
-def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
+def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num_runs):
     run_args_setup = run_config['setup']
     run_args_cleanup = run_config.get('cleanup', [])
     if not run_args_cleanup:
@@ -171,9 +173,6 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
         os.remove(result_file) 
 
     # --- Run Wasm ---
-    iwasm_flags = []
-    if verbose:
-        iwasm_flags.append("-v=5")
     
     # Generate Env File for WALI
     env_file_path = f"/tmp/wali_env_{base_name}_{run_idx}.env"
@@ -181,9 +180,36 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
         for k, v in run_env.items():
             f.write(f"{k}={v}\n")
             
-    iwasm_flags.append(f"--env-file={env_file_path}")
+    # Build Engine Command
+    cmd_template = engine.get('command', "../iwasm")
+    if isinstance(cmd_template, str):
+        wasm_cmd_parts = [cmd_template]
+    else:
+        wasm_cmd_parts = list(cmd_template)
+
+    arg_templates = engine.get('args', ["{verbose}", "--env-file={env_file}", "--native-lib={native_lib}", "{wasm_file}", "{args}"])
+    verbose_arg = engine.get('verbose_arg', '') if verbose else ''
+    
+    final_args = []
+    has_args_placeholder = False
+    
+    for arg in arg_templates:
+        if "{args}" in arg:
+            has_args_placeholder = True
+            if arg == "{args}":
+                final_args.extend(run_args_test)
+        else:
+             val = arg.replace("{verbose}", verbose_arg)
+             val = val.replace("{env_file}", env_file_path)
+             val = val.replace("{native_lib}", native_lib)
+             val = val.replace("{wasm_file}", wasm_file)
+             if val: 
+                 final_args.append(val)
+    
+    if not has_args_placeholder:
+        final_args.extend(run_args_test)
         
-    iwasm_cmd = ["../iwasm"] + iwasm_flags + ["--native-lib=" + native_lib, wasm_file] + run_args_test
+    iwasm_cmd = wasm_cmd_parts + final_args
     
     if hooks_bin:
         iwasm_cmd = [hooks_bin, "setup"] + run_args_setup + ["--"] + iwasm_cmd
@@ -242,7 +268,7 @@ def run_test_case_execution(base_name, run_config, verbose, run_idx, num_runs):
     else:
         return False, (failure_reason, native_out, wasm_out)
 
-def run_test_suite(test_path, verbose):
+def run_test_suite(test_path, engines, verbose):
     base_name = os.path.basename(test_path).replace(".c", "")
     # Parse runs
     source_file = f"unit/{base_name}.c"
@@ -250,43 +276,65 @@ def run_test_suite(test_path, verbose):
     
     # Print Test Name
     print(f"{base_name:.<50}", end='', flush=True)
+
+    suite_results = {}
     
-    all_passed = True
-    failed_runs = []
-    passed_count = 0
+    for engine in engines:
+        failed_runs = []
+        passed_count = 0
+        for i, run_args in enumerate(runs):
+            success, result_data = run_test_case_execution(base_name, run_args, engine, verbose, i, len(runs))
+            if success:
+                passed_count += 1
+            else:
+                failed_runs.append((i, run_args, result_data))
+        suite_results[engine['name']] = (passed_count, failed_runs)
+
+    # Check aggregate
+    all_engines_passed = all(len(res[1]) == 0 for res in suite_results.values())
     
-    for i, run_args in enumerate(runs):
-        success, result_data = run_test_case_execution(base_name, run_args, verbose, i, len(runs))
-        if success:
-            passed_count += 1
-        else:
-            all_passed = False
-            failed_runs.append((i, run_args, result_data))
-            
-    if all_passed:
-        print(f"{GREEN}PASS ({passed_count}/{len(runs)}){RESET}")
+    if all_engines_passed:
+        print(f"{GREEN}PASS ({len(runs)}/{len(runs)}){RESET}")
         return True
     else:
-        print(f"{RED}FAIL ({passed_count}/{len(runs)}){RESET}")
-        for idx, args, result_info in failed_runs:
-             if isinstance(result_info, str):
-                 print(f"  Run {idx+1} Failed: {args}")
-                 print(f"    Reason: {result_info}")
-                 continue
-                 
-             reason, native_out, wasm_out = result_info
-             print(f"  Run {idx+1} Failed: {args}")
-             print(f"    Reason: {reason}")
-             print("    Native Output:")
-             for line in native_out.splitlines(): print(f"      {line}")
-             print("    Wasm Output:")
-             for line in wasm_out.splitlines(): print(f"      {line}")
+        print(f"{RED}FAIL{RESET}")
+        for engine_name in suite_results:
+            pc, failed = suite_results[engine_name]
+            if len(failed) == 0:
+                print(f"  [{engine_name}] PASS")
+            else:
+                print(f"  [{engine_name}] FAIL ({pc}/{len(runs)})")
+                for idx, args, result_info in failed:
+                    if isinstance(result_info, str):
+                        print(f"    Run {idx+1} Failed: {args}")
+                        print(f"      Reason: {result_info}")
+                        continue
+                    
+                    reason, native_out, wasm_out = result_info
+                    print(f"    Run {idx+1} Failed: {args}")
+                    print(f"      Reason: {reason}")
+                    print("      Native Output:")
+                    for line in native_out.splitlines(): print(f"        {line}")
+                    print("      Wasm Output:")
+                    for line in wasm_out.splitlines(): print(f"        {line}")
         return False
 
 def main():
     parser = argparse.ArgumentParser(description='Run WALI unit tests.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output (iwasm -v=5 and full logs)')
+    parser.add_argument('--config', default='engines.json', help='Path to engines config file')
     args = parser.parse_args()
+
+    # Load Engines
+    if not os.path.exists(args.config):
+        print(f"Error: Config file {args.config} not found.")
+        sys.exit(1)
+
+    with open(args.config, 'r') as f:
+        engines = json.load(f)
+
+    print(f"Testing with engines: {', '.join(e['name'] for e in engines)}")
+    print("-" * 60)
 
     # Find all .c files in unit/
     test_sources = glob.glob("unit/*.c")
@@ -299,7 +347,7 @@ def main():
 
     success_count = 0
     for t in tests:
-        if run_test_suite(t, args.verbose):
+        if run_test_suite(t, engines, args.verbose):
             success_count += 1
             
     print(f"\nSummary: {success_count}/{len(tests)} test suites passed.")
