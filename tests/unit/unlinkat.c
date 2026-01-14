@@ -21,14 +21,27 @@
 int test_setup(int argc, char **argv) {
     if (argc < 2) return 0;
     mkdir(argv[1], 0755);
+    // Create file to unlink
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
+    int fd = open(buf, O_WRONLY | O_CREAT, 0644);
+    if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
     if (argc < 2) return 0;
-    // Just in case it failed to unlink
+    // Verify file is gone
     char buf[256];
     snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
-    unlink(buf);
+    
+    struct stat st;
+    if (stat(buf, &st) == 0) {
+         fprintf(stderr, "[Native Hook] File %s still exists!\n", buf);
+         unlink(buf); // cleanup anyway
+         rmdir(argv[1]);
+         return 1;
+    }
+    
     rmdir(argv[1]);
     return 0;
 }
@@ -38,16 +51,9 @@ int test_cleanup(int argc, char **argv) {
 __attribute__((__import_module__("wali"), __import_name__("SYS_unlinkat")))
 long long __imported_wali_unlinkat(int dirfd, const char *pathname, int flags);
 int wali_unlinkat(int dirfd, const char *pathname, int flags) { return (int)__imported_wali_unlinkat(dirfd, pathname, flags); }
-
-// Need openat for setup part of the test inside Wasm
-__attribute__((__import_module__("wali"), __import_name__("SYS_openat")))
-long long __imported_wali_openat(int dirfd, const char *pathname, int flags, int mode);
-int wali_openat_helper(int dirfd, const char *pathname, int flags, int mode) { return (int)__imported_wali_openat(dirfd, pathname, flags, mode); }
-
 #else
 #include <sys/syscall.h>
 int wali_unlinkat(int dirfd, const char *pathname, int flags) { return syscall(SYS_unlinkat, dirfd, pathname, flags); }
-int wali_openat_helper(int dirfd, const char *pathname, int flags, int mode) { return syscall(SYS_openat, dirfd, pathname, flags, mode); }
 #endif
 
 int test(void) {
@@ -57,16 +63,7 @@ int test(void) {
     int dirfd = open(dname, O_RDONLY | O_DIRECTORY);
     if (dirfd < 0) return -1;
     
-    // Pre-create file to unlink
-    int fd = wali_openat_helper(dirfd, "f1", O_WRONLY | O_CREAT, 0644);
-    if (fd >= 0) close(fd);
-    
     if (wali_unlinkat(dirfd, "f1", 0) != 0) return -1;
-    
-    struct stat st;
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%s/f1", dname);
-    if (stat(buf, &st) == 0) return -1; // Should fail as it's gone
     
     close(dirfd);
     return 0;

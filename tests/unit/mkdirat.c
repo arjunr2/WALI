@@ -22,6 +22,21 @@ int test_cleanup(int argc, char **argv) {
     if (argc < 2) return 0;
     char buf[256];
     snprintf(buf, sizeof(buf), "%s/sub", argv[1]);
+    
+    // Verification
+    struct stat st;
+    if (stat(buf, &st) != 0) {
+        fprintf(stderr, "[Native Hook] Directory %s not created!\n", buf);
+        rmdir(argv[1]);
+        return 1;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        fprintf(stderr, "[Native Hook] %s is not a directory!\n", buf);
+        rmdir(buf);
+        rmdir(argv[1]);
+        return 1;
+    }
+    
     rmdir(buf);
     rmdir(argv[1]);
     return 0;
@@ -45,12 +60,6 @@ int test(void) {
     if (dirfd < 0) return -1;
     
     if (wali_mkdirat(dirfd, "sub", 0755) != 0) return -1;
-    
-    struct stat st;
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%s/sub", dname);
-    if (stat(buf, &st) != 0) return -1;
-    if (!S_ISDIR(st.st_mode)) return -1;
     
     close(dirfd);
     return 0;

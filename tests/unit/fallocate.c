@@ -8,6 +8,7 @@
 
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
+#include <stdio.h>
 int test_setup(int argc, char **argv) {
     if (argc < 2) return 0;
     int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -15,6 +16,20 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
+    if (argc < 2) return 0;
+    // Verification
+    struct stat st;
+    if (stat(argv[1], &st) != 0) {
+        fprintf(stderr, "[Native Hook] Failed to stat %s\n", argv[1]);
+        unlink(argv[1]);
+        return 1;
+    }
+    if (st.st_size != 100) {
+        fprintf(stderr, "[Native Hook] Size mismatch. Expected 100, got %ld\n", st.st_size);
+        unlink(argv[1]);
+        return 1;
+    }
+    
     unlink(argv[1]);
     return 0;
 }
@@ -62,10 +77,6 @@ int test(void) {
         // But we expect WALI to implement it or proxy it.
         return -1;
     }
-    
-    struct stat st;
-    if (fstat(fd, &st) != 0) return -1;
-    if (st.st_size != 100) return -1;
     
     // fadvise
     if (wali_fadvise(fd, 0, 100, 1) != 0) { // POSIX_FADV_RANDOM = 1

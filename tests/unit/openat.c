@@ -22,6 +22,15 @@ int test_cleanup(int argc, char **argv) {
     if (argc < 2) return 0;
     char buf[256];
     snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
+    
+    // Verification
+    struct stat st;
+    if (stat(buf, &st) != 0) {
+        fprintf(stderr, "[Native Hook] File %s was not created!\n", buf);
+        rmdir(argv[1]);
+        return 1;
+    }
+    
     unlink(buf);
     rmdir(argv[1]);
     return 0;
@@ -48,15 +57,7 @@ int test(void) {
     int fd = wali_openat(dirfd, "f1", O_WRONLY | O_CREAT, 0644);
     if (fd < 0) return -1;
     
-    write(fd, "OK", 2);
     close(fd);
-    
-    // Check exist
-    struct stat st;
-    char buf[256];
-    snprintf(buf, sizeof(buf), "%s/f1", dname);
-    if (stat(buf, &st) != 0) return -1;
-    
     close(dirfd);
     return 0;
 }
