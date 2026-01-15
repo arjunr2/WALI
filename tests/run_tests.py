@@ -28,8 +28,6 @@ def parse_env_str(env_str, env_dict):
         pass
 
 def parse_runs(source_file):
-    setup_configs = []
-    test_arg_configs = []
     explicit_runs = []
 
     if not os.path.exists(source_file):
@@ -38,30 +36,8 @@ def parse_runs(source_file):
     with open(source_file, 'r') as f:
         for line in f:
             line = line.strip()
-            # Support // SETUP: env=".." arg1 arg2
-            if line.startswith("// SETUP:"):
-                parts = shlex.split(line[len("// SETUP:"):].strip())
-                config = {'args': [], 'env': {}}
-                for p in parts:
-                    if p.startswith("env="):
-                        parse_env_str(p[4:], config['env'])
-                    else:
-                        config['args'].append(p)
-                setup_configs.append(config)
-
-            # Support // TEST_ARGS: env=".." arg1 arg2
-            elif line.startswith("// TEST_ARGS:"):
-                 parts = shlex.split(line[len("// TEST_ARGS:"):].strip())
-                 config = {'args': [], 'env': {}}
-                 for p in parts:
-                    if p.startswith("env="):
-                        parse_env_str(p[4:], config['env'])
-                    else:
-                        config['args'].append(p)
-                 test_arg_configs.append(config)
-
             # Support // CMD: setup=".." args=".." env=".." (or simply "arg" for both)
-            elif line.startswith("// CMD:"):
+            if line.startswith("// CMD:"):
                 parts = shlex.split(line[len("// CMD:"):].strip())
                 cmd = {'setup': [], 'cleanup': [], 'args': [], 'env': {}}
                 for p in parts:
@@ -80,18 +56,6 @@ def parse_runs(source_file):
 
     # Generate combinations
     final_runs = []
-    
-    # If we have pool configs, generate cartesian product
-    if setup_configs or test_arg_configs:
-        if not setup_configs: setup_configs = [{'args': [], 'env': {}}]
-        if not test_arg_configs: test_arg_configs = [{'args': [], 'env': {}}]
-        
-        for s in setup_configs:
-            for t in test_arg_configs:
-                # Merge envs (test overrides setup)
-                merged_env = s['env'].copy()
-                merged_env.update(t['env'])
-                final_runs.append({'setup': s['args'], 'cleanup': [], 'args': t['args'], 'env': merged_env})
     
     # Add explicit runs
     final_runs.extend(explicit_runs)
@@ -161,9 +125,10 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
         try:
             # hooks_bin cleanup [cleanup_args...]
             cleanup_cmd = [hooks_bin, "cleanup"] + run_args_cleanup
-            subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
-            pass
+            subprocess.check_output(cleanup_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            cleanup_out = e.output.decode('utf-8', errors='replace')
+            return False, (f"Native cleanup failed (exit code {e.returncode})", native_out + "\n[Cleanup Output]\n" + cleanup_out, "")
     
     # Read/Clean Native Results
     native_result_data = b""
@@ -229,9 +194,10 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
     if hooks_bin:
         try:
              cleanup_cmd = [hooks_bin, "cleanup"] + run_args_cleanup
-             subprocess.check_call(cleanup_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
-            pass
+             subprocess.check_output(cleanup_cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            cleanup_out = e.output.decode('utf-8', errors='replace')
+            return False, (f"Wasm cleanup failed (exit code {e.returncode})", native_out, wasm_out + "\n[Cleanup Output]\n" + cleanup_out)
             
     # Cleanup env file
     if os.path.exists(env_file_path):

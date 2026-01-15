@@ -14,17 +14,17 @@ int test_cleanup(int argc, char **argv) { return 0; }
 __attribute__((__import_module__("wali"), __import_name__("SYS_pipe2")))
 long __imported_wali_pipe2(int *pipefd, int flags);
 __attribute__((__import_module__("wali"), __import_name__("SYS_fcntl")))
-long __imported_wali_fcntl(int fd, int cmd, int arg);
+long __imported_wali_fcntl(int fd, int cmd, unsigned long arg);
 __attribute__((__import_module__("wali"), __import_name__("SYS_close")))
 long __imported_wali_close(int fd);
 
 int wali_pipe2(int *pipefd, int flags) { return (int)__imported_wali_pipe2(pipefd, flags); }
-int wali_fcntl(int fd, int cmd, int arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
 int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 #else
 #include <sys/syscall.h>
 int wali_pipe2(int *pipefd, int flags) { return syscall(SYS_pipe2, pipefd, flags); }
-int wali_fcntl(int fd, int cmd, int arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
 int wali_close(int fd) { return syscall(SYS_close, fd); }
 #endif
 

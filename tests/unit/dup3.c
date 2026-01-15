@@ -33,20 +33,20 @@ long __imported_wali_close(int fd);
 __attribute__((__import_module__("wali"), __import_name__("SYS_dup3")))
 long __imported_wali_dup3(int oldfd, int newfd, int flags);
 __attribute__((__import_module__("wali"), __import_name__("SYS_fcntl")))
-long __imported_wali_fcntl(int fd, int cmd, int arg);
+long __imported_wali_fcntl(int fd, int cmd, unsigned long arg);
 
 int wali_open(const char *pathname, int flags, int mode) { return (int)__imported_wali_open(pathname, flags, mode); }
 int wali_read(int fd, void *buf, size_t count) { return (int)__imported_wali_read(fd, buf, count); }
 int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 int wali_dup3(int oldfd, int newfd, int flags) { return (int)__imported_wali_dup3(oldfd, newfd, flags); }
-int wali_fcntl(int fd, int cmd, int arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
 #else
 #include <sys/syscall.h>
 int wali_open(const char *pathname, int flags, int mode) { return syscall(SYS_open, pathname, flags, mode); }
 int wali_read(int fd, void *buf, size_t count) { return syscall(SYS_read, fd, buf, count); }
 int wali_close(int fd) { return syscall(SYS_close, fd); }
 int wali_dup3(int oldfd, int newfd, int flags) { return syscall(SYS_dup3, oldfd, newfd, flags); }
-int wali_fcntl(int fd, int cmd, int arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
 #endif
 
 #ifndef O_CLOEXEC

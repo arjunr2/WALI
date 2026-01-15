@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/target_rl link /tmp/target_rl /tmp/link_rl" args="/tmp/link_rl" cleanup="remove /tmp/target_rl /tmp/link_rl"
+// CMD: setup="/tmp/target_rl /tmp/link_rl" args="/tmp/link_rl" cleanup="/tmp/target_rl /tmp/link_rl"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -10,8 +10,8 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *target = "/tmp/target_rl";
+    if (argc < 2) return -1;
+    const char *target = argv[0];
     const char *linkpath = argv[1];
     
     int fd = open(target, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -23,7 +23,8 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    unlink("/tmp/target_rl");
+    if (argc < 2) return -1;
+    unlink(argv[0]);
     unlink(argv[1]);
     return 0;
 }

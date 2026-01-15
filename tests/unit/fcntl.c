@@ -24,11 +24,11 @@ int test_cleanup(int argc, char **argv) {
 
 #ifdef __wasm__
 __attribute__((__import_module__("wali"), __import_name__("SYS_fcntl")))
-long long __imported_wali_fcntl(int fd, int cmd, int arg);
-int wali_fcntl(int fd, int cmd, int arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
+long long __imported_wali_fcntl(int fd, int cmd, unsigned long arg);
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return (int)__imported_wali_fcntl(fd, cmd, arg); }
 #else
 #include <sys/syscall.h>
-int wali_fcntl(int fd, int cmd, int arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
+int wali_fcntl(int fd, int cmd, unsigned long arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
 #endif
 
 int test(void) {

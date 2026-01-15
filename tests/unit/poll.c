@@ -25,9 +25,8 @@ __attribute__((__import_module__("wali"), __import_name__("SYS_write")))
 long __imported_wali_write(int fd, const void *buf, size_t count);
 __attribute__((__import_module__("wali"), __import_name__("SYS_close")))
 long __imported_wali_close(int fd);
-// Cast nfds to int to match runtime signature (iii)I
 __attribute__((__import_module__("wali"), __import_name__("SYS_poll")))
-long long __imported_wali_poll(struct pollfd *fds, int nfds, int timeout);
+long long __imported_wali_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 
 int wali_pipe(int *pipefd) { return (int)__imported_wali_pipe(pipefd); }
 int wali_write(int fd, const void *buf, size_t count) { return (int)__imported_wali_write(fd, buf, count); }
