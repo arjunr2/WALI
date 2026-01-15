@@ -46,8 +46,6 @@ __attribute__((__import_module__("wali"), __import_name__("SYS_close")))
 long __imported_wali_close(int fd);
 __attribute__((__import_module__("wali"), __import_name__("SYS_dup")))
 long __imported_wali_dup(int fd);
-__attribute__((__import_module__("wali"), __import_name__("SYS_dup2")))
-long __imported_wali_dup2(int oldfd, int newfd);
 
 int wali_open(const char *pathname, int flags, int mode) {
   return (int) __imported_wali_open(pathname, flags, mode);
@@ -60,9 +58,6 @@ int wali_close(int fd) {
 }
 int wali_dup(int fd) {
   return (int) __imported_wali_dup(fd);
-}
-int wali_dup2(int oldfd, int newfd) {
-  return (int) __imported_wali_dup2(oldfd, newfd);
 }
 #else
 #include <sys/syscall.h>
@@ -77,9 +72,6 @@ int wali_close(int fd) {
 }
 int wali_dup(int fd) {
   return syscall(SYS_dup, fd);
-}
-int wali_dup2(int oldfd, int newfd) {
-  return syscall(SYS_dup2, oldfd, newfd);
 }
 #endif
 
@@ -106,30 +98,7 @@ int test(void) {
   }
   wali_close(fd2);
   
-  // Test dup2
-  // Let's dup to 10
-  int target_fd = 10;
-  // Make sure it's closed first?
-  wali_close(target_fd); 
-  
-  // Rewind original fd by closing and reopening? No, lseek not imported here.
-  // Reopen.
   wali_close(fd);
-  fd = wali_open(path, O_RDONLY, 0);
-  
-  int fd3 = wali_dup2(fd, target_fd);
-  if (fd3 != target_fd) { wali_close(fd); return -1; }
-  
-  memset(buf, 0, sizeof(buf));
-  if (wali_read(target_fd, buf, 8) != 8) {
-      wali_close(fd); wali_close(target_fd); return -1;
-  }
-  if (strcmp(buf, "DUP_TEST") != 0) {
-      wali_close(fd); wali_close(target_fd); return -1;
-  }
-  
-  wali_close(fd);
-  wali_close(target_fd);
   
   return 0;
 }

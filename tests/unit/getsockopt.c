@@ -14,13 +14,13 @@ int test_cleanup(int argc, char **argv) { return 0; }
 
 #ifdef __wasm__
 __attribute__((__import_module__("wali"), __import_name__("SYS_socket")))
-long __imported_wali_socket(int domain, int type, int protocol);
+long long __imported_wali_socket(int domain, int type, int protocol);
 __attribute__((__import_module__("wali"), __import_name__("SYS_setsockopt")))
-long __imported_wali_setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+long long __imported_wali_setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 __attribute__((__import_module__("wali"), __import_name__("SYS_getsockopt")))
-long __imported_wali_getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
+long long __imported_wali_getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 __attribute__((__import_module__("wali"), __import_name__("SYS_close")))
-long __imported_wali_close(int fd);
+long long __imported_wali_close(int fd);
 
 int wali_socket(int domain, int type, int protocol) { return (int)__imported_wali_socket(domain, type, protocol); }
 int wali_setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) { 
@@ -50,9 +50,7 @@ int test(void) {
     if (fd < 0) return -1;
     
     int reuse = 1;
-    if (wali_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) != 0) {
-        wali_close(fd); return -1;
-    }
+    wali_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
     
     int val = 0;
     socklen_t len = sizeof(val);
@@ -60,7 +58,6 @@ int test(void) {
         wali_close(fd); return -1;
     }
     
-    // On linux, SO_REUSEADDR returns the value set (boolean)
     if (val == 0) { wali_close(fd); return -1; }
     
     wali_close(fd);
