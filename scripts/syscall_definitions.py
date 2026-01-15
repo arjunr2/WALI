@@ -47,7 +47,14 @@ class Syscall:
 
     def args_reduce(self, ts: TypeSystem, replace_complex: bool = True) -> List[ScArg]:
         '''Returns argument list with complex types reduce by their base types.'''
-        return [ScArg(ts.complex_types.get(arg, "UNDEF")) if not arg.is_ptr() and not arg.is_basic_type(ts) else arg for arg in self.args]
+        def f(ts: TypeSystem, arg: ScArg):
+            try:
+                arg = ScArg(ts.complex_types[arg])
+                return arg
+            except KeyError as e:
+                raise RuntimeError(f"Type '{arg}' not found in complex types (used in syscall '{self.name}')") from e
+
+        return [f(ts, arg) if not arg.is_ptr() and not arg.is_basic_type(ts) else arg for arg in self.args]
 
 
 # -----------------------------------------------------------------------------
@@ -139,7 +146,8 @@ _syscall_list: List[Syscall] = [
     unimpl("msgsnd", Nrs(x86_64=69, arm64=189, rv64=189)),
     unimpl("msgrcv", Nrs(x86_64=70, arm64=188, rv64=188)),
     unimpl("msgctl", Nrs(x86_64=71, arm64=187, rv64=187)),
-    impl("fcntl", ["int", "int", "int"], Nrs(x86_64=72, arm64=25, rv64=25)),
+    # fcntl flags only span 32-bits in wasm32, but conservatively use 64-bit value
+    impl("fcntl", ["int", "int", "unsigned long"], Nrs(x86_64=72, arm64=25, rv64=25)),
     impl("flock", ["int", "int"], Nrs(x86_64=73, arm64=32, rv64=32)),
     impl("fsync", ["int"], Nrs(x86_64=74, arm64=82, rv64=82)),
     impl("fdatasync", ["int"], Nrs(x86_64=75, arm64=83, rv64=83)),
@@ -200,7 +208,8 @@ _syscall_list: List[Syscall] = [
     unimpl("rt_sigqueueinfo", Nrs(x86_64=129, arm64=138, rv64=138)),
     impl("rt_sigsuspend", ["sigset_t*", "size_t"],Nrs(x86_64=130, arm64=133, rv64=133)),
     impl("sigaltstack", ["stack_t*", "stack_t*"], Nrs(x86_64=131, arm64=132, rv64=132)),
-    impl("utime", ["char*", "struct utimbuf*"], Nrs(x86_64=132)),
+    # utime is a legacy call; use utimensat which WALI implements
+    unimpl("utime", Nrs(x86_64=132)),
     unimpl("mknod", Nrs(x86_64=133)),
     unimpl("uselib", Nrs(x86_64=134)),
     unimpl("personality", Nrs(x86_64=135, arm64=92, rv64=92)),

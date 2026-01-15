@@ -85,7 +85,11 @@ class LibcGenerator(StubGenerator):
             if arg.is_ptr():
                 return 'i32'
             while arg not in self.ts.wit_primitive_set:
-                arg = self.ts.combined_types.get(arg, "UNDEF")
+                try:
+                    arg = self.ts.combined_types[arg]
+                except KeyError as e:
+                    raise RuntimeError(f"Type '{arg}' not found in combined types (used in syscall '{sc.name}')") from e
+
             return arg if not arg.startswith('s') else 'i' + arg[1:]
         
         return [f(x) for x in sc.args_reduce(self.ts)]
@@ -240,12 +244,8 @@ class WitGenerator(StubGenerator):
 
         # Process Records
         # Assuming templates dir relative to CWD
-        try:
-            with open('templates/records.wit.template') as f:
-                record_content = f.read()
-        except FileNotFoundError:
-            logging.error("templates/records.wit.template not found")
-            record_content = ""
+        with open('templates/records.wit.template') as f:
+            record_content = f.read()
 
         record_types = set(re.findall(r'record (\S+)', record_content))
         sc_ptr_types = set()
