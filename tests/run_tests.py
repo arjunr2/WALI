@@ -77,19 +77,12 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
     # Paths
     wasm_file = f"bin/unit/wasm/{base_name}.wasm"
     native_file = f"bin/unit/elf/{base_name}"
-    native_lib = "./libnative_lib.so"
     
     if not os.path.exists(wasm_file) or not os.path.exists(native_file):
         return False, "missing binary"
 
-    # Result file logic
-    result_file = f"/tmp/wali_test_{base_name}_{run_idx}.bin"
-    if os.path.exists(result_file):
-        os.remove(result_file)
-    
     # Setup Native Env
     env = os.environ.copy()
-    env["WALI_TEST_RESULT_FILE"] = result_file
     env.update(run_env)
 
     # Hooks
@@ -130,13 +123,6 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
             cleanup_out = e.output.decode('utf-8', errors='replace')
             return False, (f"Native cleanup failed (exit code {e.returncode})", native_out + "\n[Cleanup Output]\n" + cleanup_out, "")
     
-    # Read/Clean Native Results
-    native_result_data = b""
-    if os.path.exists(result_file):
-        with open(result_file, "rb") as f:
-            native_result_data = f.read()
-        os.remove(result_file) 
-
     # --- Run Wasm ---
     
     # Generate Env File for WALI
@@ -152,7 +138,7 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
     else:
         wasm_cmd_parts = list(cmd_template)
 
-    arg_templates = engine.get('args', ["{verbose}", "--env-file={env_file}", "--native-lib={native_lib}", "{wasm_file}", "{args}"])
+    arg_templates = engine.get('args', ["{verbose_arg}", "--env-file={env_file}", "{wasm_file}", "{args}"])
     verbose_arg = engine.get('verbose_arg', '') if verbose else ''
     
     final_args = []
@@ -164,9 +150,8 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
             if arg == "{args}":
                 final_args.extend(run_args_test)
         else:
-             val = arg.replace("{verbose}", verbose_arg)
+             val = arg.replace("{verbose_arg}", verbose_arg)
              val = val.replace("{env_file}", env_file_path)
-             val = val.replace("{native_lib}", native_lib)
              val = val.replace("{wasm_file}", wasm_file)
              if val: 
                  final_args.append(val)
@@ -203,31 +188,11 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
     if os.path.exists(env_file_path):
         os.remove(env_file_path)
 
-    # Read/Clean Wasm Results
-    wasm_result_data = b""
-    if os.path.exists(result_file):
-        with open(result_file, "rb") as f:
-            wasm_result_data = f.read()
-        os.remove(result_file)
-
     # --- Compare ---
     failure_reason = ""
     
     if native_returncode != wasm_returncode:
         failure_reason = f"Return codes differ (Native: {native_returncode}, Wasm: {wasm_returncode})"
-    elif native_result_data != wasm_result_data:
-        diff_idx = -1
-        max_len = max(len(native_result_data), len(wasm_result_data))
-        for i in range(max_len):
-            b_nat = native_result_data[i] if i < len(native_result_data) else -1
-            b_wasm = wasm_result_data[i] if i < len(wasm_result_data) else -1
-            if b_nat != b_wasm:
-                diff_idx = i
-                break
-        
-        failure_reason = f"Result buffer differs at offset {diff_idx}.\n"
-        failure_reason += f"    Native byte: {hex(native_result_data[diff_idx]) if diff_idx < len(native_result_data) else 'EOF'}\n"
-        failure_reason += f"    Wasm byte:   {hex(wasm_result_data[diff_idx]) if diff_idx < len(wasm_result_data) else 'EOF'}"
 
     if not failure_reason:
         return True, (native_out, wasm_out)

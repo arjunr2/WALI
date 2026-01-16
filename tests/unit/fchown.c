@@ -7,6 +7,7 @@
 
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
+#include <sys/stat.h>
 int test_setup(int argc, char **argv) {
     if (argc < 1) return -1;
     int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0666);

@@ -3,7 +3,7 @@
     "name": "iwasm",
     "command": "../iwasm",
     "args": [
-      "{verbose}",
+      "{verbose_arg}",
       "--env-file={env_file}",
       "--native-lib={native_lib}",
       "{wasm_file}"
