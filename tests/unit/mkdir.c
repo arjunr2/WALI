@@ -1,7 +1,7 @@
-// CMD: setup="clean /tmp/test_dir" args="create /tmp/test_dir"
-// CMD: setup="create /tmp/exist_dir" args="fail /tmp/exist_dir"
+// CMD: setup="clean /tmp/test_dir" args="create /tmp/test_dir" cleanup="/tmp/test_dir"
+// CMD: setup="create /tmp/exist_dir" args="fail /tmp/exist_dir" cleanup="/tmp/exist_dir"
 // CMD: args="no_parent /tmp/p/c"
-// CMD: setup="clean /tmp/mode_dir" args="mode /tmp/mode_dir"
+// CMD: setup="clean /tmp/mode_dir" args="mode /tmp/mode_dir" cleanup="/tmp/mode_dir"
 
 #include "wali_start.c"
 #include <fcntl.h>
@@ -18,7 +18,7 @@ int file_exists(const char *path) {
 }
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 1) return 0;
     const char *mode = argv[0];
     const char *path = argv[1];
     
@@ -31,15 +31,8 @@ int test_setup(int argc, char **argv) {
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
-    
-    if (strcmp(mode, "create") == 0) {
-        rmdir(path);
-    } else if (strcmp(mode, "clean") == 0) {
-        rmdir(path);
-    }
+    if (argc < 1) return 0;
+    rmdir(argv[0]);
     return 0;
 }
 #endif
@@ -69,8 +62,9 @@ int wali_rmdir(const char *pathname) {
 
 int test(void) {
   if (test_init_args() != 0) return -1;
-  const char *mode = (argc > 0) ? argv[0] : "fail";
-  const char *path = (argc > 1) ? argv[1] : "test_dir";
+  if (argc != 2) return -1;
+  const char *mode = argv[0];
+  const char *path = argv[1];
   
   if (strcmp(mode, "create") == 0) {
       if (wali_mkdir(path, 0755) != 0) return -1;

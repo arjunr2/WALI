@@ -1,4 +1,4 @@
-// CMD: setup="/tmp/renameat2_src" args="/tmp/renameat2_src /tmp/renameat2_dst" cleanup="remove /tmp/renameat2_src /tmp/renameat2_dst"
+// CMD: setup="/tmp/renameat2_src" args="/tmp/renameat2_src /tmp/renameat2_dst" cleanup="/tmp/renameat2_src /tmp/renameat2_dst"
 
 #include "wali_start.c"
 #include <fcntl.h>

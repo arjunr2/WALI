@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/writev_file" args="/tmp/writev_file"
+// CMD: setup="/tmp/writev_file" args="/tmp/writev_file" cleanup="/tmp/writev_file"
 
 #define _GNU_SOURCE
 #include "wali_start.c"
@@ -12,17 +12,17 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 1) return -1;
     // Just create dummy or ensure it doesn't exist? 
     // Truncate it
-    const char *fname = argv[1];
+    const char *fname = argv[0];
     int fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif

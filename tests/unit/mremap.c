@@ -1,4 +1,4 @@
-// CMD: setup="create_file /tmp/mremap_file 4096" args="/tmp/mremap_file"
+// CMD: setup="/tmp/mremap_file 4096" args="/tmp/mremap_file" cleanup="/tmp/mremap_file"
 
 #define _GNU_SOURCE
 #include "wali_start.c"
@@ -15,9 +15,9 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 3) return 0;
-    const char *fname = argv[1];
-    int size = atoi(argv[2]);
+    if (argc < 2) return -1;
+    const char *fname = argv[0];
+    int size = atoi(argv[1]);
     int fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         ftruncate(fd, size);
@@ -26,8 +26,8 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif

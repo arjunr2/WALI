@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/stat_target" args="/tmp/stat_target" cleanup="remove /tmp/stat_target"
+// CMD: setup="/tmp/stat_target" args="/tmp/stat_target" cleanup="/tmp/stat_target"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -10,13 +10,14 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (argc < 1) return -1;
+    int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif

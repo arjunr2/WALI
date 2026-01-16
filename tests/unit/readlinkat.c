@@ -8,7 +8,7 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 2) return -1;
     const char *link = argv[0];
     const char *target = argv[1];
     // Create target file
@@ -19,7 +19,7 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 2) return -1;
     unlink(argv[0]);
     unlink(argv[1]);
     return 0;

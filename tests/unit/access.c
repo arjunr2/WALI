@@ -1,9 +1,9 @@
-// CMD: setup="create /tmp/access_ok.txt" args="exist /tmp/access_ok.txt"
+// CMD: setup="create /tmp/access_ok.txt" args="exist /tmp/access_ok.txt" cleanup="/tmp/access_ok.txt"
 // CMD: args="fail /tmp/access_missing.txt"
-// CMD: setup="create /tmp/access_rw.txt" args="read /tmp/access_rw.txt"
-// CMD: setup="create /tmp/access_rw.txt" args="write /tmp/access_rw.txt"
-// CMD: setup="create_exec /tmp/access_x.txt" args="exec /tmp/access_x.txt"
-// CMD: setup="create_ro /tmp/access_ro.txt" args="no_write /tmp/access_ro.txt"
+// CMD: setup="create /tmp/access_rw.txt" args="read /tmp/access_rw.txt" cleanup="/tmp/access_rw.txt"
+// CMD: setup="create /tmp/access_rw.txt" args="write /tmp/access_rw.txt" cleanup="/tmp/access_rw.txt"
+// CMD: setup="create_exec /tmp/access_x.txt" args="exec /tmp/access_x.txt" cleanup="/tmp/access_x.txt"
+// CMD: setup="create_ro /tmp/access_ro.txt" args="no_write /tmp/access_ro.txt" cleanup="/tmp/access_ro.txt"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -15,33 +15,29 @@
 #include <stdio.h>
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc == 0) return 0;
     const char *mode = argv[0];
     const char *path = argv[1];
     
     if (strcmp(mode, "create") == 0) {
         int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd < 0) return 1;
+        if (fd < 0) return -1;
         close(fd);
     } else if (strcmp(mode, "create_exec") == 0) {
         int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
-        if (fd < 0) return 1;
+        if (fd < 0) return -1;
         close(fd);
     } else if (strcmp(mode, "create_ro") == 0) { // Read only
         int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0444);
-        if (fd < 0) return 1;
+        if (fd < 0) return -1;
         close(fd);
     }
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
-    if (strchr(mode, '_') != NULL || strcmp(mode, "create") == 0) {
-        unlink(path);
-    }
+    if (argc == 0) return 0;
+    unlink(argv[0]);
     return 0;
 }
 #endif

@@ -1,4 +1,4 @@
-// CMD: setup="create_dir /tmp/rmdir_test" args="/tmp/rmdir_test" cleanup="remove_dir /tmp/rmdir_test"
+// CMD: setup="/tmp/rmdir_test" args="/tmp/rmdir_test" cleanup="/tmp/rmdir_test"
 
 #include "wali_start.c"
 #include <fcntl.h>
@@ -8,12 +8,12 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 1) return 0;
+    if (argc < 1) return -1;
     mkdir(argv[0], 0755);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 1) return 0;
+    if (argc < 1) return -1;
     rmdir(argv[0]); // May already be removed by test
     return 0;
 }

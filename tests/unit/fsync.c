@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/fsync_file" args="/tmp/fsync_file" cleanup="remove /tmp/fsync_file"
+// CMD: setup="/tmp/fsync_file" args="/tmp/fsync_file" cleanup="/tmp/fsync_file"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -7,14 +7,14 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (argc < 1) return -1;
+    int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif

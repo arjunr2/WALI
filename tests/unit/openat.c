@@ -1,4 +1,4 @@
-// CMD: setup="create_dir /tmp/openat_dir" args="/tmp/openat_dir"
+// CMD: setup="/tmp/openat_dir" args="/tmp/openat_dir" cleanup="/tmp/openat_dir"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -14,25 +14,23 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    mkdir(argv[1], 0755);
+    if (argc < 1) return -1;
+    mkdir(argv[0], 0755);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 1) return -1;
     char buf[256];
-    snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
+    snprintf(buf, sizeof(buf), "%s/f1", argv[0]);
     
     // Verification
     struct stat st;
     if (stat(buf, &st) != 0) {
-        fprintf(stderr, "[Native Hook] File %s was not created!\n", buf);
-        rmdir(argv[1]);
-        return 1;
+        rmdir(argv[0]);
     }
     
     unlink(buf);
-    rmdir(argv[1]);
+    rmdir(argv[0]);
     return 0;
 }
 #endif

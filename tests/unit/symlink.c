@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/sym_src_sl" args="/tmp/sym_src_sl /tmp/sym_dst_sl" cleanup="remove /tmp/sym_src_sl /tmp/sym_dst_sl"
+// CMD: setup="/tmp/sym_src_sl /tmp/sym_dst_sl" args="/tmp/sym_src_sl /tmp/sym_dst_sl" cleanup="/tmp/sym_src_sl /tmp/sym_dst_sl"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -10,8 +10,8 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *src = argv[1];
+    if (argc < 2) return -1;
+    const char *src = argv[0];
     int fd = open(src, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         write(fd, "DATA", 4);
@@ -20,9 +20,9 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 3) return 0;
+    if (argc < 2) return -1;
+    unlink(argv[0]);
     unlink(argv[1]);
-    unlink(argv[2]);
     return 0;
 }
 #endif

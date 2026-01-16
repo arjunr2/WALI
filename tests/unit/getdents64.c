@@ -1,4 +1,4 @@
-// CMD: setup="create_dir /tmp/d1" args="ls /tmp/d1"
+// CMD: setup="/tmp/d1" args="ls /tmp/d1" cleanup="/tmp/d1"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -11,8 +11,8 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *dname = argv[1]; 
+    if (argc < 1) return -1;
+    const char *dname = argv[0]; 
     mkdir(dname, 0755);
     char buf[256];
     
@@ -27,8 +27,8 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *dname = argv[1];
+    if (argc < 1) return -1;
+    const char *dname = argv[0];
     char buf[256];
     snprintf(buf, sizeof(buf), "%s/f1", dname);
     unlink(buf);

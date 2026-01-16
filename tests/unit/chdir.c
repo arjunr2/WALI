@@ -1,4 +1,4 @@
-// CMD: setup="clean /tmp/sub_chdir" args="test /tmp/sub_chdir"
+// CMD: setup="/tmp/sub_chdir" args="test /tmp/sub_chdir" cleanup="/tmp/sub_chdir"
 
 #include "wali_start.c"
 #include <fcntl.h>
@@ -13,15 +13,15 @@
 #include <stdio.h>
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *dir = argv[1];
+    if (argc < 1) return -1;
+    const char *dir = argv[0];
     rmdir(dir);
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *dir = argv[1];
+    if (argc < 1) return -1;
+    const char *dir = argv[0];
     rmdir(dir);
     return 0;
 }

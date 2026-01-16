@@ -8,7 +8,7 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 1) return 0;
+    if (argc < 1) return -1;
     int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         write(fd, "TEST", 4);
@@ -17,7 +17,7 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 1) return 0;
+    if (argc < 1) return -1;
     unlink(argv[0]);
     return 0;
 }

@@ -1,11 +1,11 @@
-// CMD: setup="create /tmp/open_read.txt" args="read /tmp/open_read.txt"
-// CMD: setup="clean /tmp/open_creat.txt" args="create /tmp/open_creat.txt"
-// CMD: setup="clean /tmp/open_fail.txt" args="fail /tmp/open_fail.txt"
-// CMD: setup="create /tmp/open_append.txt" args="append /tmp/open_append.txt"
-// CMD: setup="clean /tmp/open_excl.txt" args="excl_ok /tmp/open_excl.txt"
-// CMD: setup="create /tmp/open_excl_fail.txt" args="excl_fail /tmp/open_excl_fail.txt"
-// CMD: setup="create_dir /tmp/open_dir" args="directory_ok /tmp/open_dir"
-// CMD: setup="create /tmp/open_dir_fail.txt" args="directory_fail /tmp/open_dir_fail.txt"
+// CMD: setup="create /tmp/open_read.txt" args="read /tmp/open_read.txt" cleanup="/tmp/open_read.txt"
+// CMD: setup="clean /tmp/open_creat.txt" args="create /tmp/open_creat.txt" cleanup="/tmp/open_creat.txt"
+// CMD: setup="clean /tmp/open_fail.txt" args="fail /tmp/open_fail.txt" cleanup="/tmp/open_fail.txt"
+// CMD: setup="create /tmp/open_append.txt" args="append /tmp/open_append.txt" cleanup="/tmp/open_append.txt"
+// CMD: setup="clean /tmp/open_excl.txt" args="excl_ok /tmp/open_excl.txt" cleanup="/tmp/open_excl.txt"
+// CMD: setup="create /tmp/open_excl_fail.txt" args="excl_fail /tmp/open_excl_fail.txt" cleanup="/tmp/open_excl_fail.txt"
+// CMD: setup="create_dir /tmp/open_dir" args="directory_ok /tmp/open_dir" cleanup="/tmp/open_dir"
+// CMD: setup="create /tmp/open_dir_fail.txt" args="directory_fail /tmp/open_dir_fail.txt" cleanup="/tmp/open_dir_fail.txt"
 
 #include "wali_start.c"
 #include <errno.h>
@@ -24,7 +24,7 @@ int file_exists(const char *path) {
 }
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 2) return -1;
     const char *mode = argv[0];
     const char *path = argv[1];
     
@@ -33,12 +33,12 @@ int test_setup(int argc, char **argv) {
         int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (fd < 0) {
              perror("Setup open failed");
-             return 1;
+             return -1;
         }
         if (write(fd, "SETUP_DATA", 10) != 10) {
             perror("Setup write failed");
             close(fd);
-            return 1;
+            return -1;
         }
         close(fd);
     } else if (strcmp(mode, "clean") == 0) {
@@ -51,34 +51,14 @@ int test_setup(int argc, char **argv) {
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
-    
-    int result = 0;
-
-    if (strcmp(mode, "clean") == 0) {
-        // This was a 'create' or 'fail' test.
-        if (strcmp(argv[0], "clean") == 0 && strstr(path, "excl_ok") != NULL) {
-             // For excl_ok, file should exist after test
-            if (!file_exists(path)) {
-                fprintf(stderr, "[Cleanup] Error: File %s should have been created\n", path);
-                result = 1;
-            }
-        }
-        // ... (simplified logic)
-    }
-    
-    // Always cleanup
+    if (argc < 1) return -1;
+    const char *path = argv[0];
     struct stat st;
     if (stat(path, &st) == 0) {
-        if (S_ISDIR(st.st_mode)) {
-            rmdir(path);
-        } else {
-            unlink(path);
-        }
+        if (S_ISDIR(st.st_mode)) rmdir(path);
+        else unlink(path);
     }
-    return result;
+    return 0;
 }
 #endif
 

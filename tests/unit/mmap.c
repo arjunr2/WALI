@@ -1,5 +1,5 @@
 // CMD: args="anon"
-// CMD: setup="create /tmp/map_file.txt" args="file /tmp/map_file.txt"
+// CMD: setup="/tmp/map_file.txt" args="file /tmp/map_file.txt" cleanup="/tmp/map_file.txt"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -12,19 +12,20 @@
 #include <stdio.h>
 
 int test_setup(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[0], "create") == 0) {
-        int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd >= 0) {
+    if (argc >= 1 && strcmp(argv[0], "file") != 0 && strstr(argv[0], "map_file") != NULL) {
+         // Argv[0] is path
+         int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+         if (fd >= 0) {
             write(fd, "0123456789", 10);
             close(fd);
-        }
+         }
     }
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc >= 2 && strcmp(argv[0], "create") == 0) {
-        unlink(argv[1]);
+    if (argc >= 1) {
+        unlink(argv[0]);
     }
     return 0;
 }

@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/poll_fifo" args="fifo /tmp/poll_fifo"
+// CMD: 
 
 #include "wali_start.c"
 #include <unistd.h>

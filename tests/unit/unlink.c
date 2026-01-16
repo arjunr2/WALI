@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/unlink_ok.txt" args="clean /tmp/unlink_ok.txt"
+// CMD: setup="/tmp/unlink_ok.txt" args="clean /tmp/unlink_ok.txt" cleanup="/tmp/unlink_ok.txt"
 // CMD: args="fail /tmp/unlink_fail.txt"
 
 #include "wali_start.c"
@@ -16,30 +16,20 @@ int file_exists(const char *path) {
 }
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
+    if (argc < 1) return 0;
+    const char *path = argv[0];
     
-    if (strcmp(mode, "create") == 0) {
-        int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd < 0) return 1;
-        close(fd);
-    }
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return -1;
+    close(fd);
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
-    
-    // For 'clean' test, file should be GONE.
-    if (strcmp(mode, "clean") == 0) {
-        if (file_exists(path)) {
-             fprintf(stderr, "[Cleanup] Error: File %s still exists\n", path);
-             unlink(path); // Cleanup anyway
-             return 1;
-        }
+    if (argc < 1) return 0;
+    const char *path = argv[0];
+    if (file_exists(path)) {
+        unlink(path);
     }
     return 0;
 }

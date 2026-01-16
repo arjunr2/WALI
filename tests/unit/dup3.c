@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/dup3_test.txt" args="file /tmp/dup3_test.txt"
+// CMD: setup="/tmp/dup3_test.txt" args="file /tmp/dup3_test.txt" cleanup="/tmp/dup3_test.txt"
 
 #include "wali_start.c"
 #include <fcntl.h>
@@ -9,16 +9,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    int fd = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (argc < 1) return -1;
+    int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) return 0;
     write(fd, "DUP3", 4);
     close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif

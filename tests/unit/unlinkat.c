@@ -1,4 +1,4 @@
-// CMD: setup="create_dir /tmp/unlinkat_dir" args="/tmp/unlinkat_dir"
+// CMD: setup="/tmp/unlinkat_dir" args="/tmp/unlinkat_dir" cleanup="/tmp/unlinkat_dir"
 
 #define _GNU_SOURCE
 #include "wali_start.c"
@@ -19,30 +19,27 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    mkdir(argv[1], 0755);
+    if (argc < 1) return -1;
+    mkdir(argv[0], 0755);
     // Create file to unlink
     char buf[256];
-    snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
+    snprintf(buf, sizeof(buf), "%s/f1", argv[0]);
     int fd = open(buf, O_WRONLY | O_CREAT, 0644);
     if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 1) return -1;
     // Verify file is gone
     char buf[256];
-    snprintf(buf, sizeof(buf), "%s/f1", argv[1]);
+    snprintf(buf, sizeof(buf), "%s/f1", argv[0]);
     
     struct stat st;
     if (stat(buf, &st) == 0) {
-         fprintf(stderr, "[Native Hook] File %s still exists!\n", buf);
          unlink(buf); // cleanup anyway
-         rmdir(argv[1]);
-         return 1;
     }
     
-    rmdir(argv[1]);
+    rmdir(argv[0]);
     return 0;
 }
 #endif

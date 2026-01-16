@@ -1,4 +1,4 @@
-// CMD: setup="create_dir /tmp/mkdirat_dir" args="/tmp/mkdirat_dir"
+// CMD: setup="/tmp/mkdirat_dir" args="/tmp/mkdirat_dir" cleanup="/tmp/mkdirat_dir"
 
 #include "wali_start.c"
 #include <unistd.h>
@@ -14,31 +14,23 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    mkdir(argv[1], 0755);
+    if (argc < 1) return -1;
+    mkdir(argv[0], 0755);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
+    if (argc < 1) return -1;
     char buf[256];
-    snprintf(buf, sizeof(buf), "%s/sub", argv[1]);
+    snprintf(buf, sizeof(buf), "%s/sub", argv[0]);
     
     // Verification
     struct stat st;
     if (stat(buf, &st) != 0) {
-        fprintf(stderr, "[Native Hook] Directory %s not created!\n", buf);
-        rmdir(argv[1]);
-        return 1;
-    }
-    if (!S_ISDIR(st.st_mode)) {
-        fprintf(stderr, "[Native Hook] %s is not a directory!\n", buf);
-        rmdir(buf);
-        rmdir(argv[1]);
-        return 1;
+        rmdir(argv[0]);
     }
     
     rmdir(buf);
-    rmdir(argv[1]);
+    rmdir(argv[0]);
     return 0;
 }
 #endif

@@ -1,6 +1,6 @@
-// CMD: setup="create /tmp/seek_test.txt" args="file /tmp/seek_test.txt"
+// CMD: setup="/tmp/seek_test.txt" args="file /tmp/seek_test.txt" cleanup="/tmp/seek_test.txt"
 // CMD: args="bad_fd"
-// CMD: setup="create /tmp/seek_past.txt" args="past /tmp/seek_past.txt"
+// CMD: setup="/tmp/seek_past.txt" args="past /tmp/seek_past.txt" cleanup="/tmp/seek_past.txt"
 
 #include "wali_start.c"
 #include <fcntl.h>
@@ -13,31 +13,23 @@
 #include <stdio.h>
 
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
+    if (argc < 1) return 0;
+    const char *path = argv[0];
     
-    if (strcmp(mode, "create") == 0) {
-        int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd < 0) return 1;
-        // writes "0123456789"
-        if (write(fd, "0123456789", 10) != 10) {
-            close(fd);
-            return 1;
-        }
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) return -1;
+    // writes "0123456789"
+    if (write(fd, "0123456789", 10) != 10) {
         close(fd);
+        return -1;
     }
+    close(fd);
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *mode = argv[0];
-    const char *path = argv[1];
-    
-    if (strcmp(mode, "create") == 0) {
-        unlink(path);
-    }
+    if (argc < 1) return 0;
+    unlink(argv[0]);
     return 0;
 }
 #endif

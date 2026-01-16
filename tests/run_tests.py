@@ -289,6 +289,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run WALI unit tests.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output (iwasm -v=5 and full logs)')
     parser.add_argument('--config', default='engines.json', help='Path to engines config file')
+    parser.add_argument('-f', '--file', nargs='+', help='Run specific tests (by name, e.g. pselect6 ioctl or specific/path.c)')
     args = parser.parse_args()
 
     # Load Engines
@@ -310,6 +311,24 @@ def main():
         return
         
     tests = sorted([os.path.splitext(f)[0] for f in test_sources])
+
+    if args.file:
+        wanted_bases = set()
+        for f in args.file:
+            # Handle path or name: "unit/stat.c", "stat.c", "stat" -> "stat"
+            base = os.path.basename(f)
+            if base.endswith('.c'):
+                base = base[:-2]
+            wanted_bases.add(base)
+        
+        # Filter existing tests
+        tests = [t for t in tests if os.path.basename(t) in wanted_bases]
+        
+        if not tests:
+            print(f"No matching tests found for {args.file}")
+            # Try to see if user requested something not in glob?
+            # For now just fail if we rely on glob to find valid tests.
+            sys.exit(1)
 
     success_count = 0
     for t in tests:

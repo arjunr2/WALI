@@ -1,4 +1,4 @@
-// CMD: setup="create /tmp/readv_file" args="/tmp/readv_file"
+// CMD: setup="/tmp/readv_file" args="/tmp/readv_file" cleanup="/tmp/readv_file"
 
 #define _GNU_SOURCE
 #include "wali_start.c"
@@ -12,8 +12,8 @@
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    const char *fname = argv[1];
+    if (argc < 1) return -1;
+    const char *fname = argv[0];
     int fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) {
         write(fd, "0123456789", 10);
@@ -22,8 +22,8 @@ int test_setup(int argc, char **argv) {
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 2) return 0;
-    unlink(argv[1]);
+    if (argc < 1) return -1;
+    unlink(argv[0]);
     return 0;
 }
 #endif
