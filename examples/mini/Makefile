@@ -8,9 +8,11 @@ ELF_LFLAGS := -lm -lpthread
 WASM_DIR := wasm
 ELF_DIR := elf
 
+OS := $(shell uname -s)
+
 SRC_C := $(wildcard *.c)
 # Generate ELF files only on linux platforms
-ifeq ($(UNAME_S),Linux)
+ifeq ($(OS),Linux)
 	SRC_O := $(SRC_C:.c=.o)
 endif
 
