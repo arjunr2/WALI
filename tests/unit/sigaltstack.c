@@ -49,13 +49,11 @@ int test(void) {
         return -1;
     }
     
-    printf("STARTING 1!!!!!!!!\n");
     if (current.ss_sp != stack_mem) {
         free(stack_mem);
         return -1;
     }
     
-    printf("STARTING 0!!!!!!!!\n");
     // Disable alt stack
     ss.ss_flags = SS_DISABLE;
     wali_sigaltstack(&ss, 0);
