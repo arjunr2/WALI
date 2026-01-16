@@ -1,42 +1,40 @@
-// CMD: args="basic"
+// CMD: setup="" args="" cleanup=""
 
 #include "wali_start.c"
-#include <unistd.h>
 #include <string.h>
 
 #ifdef WALI_TEST_WRAPPER
+// No setup/cleanup needed for pure pipe test
 int test_setup(int argc, char **argv) { return 0; }
 int test_cleanup(int argc, char **argv) { return 0; }
 #endif
 
-#ifdef __wasm__
-__attribute__((__import_module__("wali"), __import_name__("SYS_write")))
-long __imported_wali_write(int fd, const void *buf, size_t count);
-
-long wali_write(int fd, const void *buf, size_t count) { return __imported_wali_write(fd, buf, count); }
-#else
-#include <sys/syscall.h>
-long wali_write(int fd, const void *buf, size_t count) { return syscall(SYS_write, fd, buf, count); }
-#endif
-
 int test(void) {
-    if (test_init_args() != 0) return -1;
-    
     int pfd[2];
-    if (pipe(pfd) != 0) return -1;
-    
+    TEST_ASSERT_EQ(wali_syscall_pipe2(pfd, 0), 0);
+
     const char *msg = "WriteTest";
-    long written = wali_write(pfd[1], msg, strlen(msg));
-    
-    if (written != (long)strlen(msg)) return -1;
-    
-    char buf[20];
-    if (read(pfd[0], buf, strlen(msg)) != (long)strlen(msg)) return -1;
-    
-    if (strncmp(buf, msg, strlen(msg)) != 0) return -1;
-    
-    close(pfd[0]);
-    close(pfd[1]);
-    
+    size_t len = strlen(msg);
+
+    // Test 1: Write success
+    TEST_ASSERT_EQ(wali_syscall_write(pfd[1], msg, len), (long)len);
+
+    // Verify Read
+    char buf[32];
+    TEST_ASSERT_EQ(wali_syscall_read(pfd[0], buf, len), (long)len);
+    TEST_ASSERT_EQ(strncmp(buf, msg, len), 0);
+
+    // Test 2: Write 0 bytes (Success)
+    TEST_ASSERT_EQ(wali_syscall_write(pfd[1], msg, 0), 0);
+
+    // Close pipe ends
+    wali_syscall_close(pfd[0]);
+    wali_syscall_close(pfd[1]);
+
+    // Test 3: Write to closed FD (Fail)
+    long res = wali_syscall_write(pfd[1], msg, len);
+    TEST_ASSERT(res < 0);
+    // TEST_ASSERT_EQ(res, -1);
+
     return 0;
 }

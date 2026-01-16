@@ -3,6 +3,9 @@
 
 #include "wali_test_helpers.h"
 
+// Commonly used headers
+#include <time.h>
+
 // Global args storage
 int argc = 0;
 char **argv = 0;

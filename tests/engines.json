@@ -5,7 +5,6 @@
     "args": [
       "{verbose_arg}",
       "--env-file={env_file}",
-      "--native-lib={native_lib}",
       "{wasm_file}"
     ],
     "verbose_arg": "-v=5"

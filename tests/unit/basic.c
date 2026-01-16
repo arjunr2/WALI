@@ -1,5 +1,7 @@
+// CMD: setup="" args="" cleanup=""
+
 #include "wali_start.c"
 
 int test(void) {
-  return 0;
+    return 0;
 }

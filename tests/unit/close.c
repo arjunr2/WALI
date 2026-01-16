@@ -1,53 +1,44 @@
-// CMD: setup="/tmp/close_test" args="/tmp/close_test" cleanup="/tmp/close_test"
+// CMD: setup="" args="" cleanup=""
 
 #include "wali_start.c"
-#include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
 
+#define TEST_FILE "/tmp/wali_close_test"
+
 #ifdef WALI_TEST_WRAPPER
-#include <stdlib.h>
+#include <fcntl.h>
 int test_setup(int argc, char **argv) {
-    if (argc < 1) return -1;
-    int fd = open(argv[0], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    // Create test file
+    int fd = open(TEST_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd >= 0) close(fd);
     return 0;
 }
 int test_cleanup(int argc, char **argv) {
-    if (argc < 1) return -1;
-    unlink(argv[0]);
+    unlink(TEST_FILE);
     return 0;
 }
 #endif
 
-#ifdef __wasm__
-__attribute__((__import_module__("wali"), __import_name__("SYS_close")))
-long __imported_wali_close(int fd);
-__attribute__((__import_module__("wali"), __import_name__("SYS_openat")))
-long __imported_wali_openat(int dirfd, const char *pathname, int flags, int mode);
-
-int wali_close(int fd) { return (int)__imported_wali_close(fd); }
-int wali_openat(int dirfd, const char *pathname, int flags, int mode) { return (int)__imported_wali_openat(dirfd, pathname, flags, mode); }
-
-#else
-#include <sys/syscall.h>
-int wali_close(int fd) { return syscall(SYS_close, fd); }
-int wali_openat(int dirfd, const char *pathname, int flags, int mode) { return syscall(SYS_openat, dirfd, pathname, flags, mode); }
-#endif
-
 int test(void) {
-    if (test_init_args() != 0) return -1;
-    const char *path = argv[0];
+    TEST_LOG("Opening " TEST_FILE);
+    int fd = wali_syscall_open(TEST_FILE, O_RDONLY, 0);
+    TEST_ASSERT(fd >= 0);
     
-    int fd = wali_openat(AT_FDCWD, path, O_RDONLY, 0);
-    if (fd < 0) return -1;
+    TEST_LOG("Closing valid fd");
+    TEST_ASSERT_EQ(wali_syscall_close(fd), 0);
     
-    // Close valid fd
-    if (wali_close(fd) != 0) return -1;
+    TEST_LOG("Closing already closed fd (should fail)");
+    long ret = wali_syscall_close(fd);
+    TEST_ASSERT(ret < 0);
     
-    // Close already closed fd should fail
-    int ret = wali_close(fd);
-    if (ret == 0) return -1; // Should have failed
-    
+    // Check errno? In WALI, we might check negative return.
+    // Native syscall returns -1, check errno EBADF.
+    // Our wrapper: native returns -1 (if using `syscall` wrapper). wrapper is `syscall(...)`.
+    // Wait, `wali_syscall_close` returns `long`. 
+    // Native `syscall` returns -1 on error.
+    // Wasm `__imported` returns whatever host returns.
+    // Usually negative errno or -1.
+    // Let's just assert failure for now.
+
     return 0;
 }

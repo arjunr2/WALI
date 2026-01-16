@@ -1,8 +1,11 @@
-// CMD: args="basic"
+// CMD: setup="" args="" cleanup=""
 
 #include "wali_start.c"
-#include <unistd.h>
+// #include <unistd.h>
+// #include <sys/epoll.h>
+
 #include <sys/epoll.h>
+#include <unistd.h>
 
 #ifdef WALI_TEST_WRAPPER
 int test_setup(int argc, char **argv) { return 0; }
@@ -10,14 +13,11 @@ int test_cleanup(int argc, char **argv) { return 0; }
 #endif
 
 #ifdef __wasm__
-__attribute__((__import_module__("wali"), __import_name__("SYS_epoll_create1")))
-long __imported_wali_epoll_create1(int flags);
+WALI_IMPORT("SYS_epoll_create1") long wali_syscall_epoll_create1(int flags);
+WALI_IMPORT("SYS_epoll_ctl") long wali_syscall_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 
-__attribute__((__import_module__("wali"), __import_name__("SYS_epoll_ctl")))
-long __imported_wali_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
-
-int wali_epoll_create1(int flags) { return (int)__imported_wali_epoll_create1(flags); }
-int wali_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event) { return (int)__imported_wali_epoll_ctl(epfd, op, fd, event); }
+int wali_epoll_create1(int flags) { return (int)wali_syscall_epoll_create1(flags); }
+int wali_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event) { return (int)wali_syscall_epoll_ctl(epfd, op, fd, event); }
 #else
 #include <sys/syscall.h>
 int wali_epoll_create1(int flags) { return syscall(SYS_epoll_create1, flags); }
@@ -25,27 +25,26 @@ int wali_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event) { return
 #endif
 
 int test(void) {
-    if (test_init_args() != 0) return -1;
-    
     int epfd = wali_epoll_create1(0);
-    if (epfd < 0) return -1;
+    TEST_ASSERT(epfd >= 0);
     
     int pfd[2];
-    if (pipe(pfd) != 0) return -1;
+    TEST_ASSERT_EQ(pipe(pfd), 0);
     
     struct epoll_event ev;
     ev.events = EPOLLIN;
     ev.data.fd = pfd[0];
     
     // Add event
-    if (wali_epoll_ctl(epfd, EPOLL_CTL_ADD, pfd[0], &ev) != 0) return -1;
+    TEST_ASSERT_EQ(wali_epoll_ctl(epfd, EPOLL_CTL_ADD, pfd[0], &ev), 0);
     
     // Delete event
-    if (wali_epoll_ctl(epfd, EPOLL_CTL_DEL, pfd[0], &ev) != 0) return -1;
+    TEST_ASSERT_EQ(wali_epoll_ctl(epfd, EPOLL_CTL_DEL, pfd[0], &ev), 0);
     
-    close(pfd[0]);
-    close(pfd[1]);
-    close(epfd);
+    wali_syscall_close(pfd[0]);
+    wali_syscall_close(pfd[1]);
+    wali_syscall_close(epfd);
     
     return 0;
 }
+

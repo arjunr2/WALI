@@ -1,100 +1,75 @@
-// CMD: setup="/tmp/dup2_test.txt" args="file /tmp/dup2_test.txt" cleanup="/tmp/dup2_test.txt"
+// CMD: setup="" args="" cleanup=""
 
 #include "wali_start.c"
-#include <fcntl.h>
-#include <unistd.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <string.h>
+
 #include <string.h>
+#include <fcntl.h>
+
+#define TEST_FILE "/tmp/dup2_test.txt"
+#define TEST_CONTENT "DUP2_TEST"
 
 #ifdef WALI_TEST_WRAPPER
 #include <stdlib.h>
 #include <stdio.h>
 
 int test_setup(int argc, char **argv) {
-    if (argc < 1) return -1;
-    const char *path = argv[0];
-    
-    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int fd = open(TEST_FILE, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd < 0) return -1;
-    if (write(fd, "DUP2_TEST", 9) != 9) {
-        close(fd);
-        return -1;
-    }
+    write(fd, TEST_CONTENT, strlen(TEST_CONTENT));
     close(fd);
     return 0;
 }
 
 int test_cleanup(int argc, char **argv) {
-    if (argc < 1) return -1;
-    unlink(argv[0]);
+    unlink(TEST_FILE);
     return 0;
 }
 #endif
 
 #ifdef __wasm__
-__attribute__((__import_module__("wali"), __import_name__("SYS_open")))
-long __imported_wali_open(const char *pathname, int flags, int mode);
-__attribute__((__import_module__("wali"), __import_name__("SYS_read")))
-long __imported_wali_read(int fd, void *buf, size_t count);
-__attribute__((__import_module__("wali"), __import_name__("SYS_close")))
-long __imported_wali_close(int fd);
-__attribute__((__import_module__("wali"), __import_name__("SYS_dup2")))
-long __imported_wali_dup2(int oldfd, int newfd);
-
-int wali_open(const char *pathname, int flags, int mode) {
-  return (int) __imported_wali_open(pathname, flags, mode);
-}
-int wali_read(int fd, void *buf, size_t count) {
-  return (int) __imported_wali_read(fd, buf, count);
-}
-int wali_close(int fd) {
-  return (int) __imported_wali_close(fd);
-}
-int wali_dup2(int oldfd, int newfd) {
-  return (int) __imported_wali_dup2(oldfd, newfd);
-}
+WALI_IMPORT("SYS_dup2") long wali_syscall_dup2(int oldfd, int newfd);
 #else
 #include <sys/syscall.h>
-int wali_open(const char *pathname, int flags, int mode) {
-  return syscall(SYS_open, pathname, flags, mode);
-}
-int wali_read(int fd, void *buf, size_t count) {
-  return syscall(SYS_read, fd, buf, count);
-}
-int wali_close(int fd) {
-  return syscall(SYS_close, fd);
-}
-int wali_dup2(int oldfd, int newfd) {
-  return syscall(SYS_dup2, oldfd, newfd);
-}
+long wali_syscall_dup2(int oldfd, int newfd) { return syscall(SYS_dup2, oldfd, newfd); }
 #endif
 
 int test(void) {
-  if (test_init_args() != 0) return -1;
-  if (argc < 2) return -1;
-  const char *path = argv[1];
-  
-  int fd = wali_open(path, O_RDONLY, 0);
-  if (fd < 0) return -1;
-  
-  // Test dup2
-  int target_fd = 10;
-  // Ensure target closed
-  wali_close(target_fd); 
-  
-  int fd3 = wali_dup2(fd, target_fd);
-  if (fd3 != target_fd) { wali_close(fd); return -1; }
-  
-  char buf[16];
-  memset(buf, 0, sizeof(buf));
-  if (wali_read(target_fd, buf, 9) != 9) {
-      wali_close(fd); wali_close(target_fd); return -1;
-  }
-  if (strcmp(buf, "DUP2_TEST") != 0) { 
-      wali_close(fd); wali_close(target_fd); return -1;
-  }
-  
-  wali_close(fd);
-  wali_close(target_fd);
-  
-  return 0;
+    int fd = wali_syscall_open(TEST_FILE, O_RDONLY, 0);
+    TEST_ASSERT(fd >= 0);
+    
+    // Test dup2
+    int target_fd = 10;
+    // Ensure target closed
+    wali_syscall_close(target_fd); 
+    
+    // Call dup2 with explicit call
+    long res = wali_syscall_dup2(fd, target_fd);
+    
+    // Check result
+    if (res != target_fd) { 
+        wali_syscall_close(fd); 
+        TEST_FAIL("dup2 failed or returned wrong fd"); 
+    }
+    
+    char buf[16];
+    memset(buf, 0, sizeof(buf));
+    int len = strlen(TEST_CONTENT);
+    if (wali_syscall_read(target_fd, buf, len) != len) {
+        wali_syscall_close(fd); wali_syscall_close(target_fd); 
+        TEST_FAIL("read failed from new fd");
+    }
+    
+    if (strcmp(buf, TEST_CONTENT) != 0) { 
+        wali_syscall_close(fd); wali_syscall_close(target_fd); 
+        TEST_FAIL("Content mismatch");
+    }
+    
+    wali_syscall_close(fd);
+    wali_syscall_close(target_fd);
+    
+    return 0;
 }
+

@@ -8,9 +8,115 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 
+#include "wali_syscall_utils.h"
+
 // Global variables to hold CLI args
 extern int argc;
 extern char **argv;
+
+/* -------------------------------------------------------------------------
+ * Minimal Logging Helpers (No libc dependencies)
+ * ------------------------------------------------------------------------- */
+
+static inline void print_str(const char *s) {
+    long len = 0;
+    while (s[len]) len++;
+    wali_syscall_write(1, s, len);
+}
+
+static inline void print_str_err(const char *s) {
+    long len = 0;
+    while (s[len]) len++;
+    wali_syscall_write(2, s, len);
+}
+
+static inline void print_long(long n) {
+    char buf[32];
+    int i = 0;
+    int neg = 0;
+    if (n < 0) { neg = 1; n = -n; }
+    if (n == 0) buf[i++] = '0';
+    while (n > 0) {
+        buf[i++] = '0' + (n % 10);
+        n /= 10;
+    }
+    if (neg) buf[i++] = '-';
+    
+    // Reverse
+    for (int j = 0; j < i / 2; j++) {
+        char tmp = buf[j];
+        buf[j] = buf[i - 1 - j];
+        buf[i - 1 - j] = tmp;
+    }
+    wali_syscall_write(1, buf, i);
+}
+
+static inline void print_long_err(long n) {
+    char buf[32];
+    int i = 0;
+    int neg = 0;
+    if (n < 0) { neg = 1; n = -n; }
+    if (n == 0) buf[i++] = '0';
+    while (n > 0) {
+        buf[i++] = '0' + (n % 10);
+        n /= 10;
+    }
+    if (neg) buf[i++] = '-';
+    
+    // Reverse
+    for (int j = 0; j < i / 2; j++) {
+        char tmp = buf[j];
+        buf[j] = buf[i - 1 - j];
+        buf[i - 1 - j] = tmp;
+    }
+    wali_syscall_write(2, buf, i);
+}
+
+/* -------------------------------------------------------------------------
+ * Assertion Macros
+ * ------------------------------------------------------------------------- */
+#define TEST_LOG(msg) do { \
+    print_str("[TEST] "); print_str(msg); print_str("\n"); \
+} while(0)
+
+#define TEST_FAIL(msg) do { \
+    print_str_err("[FAIL] "); \
+    print_str_err(__FILE__); print_str_err(":"); print_long_err(__LINE__); \
+    print_str_err(": "); print_str_err(msg); print_str_err("\n"); \
+    return -1; \
+} while(0)
+
+#define TEST_ASSERT(cond) do { \
+    if (!(cond)) { \
+        TEST_FAIL("Assertion failed: " #cond); \
+    } \
+} while(0)
+
+#define TEST_ASSERT_EQ(a, b) do { \
+    long _a = (long)(a); \
+    long _b = (long)(b); \
+    if (_a != _b) { \
+        print_str_err("[FAIL] "); \
+        print_str_err(__FILE__); print_str_err(":"); print_long_err(__LINE__); \
+        print_str_err(": Equality failed: "); \
+        print_long_err(_a); print_str_err(" != "); print_long_err(_b); \
+        print_str_err("\n"); \
+        return -1; \
+    } \
+} while(0)
+
+#define TEST_ASSERT_NE(a, b) do { \
+    long _a = (long)(a); \
+    long _b = (long)(b); \
+    if (_a == _b) { \
+        print_str_err("[FAIL] "); \
+        print_str_err(__FILE__); print_str_err(":"); print_long_err(__LINE__); \
+        print_str_err(": Inequality failed: "); \
+        print_long_err(_a); print_str_err(" == "); print_long_err(_b); \
+        print_str_err("\n"); \
+        return -1; \
+    } \
+} while(0)
 
 #ifdef __wasm__
 

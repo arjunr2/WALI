@@ -11,13 +11,14 @@ int test(void) {
 
     char *val = getenv("TEST_VAR");
     if (!val) {
-        return 1;
+        TEST_FAIL("TEST_VAR not found");
     }
     
     // Check expected values
     if (strcmp(val, "hello") != 0 && strcmp(val, "world") != 0) {
-        return 1;
+        TEST_FAIL("Unexpected TEST_VAR value");
     }
 
     return 0;
 }
+
