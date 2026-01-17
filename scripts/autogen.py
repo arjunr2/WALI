@@ -202,6 +202,14 @@ class WamrGenerator(StubGenerator):
 
 
 class WitGenerator(StubGenerator):
+    WIT_KEYWORDS_RESERVED_MAP = {
+        "flags": "flags-id",
+        "type": "type-id",
+        "resource": "resource-id",
+        "list": "list-id",
+        "option": "option-id",
+    }
+    
     def generate(self):
         buf = []
         uniq_ptr_types = set()
@@ -218,11 +226,11 @@ class WitGenerator(StubGenerator):
             up_types = set([x for x in args if x.startswith('ptr-')])
             uniq_ptr_types.update(up_types)
 
-            if sc.num_args:
+            if sc.implemented:
                 l1 = f"\t// [{sc.nr}] {sc.name}({', '.join(sc.args)})"
                 wit_args = ', '.join([
-                    f"a{i+1}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
-                    for i, arg in enumerate(args)
+                    f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
+                    for (id, arg) in zip(sc.args_id, args)
                 ])
                 l2 = f"\tSYS-{sc.name.replace('_', '-')}: func({wit_args}) -> syscall-result;"
                 buf.append(l1 + '\n' + l2)
@@ -324,7 +332,7 @@ class MarkdownGenerator(StubGenerator):
         sep = "| --- | --- | --- | --- | --- | --- | --- | --- |"
         rows = []
         for s in supp_sc:
-            args = s.args
+            args = [f"{arg} {id}" for arg, id in zip(s.args, s.args_id)]
             nargs = len(args)
             # Pad args to 6
             padded_args = args + [''] * (6 - nargs)
