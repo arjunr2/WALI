@@ -16,27 +16,5 @@ world linux {
 /// Raw user-space Linux syscall wrappers
 [[SYSCALLS_STUB]]
 
-interface aux {
-    use syscalls.{ptr-char, ptr-func};
-    use types.{ptr};
-    type ptr-sigjmpbuf = ptr;
-    
-    init: func() -> s32;
-    deinit: func() -> s32;
-    // Set the exit code of the process
-    proc-exit: func(status: s32);
-    // Get number of CL arguments
-    cl-get-argc: func() -> u32;
-    // Get size of a specific CL argument
-    cl-get-argv-len: func(arg-idx: u32) -> u32;
-    // Copy the contents of a specific CL argument
-    cl-copy-argv: func(argv-addr: ptr-char, arg-idx: u32) -> u32; 
-    // Environment variables
-    get-init-envfile: func(filepath: ptr-char, pathsize: u32) -> bool;
-    // Threads
-    wasm-thread-spawn: func(setup-funcptr: ptr-func, arg-wasm: s32) -> s32;
-    // Setjmp/longjmp temporary stubs
-    sigsetjmp: func(sigjmpbuf: ptr-sigjmpbuf, savesigs: s32) -> s32;
-    setjmp: func(jmpbuf: ptr-sigjmpbuf) -> s32;
-    siglongjmp: func(sigjmpbuf: ptr-sigjmpbuf, val: s32);
-}
+/// Auxilary syscalls for WALI
+[[AUX_SYSCALLS_STUB]]

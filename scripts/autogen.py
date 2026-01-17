@@ -8,7 +8,7 @@ from dataclasses import dataclass, fields
 from typing import List, Dict, Any, Callable, Set, Optional, Tuple, Type
 
 # Import definition objects
-from syscall_definitions import SYSCALLS, Syscall, Nrs, ScArg
+from syscall_definitions import SYSCALLS, AUX_SYSCALLS, Syscall, AuxSyscall, Nrs, ScArg
 from type_system import TypeSystem
 
 @dataclass
@@ -16,6 +16,7 @@ class GeneratorContext:
     ts: TypeSystem
     archs: List[str]
     syscalls: Dict[str, Syscall]
+    aux_syscalls: Dict[str, AuxSyscall]
 
     @classmethod
     def create(cls) -> 'GeneratorContext':
@@ -23,7 +24,7 @@ class GeneratorContext:
         # Load Type System
         ts = TypeSystem.load(Path('templates'))
         archs = [f.name for f in fields(Nrs)]
-        return cls(ts, archs, SYSCALLS)
+        return cls(ts, archs, SYSCALLS, AUX_SYSCALLS)
 
 
 # --- Base Generator ---
@@ -44,6 +45,10 @@ class StubGenerator:
     @property
     def syscalls(self) -> Dict[str, Syscall]:
         return self.ctx.syscalls
+    
+    @property
+    def aux_syscalls(self) -> Dict[str, AuxSyscall]:
+        return self.ctx.aux_syscalls
 
     def generate(self):
         raise NotImplementedError
@@ -212,9 +217,13 @@ class WitGenerator(StubGenerator):
     
     def generate(self):
         buf = []
+        buf_aux = []
         uniq_ptr_types = set()
+        aux_ptr_types = set()
 
         def transform_ptr_arg(arg):
+            if arg.startswith('fn('):
+                return 'ptr-func'
             arg_no_ptr = arg.rstrip('*')
             ptr_indirection = len(arg) - len(arg_no_ptr)
             return ("ptr-" * ptr_indirection) + arg_no_ptr
@@ -235,11 +244,40 @@ class WitGenerator(StubGenerator):
                 l2 = f"\tSYS-{sc.name.replace('_', '-')}: func({wit_args}) -> syscall-result;"
                 buf.append(l1 + '\n' + l2)
 
-        buf = list(filter(bool, buf))
-        
-        self._generate_wit_file(buf, uniq_ptr_types)
+        for sc in self.aux_syscalls.values():
+            args = [x.strip().replace(' ', '-').replace('_', '-') for x in sc.args]
+            args = [transform_ptr_arg(x) for x in args]
+            
+            up_types = set([x for x in args if x.startswith('ptr-')])
+            aux_ptr_types.update(up_types)
 
-    def _generate_wit_file(self, buf, uniq_ptr_types):
+            l1 = f"\t// {sc.name}({', '.join(sc.args)})"
+            wit_args = ', '.join([
+                f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
+                for (id, arg) in zip(sc.args_id, args)
+            ])
+            
+            name = sc.name.lstrip('_').replace('_', '-')
+            start_sig = f"\t{name}: func({wit_args})"
+            
+            res_ty = None
+            if sc.result:
+                # If sc.result is basic type, use map
+                res_ty = self.ts.basic_types.get(sc.result, sc.result)
+            
+            if res_ty:
+                l2 = f"{start_sig} -> {res_ty};"
+            else:
+                l2 = f"{start_sig};"
+            
+            buf_aux.append(l1 + '\n' + l2)
+
+        buf = list(filter(bool, buf))
+        buf_aux = list(filter(bool, buf_aux))
+        
+        self._generate_wit_file(buf, buf_aux, uniq_ptr_types, aux_ptr_types)
+
+    def _generate_wit_file(self, buf, buf_aux, uniq_ptr_types, aux_ptr_types):
         rep = lambda p: p.replace('_', '-').replace(' ', '-')
         comp_types = {'syscall-result': 's64'}
         for k, v in (self.ts.basic_types | self.ts.complex_types).items():
@@ -286,18 +324,26 @@ class WitGenerator(StubGenerator):
             [""]
         )
 
-        sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
 
-        try:
-            with open('templates/wali.wit.template', 'r') as f:
-                template = f.read()
-        except FileNotFoundError:
-             template = "[[TYPES_STUB]]\n[[SYSCALLS_STUB]]"
+        aux_prelude = (
+            ["interface aux {"] +
+            [f"\tuse types.{{{', '.join(comp_types)}}};"] +
+            [f"\tuse syscalls.{{{', '.join([x for x in aux_ptr_types if x in uniq_ptr_types])}}};"] +
+            [""]
+        )
+
+        sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
+        aux_if = aux_prelude + ["\t/// Aux methods"] + buf_aux + ["}"]
+
+        with open('templates/wali.wit.template', 'r') as f:
+            template = f.read()
 
         fill_temp = template.replace(
             '[[TYPES_STUB]]', '\n'.join(type_if)
         ).replace(
             '[[SYSCALLS_STUB]]', '\n'.join(sc_if)
+        ).replace(
+            '[[AUX_SYSCALLS_STUB]]', '\n'.join(aux_if)
         )
 
         def matchrep(matchobj):

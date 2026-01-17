@@ -480,11 +480,11 @@ _aux_syscall_list: List[Syscall] = [
     impl_aux("__cl_copy_argv", ["char* argbuf", "unsigned int arg_index"], "int"),
     impl_aux("__get_init_envfile", ["char* pathbuf", "unsigned int bufsize"], "int"),
     # Threads
-    impl_aux("__wasm_thread_spawn", ["fn(int,void*)* wasm_start_fn", "void* args"], "int")
+    impl_aux("__wasm_thread_spawn", ["fn(int, void*) wasm_start_fn", "void* args"], "int"),
     # Set/longjmps
-    impl_aux("sigsetjmp", ["sigjmp_buf sigjmp_buf", "int savesigs"], "int"),
-    impl_aux("longjmp", ["jmp_buf env", "int val"], None),
-    impl_aux("setjmp", ["jmp_buf env"], "int"),
+    impl_aux("sigsetjmp", ["void* sigjmp_buf", "int savesigs"], "int"),
+    impl_aux("longjmp", ["void* env", "int val"], None),
+    impl_aux("setjmp", ["void* env"], "int"),
 ]
 
 AUX_SYSCALLS: Dict[str, AuxSyscall] = {s.name: s for s in _aux_syscall_list}
