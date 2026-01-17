@@ -62,20 +62,20 @@ class Syscall:
 # Helper Functions
 # -----------------------------------------------------------------------------
 
+def split_args(a: str) -> Tuple[ScArg, str]:
+    parts = a.rsplit(maxsplit=1)
+    if len(parts) != 2:
+        raise RuntimeError(f"Argument '{a}' is not in the expected format '<type> <id>'")
+    return (ScArg(parts[0]), parts[1])
+
+
 def unimpl(name: str, nrs: Nrs) -> Syscall:
     """Shorthand for syscalls with no argument info or aliases (unimplemented/simple)."""
     return Syscall(name=name, nrs=nrs)
 
 def impl(name: str, args: List[str], nrs: Nrs, **kwargs) -> Syscall:
     """Full creation helper for fully defined (implemented) syscalls."""
-    def split_args(a: str) -> Tuple[ScArg, str]:
-        parts = a.rsplit(maxsplit=1)
-        if len(parts) != 2:
-            raise RuntimeError(f"Argument '{a}' is not in the expected format '<type> <id>'")
-        return (ScArg(parts[0]), parts[1])
-
     args_ty, args_id = map(list, zip(*[split_args(a) for a in args])) if args else ([], [])
-
     return Syscall(name=name, nrs=nrs, args=args_ty, args_id=args_id, implemented=True, **kwargs)
 
 # -----------------------------------------------------------------------------
@@ -454,6 +454,42 @@ _syscall_list: List[Syscall] = [
 SYSCALLS: Dict[str, Syscall] = {s.name: s for s in _syscall_list}
 assert len(SYSCALLS) == len(_syscall_list), "Duplicate entries for same syscall detected"
 
+# -----------------------------------------------------------------------------
+# Auxilary Syscalls
+# These are WALI imports needed for runtime but not part of Linux syscall set
+# -----------------------------------------------------------------------------
+@dataclass
+class AuxSyscall:
+    name: str
+    args: List[ScArg]
+    args_id: List[str]
+    result: ScArg = None
+
+def impl_aux(name: str, args: List[ScArg], result: ScArg) -> AuxSyscall:
+    """Full creation helper for fully defined (implemented) auxiliary syscalls."""
+    args_ty, args_id = map(list, zip(*[split_args(a) for a in args])) if args else ([], [])
+    return AuxSyscall(name=name, args=args_ty, args_id=args_id, result=result)
+
+_aux_syscall_list: List[Syscall] = [
+    # Startup, Args, Env
+    impl_aux("__init", [], "int"),
+    impl_aux("__deinit", [], "int"),
+    impl_aux("__proc_exit", ["int status"], None),
+    impl_aux("__cl_get_argc", [], "unsigned int"),
+    impl_aux("__cl_get_argv_len", ["unsigned int arg_index"], "unsigned int"),
+    impl_aux("__cl_copy_argv", ["char* argbuf", "unsigned int arg_index"], "int"),
+    impl_aux("__get_init_envfile", ["char* pathbuf", "unsigned int bufsize"], "int"),
+    # Threads
+    impl_aux("__wasm_thread_spawn", ["fn(int,void*)* wasm_start_fn", "void* args"], "int")
+    # Set/longjmps
+    impl_aux("sigsetjmp", ["sigjmp_buf sigjmp_buf", "int savesigs"], "int"),
+    impl_aux("longjmp", ["jmp_buf env", "int val"], None),
+    impl_aux("setjmp", ["jmp_buf env"], "int"),
+]
+
+AUX_SYSCALLS: Dict[str, AuxSyscall] = {s.name: s for s in _aux_syscall_list}
+assert len(AUX_SYSCALLS) == len(_aux_syscall_list), "Duplicate entries for same aux syscall detected"
+
 
 # Utility functions for exporting syscall data
 def dump_syscalls_to_csv():
@@ -507,4 +543,5 @@ if __name__ == "__main__":
         dump_syscalls_to_csv()
         print(f"Wrote {len(_syscall_list)} definitions to csvs/syscall_full_format.csv")
     else:
-        print(f"Loaded spec successfully; {len(SYSCALLS)} syscall definitions.")
+        num_implemented = len([x for x in SYSCALLS.values() if x.implemented])
+        print(f"Loaded spec successfully; {num_implemented} implemented Linux syscalls ({len(SYSCALLS)} defined) + {len(AUX_SYSCALLS)} auxiliary calls.")
