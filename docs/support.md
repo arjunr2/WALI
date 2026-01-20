@@ -5,152 +5,151 @@ architectures: **x86-64, aarch64, riscv64**
 
 Uses metadata from Marcin Juszkiewicz's [syscall table](https://gpages.juszkiewicz.com.pl/syscalls-table/syscalls.html)
 
-Number of supported syscalls: **142**
+Number of supported syscalls: **141**
 
 | Syscall | # Args | a1 | a2 | a3 | a4 | a5 | a6 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| read | 3 | int | void\* | size\_t |  |  |  |
-| write | 3 | int | void\* | size\_t |  |  |  |
-| open | 3 | char\* | int | mode\_t |  |  |  |
-| close | 1 | int |  |  |  |  |  |
-| stat | 2 | char\* | struct stat\* |  |  |  |  |
-| fstat | 2 | int | struct stat\* |  |  |  |  |
-| lstat | 2 | char\* | struct stat\* |  |  |  |  |
-| poll | 3 | struct pollfd\* | nfds\_t | int |  |  |  |
-| lseek | 3 | int | off\_t | int |  |  |  |
-| mmap | 6 | void\* | size\_t | int | int | int | off\_t |
-| mprotect | 3 | void\* | size\_t | int |  |  |  |
-| munmap | 2 | void\* | size\_t |  |  |  |  |
-| brk | 1 | void\* |  |  |  |  |  |
-| rt\_sigaction | 4 | int | struct sigaction\* | struct sigaction\* | size\_t |  |  |
-| rt\_sigprocmask | 4 | int | sigset\_t\* | sigset\_t\* | size\_t |  |  |
-| rt\_sigreturn | 1 | long |  |  |  |  |  |
-| ioctl | 3 | int | int | char\* |  |  |  |
-| pread64 | 4 | int | char\* | size\_t | off\_t |  |  |
-| pwrite64 | 4 | int | char\* | size\_t | off\_t |  |  |
-| readv | 3 | int | struct iovec\* | int |  |  |  |
-| writev | 3 | int | struct iovec\* | int |  |  |  |
-| access | 2 | char\* | int |  |  |  |  |
-| pipe | 1 | int\* |  |  |  |  |  |
-| select | 5 | int | fd\_set\* | fd\_set\* | fd\_set\* | struct timeval\* |  |
+| read | 3 | int fd | void\* buf | size\_t count |  |  |  |
+| write | 3 | int fd | void\* buf | size\_t count |  |  |  |
+| open | 3 | char\* pathname | int flags | mode\_t mode |  |  |  |
+| close | 1 | int fd |  |  |  |  |  |
+| stat | 2 | char\* pathname | struct stat\* statbuf |  |  |  |  |
+| fstat | 2 | int fd | struct stat\* statbuf |  |  |  |  |
+| lstat | 2 | char\* pathname | struct stat\* statbuf |  |  |  |  |
+| poll | 3 | struct pollfd\* fds | nfds\_t nfds | int timeout |  |  |  |
+| lseek | 3 | int fd | off\_t offset | int whence |  |  |  |
+| mmap | 6 | void\* addr | size\_t length | int prot | int flags | int fd | off\_t offset |
+| mprotect | 3 | void\* addr | size\_t len | int prot |  |  |  |
+| munmap | 2 | void\* addr | size\_t len |  |  |  |  |
+| brk | 1 | void\* addr |  |  |  |  |  |
+| rt\_sigaction | 4 | int signum | struct sigaction\* act | struct sigaction\* oldact | size\_t sigsetsize |  |  |
+| rt\_sigprocmask | 4 | int how | sigset\_t\* set | sigset\_t\* oldset | size\_t sigsetsize |  |  |
+| rt\_sigreturn | 1 | long unused |  |  |  |  |  |
+| ioctl | 3 | int fd | int request | char\* argp |  |  |  |
+| pread64 | 4 | int fd | char\* buf | size\_t count | off\_t offset |  |  |
+| pwrite64 | 4 | int fd | char\* buf | size\_t count | off\_t offset |  |  |
+| readv | 3 | int fd | struct iovec\* iov | int iovcnt |  |  |  |
+| writev | 3 | int fd | struct iovec\* iov | int iovcnt |  |  |  |
+| access | 2 | char\* pathname | int mode |  |  |  |  |
+| pipe | 1 | int\* pipefd |  |  |  |  |  |
+| select | 5 | int nfds | fd\_set\* readfds | fd\_set\* writefds | fd\_set\* exceptfds | struct timeval\* timeout |  |
 | sched\_yield | 0 |  |  |  |  |  |  |
-| mremap | 5 | void\* | size\_t | size\_t | int | void\* |  |
-| msync | 3 | void\* | size\_t | int |  |  |  |
-| madvise | 3 | void\* | size\_t | int |  |  |  |
-| dup | 1 | int |  |  |  |  |  |
-| dup2 | 2 | int | int |  |  |  |  |
-| nanosleep | 2 | struct timespec\* | struct timespec\* |  |  |  |  |
-| alarm | 1 | int |  |  |  |  |  |
-| setitimer | 3 | int | struct itimerval\* | struct itimerval\* |  |  |  |
+| mremap | 5 | void\* old\_address | size\_t old\_size | size\_t new\_size | int flags | void\* new\_address |  |
+| msync | 3 | void\* addr | size\_t length | int flags |  |  |  |
+| madvise | 3 | void\* addr | size\_t length | int advice |  |  |  |
+| dup | 1 | int oldfd |  |  |  |  |  |
+| dup2 | 2 | int oldfd | int newfd |  |  |  |  |
+| nanosleep | 2 | struct timespec\* req | struct timespec\* rem |  |  |  |  |
+| alarm | 1 | int seconds |  |  |  |  |  |
+| setitimer | 3 | int which | struct itimerval\* new\_value | struct itimerval\* old\_value |  |  |  |
 | getpid | 0 |  |  |  |  |  |  |
-| socket | 3 | int | int | int |  |  |  |
-| connect | 3 | int | struct sockaddr\* | socklen\_t |  |  |  |
-| accept | 3 | int | struct sockaddr\* | socklen\_t\* |  |  |  |
-| sendto | 6 | int | void\* | size\_t | int | struct sockaddr\* | socklen\_t |
-| recvfrom | 6 | int | void\* | size\_t | int | struct sockaddr\* | socklen\_t\* |
-| sendmsg | 3 | int | struct msghdr\* | int |  |  |  |
-| recvmsg | 3 | int | struct msghdr\* | int |  |  |  |
-| shutdown | 2 | int | int |  |  |  |  |
-| bind | 3 | int | struct sockaddr\* | socklen\_t |  |  |  |
-| listen | 2 | int | int |  |  |  |  |
-| getsockname | 3 | int | struct sockaddr\* | socklen\_t\* |  |  |  |
-| getpeername | 3 | int | struct sockaddr\* | socklen\_t\* |  |  |  |
-| socketpair | 4 | int | int | int | int\* |  |  |
-| setsockopt | 5 | int | int | int | void\* | socklen\_t |  |
-| getsockopt | 5 | int | int | int | void\* | socklen\_t\* |  |
+| socket | 3 | int domain | int type | int protocol |  |  |  |
+| connect | 3 | int sockfd | struct sockaddr\* addr | socklen\_t addrlen |  |  |  |
+| accept | 3 | int sockfd | struct sockaddr\* addr | socklen\_t\* addrlen |  |  |  |
+| sendto | 6 | int sockfd | void\* buf | size\_t len | int flags | struct sockaddr\* dest\_addr | socklen\_t addrlen |
+| recvfrom | 6 | int sockfd | void\* buf | size\_t len | int flags | struct sockaddr\* src\_addr | socklen\_t\* addrlen |
+| sendmsg | 3 | int sockfd | struct msghdr\* msg | int flags |  |  |  |
+| recvmsg | 3 | int sockfd | struct msghdr\* msg | int flags |  |  |  |
+| shutdown | 2 | int sockfd | int how |  |  |  |  |
+| bind | 3 | int sockfd | struct sockaddr\* addr | socklen\_t addrlen |  |  |  |
+| listen | 2 | int sockfd | int backlog |  |  |  |  |
+| getsockname | 3 | int sockfd | struct sockaddr\* addr | socklen\_t\* addrlen |  |  |  |
+| getpeername | 3 | int sockfd | struct sockaddr\* addr | socklen\_t\* addrlen |  |  |  |
+| socketpair | 4 | int domain | int type | int protocol | int\* sv |  |  |
+| setsockopt | 5 | int sockfd | int level | int optname | void\* optval | socklen\_t optlen |  |
+| getsockopt | 5 | int sockfd | int level | int optname | void\* optval | socklen\_t\* optlen |  |
 | fork | 0 |  |  |  |  |  |  |
-| execve | 3 | char\* | char\*\* | char\*\* |  |  |  |
-| exit | 1 | int |  |  |  |  |  |
-| wait4 | 4 | pid\_t | int\* | int | struct rusage\* |  |  |
-| kill | 2 | pid\_t | int |  |  |  |  |
-| uname | 1 | struct utsname\* |  |  |  |  |  |
-| fcntl | 3 | int | int | int |  |  |  |
-| flock | 2 | int | int |  |  |  |  |
-| fsync | 1 | int |  |  |  |  |  |
-| fdatasync | 1 | int |  |  |  |  |  |
-| ftruncate | 2 | int | off\_t |  |  |  |  |
-| getcwd | 2 | char\* | size\_t |  |  |  |  |
-| chdir | 1 | char\* |  |  |  |  |  |
-| fchdir | 1 | int |  |  |  |  |  |
-| rename | 2 | char\* | char\* |  |  |  |  |
-| mkdir | 2 | char\* | mode\_t |  |  |  |  |
-| rmdir | 1 | char\* |  |  |  |  |  |
-| link | 2 | char\* | char\* |  |  |  |  |
-| unlink | 1 | char\* |  |  |  |  |  |
-| symlink | 2 | char\* | char\* |  |  |  |  |
-| readlink | 3 | char\* | char\* | size\_t |  |  |  |
-| chmod | 2 | char\* | mode\_t |  |  |  |  |
-| fchmod | 2 | int | mode\_t |  |  |  |  |
-| chown | 3 | char\* | uid\_t | gid\_t |  |  |  |
-| fchown | 3 | int | uid\_t | gid\_t |  |  |  |
-| umask | 1 | mode\_t |  |  |  |  |  |
-| gettimeofday | 2 | struct timeval\* | struct timezone\* |  |  |  |  |
-| getrlimit | 2 | int | struct rlimit\* |  |  |  |  |
-| getrusage | 2 | int | struct rusage\* |  |  |  |  |
-| sysinfo | 1 | struct sysinfo\* |  |  |  |  |  |
+| execve | 3 | char\* pathname | char\*\* argv | char\*\* envp |  |  |  |
+| exit | 1 | int status |  |  |  |  |  |
+| wait4 | 4 | pid\_t pid | int\* wstatus | int options | struct rusage\* rusage |  |  |
+| kill | 2 | pid\_t pid | int sig |  |  |  |  |
+| uname | 1 | struct utsname\* buf |  |  |  |  |  |
+| fcntl | 3 | int fd | int cmd | unsigned long arg |  |  |  |
+| flock | 2 | int fd | int operation |  |  |  |  |
+| fsync | 1 | int fd |  |  |  |  |  |
+| fdatasync | 1 | int fd |  |  |  |  |  |
+| ftruncate | 2 | int fd | off\_t length |  |  |  |  |
+| getcwd | 2 | char\* buf | size\_t size |  |  |  |  |
+| chdir | 1 | char\* path |  |  |  |  |  |
+| fchdir | 1 | int fd |  |  |  |  |  |
+| rename | 2 | char\* oldpath | char\* newpath |  |  |  |  |
+| mkdir | 2 | char\* pathname | mode\_t mode |  |  |  |  |
+| rmdir | 1 | char\* pathname |  |  |  |  |  |
+| link | 2 | char\* oldpath | char\* newpath |  |  |  |  |
+| unlink | 1 | char\* pathname |  |  |  |  |  |
+| symlink | 2 | char\* target | char\* linkpath |  |  |  |  |
+| readlink | 3 | char\* pathname | char\* buf | size\_t bufsiz |  |  |  |
+| chmod | 2 | char\* pathname | mode\_t mode |  |  |  |  |
+| fchmod | 2 | int fd | mode\_t mode |  |  |  |  |
+| chown | 3 | char\* pathname | uid\_t owner | gid\_t group |  |  |  |
+| fchown | 3 | int fd | uid\_t owner | gid\_t group |  |  |  |
+| umask | 1 | mode\_t mask |  |  |  |  |  |
+| gettimeofday | 2 | struct timeval\* tv | struct timezone\* tz |  |  |  |  |
+| getrlimit | 2 | int resource | struct rlimit\* rlim |  |  |  |  |
+| getrusage | 2 | int who | struct rusage\* usage |  |  |  |  |
+| sysinfo | 1 | struct sysinfo\* info |  |  |  |  |  |
 | getuid | 0 |  |  |  |  |  |  |
 | getgid | 0 |  |  |  |  |  |  |
-| setuid | 1 | uid\_t |  |  |  |  |  |
-| setgid | 1 | gid\_t |  |  |  |  |  |
+| setuid | 1 | uid\_t uid |  |  |  |  |  |
+| setgid | 1 | gid\_t gid |  |  |  |  |  |
 | geteuid | 0 |  |  |  |  |  |  |
 | getegid | 0 |  |  |  |  |  |  |
-| setpgid | 2 | pid\_t | pid\_t |  |  |  |  |
+| setpgid | 2 | pid\_t pid | pid\_t pgid |  |  |  |  |
 | getppid | 0 |  |  |  |  |  |  |
 | setsid | 0 |  |  |  |  |  |  |
-| setreuid | 2 | uid\_t | uid\_t |  |  |  |  |
-| setregid | 2 | gid\_t | gid\_t |  |  |  |  |
-| getgroups | 2 | size\_t | gid\_t\* |  |  |  |  |
-| setgroups | 2 | size\_t | gid\_t\* |  |  |  |  |
-| setresuid | 3 | uid\_t | uid\_t | uid\_t |  |  |  |
-| setresgid | 3 | gid\_t | gid\_t | gid\_t |  |  |  |
-| getpgid | 1 | pid\_t |  |  |  |  |  |
-| getsid | 1 | pid\_t |  |  |  |  |  |
-| rt\_sigpending | 2 | sigset\_t\* | size\_t |  |  |  |  |
-| rt\_sigsuspend | 2 | sigset\_t\* | size\_t |  |  |  |  |
-| sigaltstack | 2 | stack\_t\* | stack\_t\* |  |  |  |  |
-| utime | 2 | char\* | struct utimbuf\* |  |  |  |  |
-| statfs | 2 | char\* | struct statfs\* |  |  |  |  |
-| fstatfs | 2 | int | struct statfs\* |  |  |  |  |
-| prctl | 5 | int | unsigned long | unsigned long | unsigned long | unsigned long |  |
-| setrlimit | 2 | int | struct rlimit\* |  |  |  |  |
-| chroot | 1 | char\* |  |  |  |  |  |
+| setreuid | 2 | uid\_t ruid | uid\_t euid |  |  |  |  |
+| setregid | 2 | gid\_t rgid | gid\_t egid |  |  |  |  |
+| getgroups | 2 | size\_t size | gid\_t\* list |  |  |  |  |
+| setgroups | 2 | size\_t size | gid\_t\* list |  |  |  |  |
+| setresuid | 3 | uid\_t ruid | uid\_t euid | uid\_t suid |  |  |  |
+| setresgid | 3 | gid\_t rgid | gid\_t egid | gid\_t sgid |  |  |  |
+| getpgid | 1 | pid\_t pid |  |  |  |  |  |
+| getsid | 1 | pid\_t pid |  |  |  |  |  |
+| rt\_sigpending | 2 | sigset\_t\* set | size\_t sigsetsize |  |  |  |  |
+| rt\_sigsuspend | 2 | sigset\_t\* mask | size\_t sigsetsize |  |  |  |  |
+| sigaltstack | 2 | stack\_t\* ss | stack\_t\* old\_ss |  |  |  |  |
+| statfs | 2 | char\* path | struct statfs\* buf |  |  |  |  |
+| fstatfs | 2 | int fd | struct statfs\* buf |  |  |  |  |
+| prctl | 5 | int option | unsigned long arg2 | unsigned long arg3 | unsigned long arg4 | unsigned long arg5 |  |
+| setrlimit | 2 | int resource | struct rlimit\* rlim |  |  |  |  |
+| chroot | 1 | char\* path |  |  |  |  |  |
 | gettid | 0 |  |  |  |  |  |  |
-| tkill | 2 | int | int |  |  |  |  |
-| futex | 6 | int\* | int | int | struct timespec\* | int\* | int |
-| sched\_getaffinity | 3 | pid\_t | size\_t | cpu\_set\_t\* |  |  |  |
-| getdents64 | 3 | int | struct dirent\* | int |  |  |  |
-| set\_tid\_address | 1 | int\* |  |  |  |  |  |
-| fadvise | 4 | int | off\_t | off\_t | int |  |  |
-| clock\_gettime | 2 | clockid\_t | struct timespec\* |  |  |  |  |
-| clock\_getres | 2 | clockid\_t | struct timespec\* |  |  |  |  |
-| clock\_nanosleep | 4 | clockid\_t | int | struct timespec\* | struct timespec\* |  |  |
-| exit\_group | 1 | int |  |  |  |  |  |
-| epoll\_ctl | 4 | int | int | int | struct epoll\_event\* |  |  |
-| openat | 4 | int | char\* | int | mode\_t |  |  |
-| mkdirat | 3 | int | char\* | mode\_t |  |  |  |
-| fchownat | 5 | int | char\* | uid\_t | gid\_t | int |  |
-| newfstatat | 4 | int | char\* | struct stat\* | int |  |  |
-| unlinkat | 3 | int | char\* | int |  |  |  |
-| linkat | 5 | int | char\* | int | char\* | int |  |
-| symlinkat | 3 | char\* | int | char\* |  |  |  |
-| readlinkat | 4 | int | char\* | char\* | size\_t |  |  |
-| fchmodat | 4 | int | char\* | mode\_t | int |  |  |
-| faccessat | 4 | int | char\* | int | int |  |  |
-| pselect6 | 6 | int | fd\_set\* | fd\_set\* | fd\_set\* | struct timespec\* | void\* |
-| ppoll | 5 | struct pollfd\* | nfds\_t | struct timespec\* | sigset\_t\* | size\_t |  |
-| utimensat | 4 | int | char\* | struct timespec\* | int |  |  |
-| epoll\_pwait | 6 | int | struct epoll\_event\* | int | int | sigset\_t\* | size\_t |
-| eventfd | 1 | int |  |  |  |  |  |
-| accept4 | 4 | int | struct sockaddr\* | socklen\_t\* | int |  |  |
-| eventfd2 | 2 | int | int |  |  |  |  |
-| epoll\_create1 | 1 | int |  |  |  |  |  |
-| dup3 | 3 | int | int | int |  |  |  |
-| pipe2 | 2 | int\* | int |  |  |  |  |
-| prlimit64 | 4 | pid\_t | int | struct rlimit\* | struct rlimit\* |  |  |
-| renameat2 | 5 | int | char\* | int | char\* | int |  |
-| getrandom | 3 | void\* | size\_t | int |  |  |  |
-| statx | 5 | int | char\* | int | unsigned int | struct statx\* |  |
-| faccessat2 | 4 | int | char\* | int | int |  |  |
+| tkill | 2 | int tid | int sig |  |  |  |  |
+| futex | 6 | int\* uaddr | int futex\_op | int val | struct timespec\* timeout | int\* uaddr2 | int val3 |
+| sched\_getaffinity | 3 | pid\_t pid | size\_t cpusetsize | cpu\_set\_t\* mask |  |  |  |
+| getdents64 | 3 | int fd | struct dirent\* dirp | int count |  |  |  |
+| set\_tid\_address | 1 | int\* tidptr |  |  |  |  |  |
+| fadvise | 4 | int fd | off\_t offset | off\_t len | int advice |  |  |
+| clock\_gettime | 2 | clockid\_t clockid | struct timespec\* tp |  |  |  |  |
+| clock\_getres | 2 | clockid\_t clockid | struct timespec\* res |  |  |  |  |
+| clock\_nanosleep | 4 | clockid\_t clockid | int flags | struct timespec\* request | struct timespec\* remain |  |  |
+| exit\_group | 1 | int status |  |  |  |  |  |
+| epoll\_ctl | 4 | int epfd | int op | int fd | struct epoll\_event\* event |  |  |
+| openat | 4 | int dirfd | char\* pathname | int flags | mode\_t mode |  |  |
+| mkdirat | 3 | int dirfd | char\* pathname | mode\_t mode |  |  |  |
+| fchownat | 5 | int dirfd | char\* pathname | uid\_t owner | gid\_t group | int flags |  |
+| newfstatat | 4 | int dirfd | char\* pathname | struct stat\* statbuf | int flags |  |  |
+| unlinkat | 3 | int dirfd | char\* pathname | int flags |  |  |  |
+| linkat | 5 | int olddirfd | char\* oldpath | int newdirfd | char\* newpath | int flags |  |
+| symlinkat | 3 | char\* target | int newdirfd | char\* linkpath |  |  |  |
+| readlinkat | 4 | int dirfd | char\* pathname | char\* buf | size\_t bufsiz |  |  |
+| fchmodat | 4 | int dirfd | char\* pathname | mode\_t mode | int flags |  |  |
+| faccessat | 4 | int dirfd | char\* pathname | int mode | int flags |  |  |
+| pselect6 | 6 | int nfds | fd\_set\* readfds | fd\_set\* writefds | fd\_set\* exceptfds | struct timespec\* timeout | void\* sigmask |
+| ppoll | 5 | struct pollfd\* fds | nfds\_t nfds | struct timespec\* tmo\_p | sigset\_t\* sigmask | size\_t sigsetsize |  |
+| utimensat | 4 | int dirfd | char\* pathname | struct timespec\* times | int flags |  |  |
+| epoll\_pwait | 6 | int epfd | struct epoll\_event\* events | int maxevents | int timeout | sigset\_t\* sigmask | size\_t sigsetsize |
+| eventfd | 1 | int initval |  |  |  |  |  |
+| accept4 | 4 | int sockfd | struct sockaddr\* addr | socklen\_t\* addrlen | int flags |  |  |
+| eventfd2 | 2 | int initval | int flags |  |  |  |  |
+| epoll\_create1 | 1 | int flags |  |  |  |  |  |
+| dup3 | 3 | int oldfd | int newfd | int flags |  |  |  |
+| pipe2 | 2 | int\* pipefd | int flags |  |  |  |  |
+| prlimit64 | 4 | pid\_t pid | int resource | struct rlimit\* new\_limit | struct rlimit\* old\_limit |  |  |
+| renameat2 | 5 | int olddirfd | char\* oldpath | int newdirfd | char\* newpath | int flags |  |
+| getrandom | 3 | void\* buf | size\_t buflen | int flags |  |  |  |
+| statx | 5 | int dirfd | char\* pathname | int flags | unsigned int mask | struct statx\* statxbuf |  |
+| faccessat2 | 4 | int dirfd | char\* pathname | int mode | int flags |  |  |
 
 ## Currently Unsupported Syscalls
 
@@ -378,6 +377,7 @@ Number of supported syscalls: **142**
 * uretprobe
 * userfaultfd
 * ustat
+* utime
 * utimes
 * vfork
 * vhangup

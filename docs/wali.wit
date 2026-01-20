@@ -7,16 +7,12 @@ package wali:linux64@1.0.0;
 /// This interface is designed for 64-bit Linux machines running WASM
 world linux {
     import syscalls;
-    import threads;
-    import environment;
-    import cl-args;
-    import misc;
+    import aux;
 }
 
 /// Representation of Linux syscall interface types
 interface types {
 	type syscall-result = s64;
-	type char = u8;
 	type int = s32;
 	type long = s64;
 	type long-long = s64;
@@ -32,7 +28,7 @@ interface types {
 	type ptr-func = u32;
 	type off-t = long-long;
 	type size-t = unsigned-int;
-	type nfds-t = unsigned-int;
+	type nfds-t = unsigned-long-long;
 	type socklen-t = unsigned-int;
 	type clockid-t = int;
 	type mode-t = int;
@@ -58,7 +54,7 @@ interface types {
 
 /// Raw user-space Linux syscall wrappers
 interface syscalls {
-	use types.{syscall-result, char, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
+	use types.{syscall-result, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
 	/// Readable pointer types
 	type ptr-char = ptr;
 	type ptr-cpu-set-t = ptr;
@@ -86,7 +82,6 @@ interface syscalls {
 	type ptr-struct-timespec = ptr;
 	type ptr-struct-timeval = ptr;
 	type ptr-struct-timezone = ptr;
-	type ptr-struct-utimbuf = ptr;
 	type ptr-struct-utsname = ptr;
 	type ptr-void = ptr;
 
@@ -300,300 +295,315 @@ interface syscalls {
 
 	/// Syscall methods
 	// [0] read(int, void*, size_t)
-	SYS-read: func(a1: s32, a2: ptr-void, a3: size-t) -> syscall-result;
+	SYS-read: func(fd: s32, buf: ptr-void, count: size-t) -> syscall-result;
 	// [1] write(int, void*, size_t)
-	SYS-write: func(a1: s32, a2: ptr-void, a3: size-t) -> syscall-result;
+	SYS-write: func(fd: s32, buf: ptr-void, count: size-t) -> syscall-result;
 	// [2] open(char*, int, mode_t)
-	SYS-open: func(a1: ptr-char, a2: s32, a3: mode-t) -> syscall-result;
+	SYS-open: func(pathname: ptr-char, flags-id: s32, mode: mode-t) -> syscall-result;
 	// [3] close(int)
-	SYS-close: func(a1: s32) -> syscall-result;
+	SYS-close: func(fd: s32) -> syscall-result;
 	// [4] stat(char*, struct stat*)
-	SYS-stat: func(a1: ptr-char, a2: ptr-struct-stat) -> syscall-result;
+	SYS-stat: func(pathname: ptr-char, statbuf: ptr-struct-stat) -> syscall-result;
 	// [5] fstat(int, struct stat*)
-	SYS-fstat: func(a1: s32, a2: ptr-struct-stat) -> syscall-result;
+	SYS-fstat: func(fd: s32, statbuf: ptr-struct-stat) -> syscall-result;
 	// [6] lstat(char*, struct stat*)
-	SYS-lstat: func(a1: ptr-char, a2: ptr-struct-stat) -> syscall-result;
+	SYS-lstat: func(pathname: ptr-char, statbuf: ptr-struct-stat) -> syscall-result;
 	// [7] poll(struct pollfd*, nfds_t, int)
-	SYS-poll: func(a1: ptr-struct-pollfd, a2: nfds-t, a3: s32) -> syscall-result;
+	SYS-poll: func(fds: ptr-struct-pollfd, nfds: nfds-t, timeout: s32) -> syscall-result;
 	// [8] lseek(int, off_t, int)
-	SYS-lseek: func(a1: s32, a2: off-t, a3: s32) -> syscall-result;
+	SYS-lseek: func(fd: s32, offset: off-t, whence: s32) -> syscall-result;
 	// [9] mmap(void*, size_t, int, int, int, off_t)
-	SYS-mmap: func(a1: ptr-void, a2: size-t, a3: s32, a4: s32, a5: s32, a6: off-t) -> syscall-result;
+	SYS-mmap: func(addr: ptr-void, length: size-t, prot: s32, flags-id: s32, fd: s32, offset: off-t) -> syscall-result;
 	// [10] mprotect(void*, size_t, int)
-	SYS-mprotect: func(a1: ptr-void, a2: size-t, a3: s32) -> syscall-result;
+	SYS-mprotect: func(addr: ptr-void, len: size-t, prot: s32) -> syscall-result;
 	// [11] munmap(void*, size_t)
-	SYS-munmap: func(a1: ptr-void, a2: size-t) -> syscall-result;
+	SYS-munmap: func(addr: ptr-void, len: size-t) -> syscall-result;
 	// [12] brk(void*)
-	SYS-brk: func(a1: ptr-void) -> syscall-result;
+	SYS-brk: func(addr: ptr-void) -> syscall-result;
 	// [13] rt_sigaction(int, struct sigaction*, struct sigaction*, size_t)
-	SYS-rt-sigaction: func(a1: s32, a2: ptr-struct-sigaction, a3: ptr-struct-sigaction, a4: size-t) -> syscall-result;
+	SYS-rt-sigaction: func(signum: s32, act: ptr-struct-sigaction, oldact: ptr-struct-sigaction, sigsetsize: size-t) -> syscall-result;
 	// [14] rt_sigprocmask(int, sigset_t*, sigset_t*, size_t)
-	SYS-rt-sigprocmask: func(a1: s32, a2: ptr-sigset-t, a3: ptr-sigset-t, a4: size-t) -> syscall-result;
+	SYS-rt-sigprocmask: func(how: s32, set: ptr-sigset-t, oldset: ptr-sigset-t, sigsetsize: size-t) -> syscall-result;
 	// [15] rt_sigreturn(long)
-	SYS-rt-sigreturn: func(a1: s64) -> syscall-result;
+	SYS-rt-sigreturn: func(unused: s64) -> syscall-result;
 	// [16] ioctl(int, int, char*)
-	SYS-ioctl: func(a1: s32, a2: s32, a3: ptr-char) -> syscall-result;
+	SYS-ioctl: func(fd: s32, request: s32, argp: ptr-char) -> syscall-result;
 	// [17] pread64(int, char*, size_t, off_t)
-	SYS-pread64: func(a1: s32, a2: ptr-char, a3: size-t, a4: off-t) -> syscall-result;
+	SYS-pread64: func(fd: s32, buf: ptr-char, count: size-t, offset: off-t) -> syscall-result;
 	// [18] pwrite64(int, char*, size_t, off_t)
-	SYS-pwrite64: func(a1: s32, a2: ptr-char, a3: size-t, a4: off-t) -> syscall-result;
+	SYS-pwrite64: func(fd: s32, buf: ptr-char, count: size-t, offset: off-t) -> syscall-result;
 	// [19] readv(int, struct iovec*, int)
-	SYS-readv: func(a1: s32, a2: ptr-struct-iovec, a3: s32) -> syscall-result;
+	SYS-readv: func(fd: s32, iov: ptr-struct-iovec, iovcnt: s32) -> syscall-result;
 	// [20] writev(int, struct iovec*, int)
-	SYS-writev: func(a1: s32, a2: ptr-struct-iovec, a3: s32) -> syscall-result;
+	SYS-writev: func(fd: s32, iov: ptr-struct-iovec, iovcnt: s32) -> syscall-result;
 	// [21] access(char*, int)
-	SYS-access: func(a1: ptr-char, a2: s32) -> syscall-result;
+	SYS-access: func(pathname: ptr-char, mode: s32) -> syscall-result;
 	// [22] pipe(int*)
-	SYS-pipe: func(a1: ptr-int) -> syscall-result;
+	SYS-pipe: func(pipefd: ptr-int) -> syscall-result;
 	// [23] select(int, fd_set*, fd_set*, fd_set*, struct timeval*)
-	SYS-select: func(a1: s32, a2: ptr-fd-set, a3: ptr-fd-set, a4: ptr-fd-set, a5: ptr-struct-timeval) -> syscall-result;
+	SYS-select: func(nfds: s32, readfds: ptr-fd-set, writefds: ptr-fd-set, exceptfds: ptr-fd-set, timeout: ptr-struct-timeval) -> syscall-result;
+	// [24] sched_yield()
+	SYS-sched-yield: func() -> syscall-result;
 	// [25] mremap(void*, size_t, size_t, int, void*)
-	SYS-mremap: func(a1: ptr-void, a2: size-t, a3: size-t, a4: s32, a5: ptr-void) -> syscall-result;
+	SYS-mremap: func(old-address: ptr-void, old-size: size-t, new-size: size-t, flags-id: s32, new-address: ptr-void) -> syscall-result;
 	// [26] msync(void*, size_t, int)
-	SYS-msync: func(a1: ptr-void, a2: size-t, a3: s32) -> syscall-result;
+	SYS-msync: func(addr: ptr-void, length: size-t, flags-id: s32) -> syscall-result;
 	// [28] madvise(void*, size_t, int)
-	SYS-madvise: func(a1: ptr-void, a2: size-t, a3: s32) -> syscall-result;
+	SYS-madvise: func(addr: ptr-void, length: size-t, advice: s32) -> syscall-result;
 	// [32] dup(int)
-	SYS-dup: func(a1: s32) -> syscall-result;
+	SYS-dup: func(oldfd: s32) -> syscall-result;
 	// [33] dup2(int, int)
-	SYS-dup2: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-dup2: func(oldfd: s32, newfd: s32) -> syscall-result;
 	// [35] nanosleep(struct timespec*, struct timespec*)
-	SYS-nanosleep: func(a1: ptr-struct-timespec, a2: ptr-struct-timespec) -> syscall-result;
+	SYS-nanosleep: func(req: ptr-struct-timespec, rem: ptr-struct-timespec) -> syscall-result;
 	// [37] alarm(int)
-	SYS-alarm: func(a1: s32) -> syscall-result;
+	SYS-alarm: func(seconds: s32) -> syscall-result;
 	// [38] setitimer(int, struct itimerval*, struct itimerval*)
-	SYS-setitimer: func(a1: s32, a2: ptr-struct-itimerval, a3: ptr-struct-itimerval) -> syscall-result;
+	SYS-setitimer: func(which: s32, new-value: ptr-struct-itimerval, old-value: ptr-struct-itimerval) -> syscall-result;
+	// [39] getpid()
+	SYS-getpid: func() -> syscall-result;
 	// [41] socket(int, int, int)
-	SYS-socket: func(a1: s32, a2: s32, a3: s32) -> syscall-result;
+	SYS-socket: func(domain: s32, type-id: s32, protocol: s32) -> syscall-result;
 	// [42] connect(int, struct sockaddr*, socklen_t)
-	SYS-connect: func(a1: s32, a2: ptr-struct-sockaddr, a3: socklen-t) -> syscall-result;
+	SYS-connect: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: socklen-t) -> syscall-result;
 	// [43] accept(int, struct sockaddr*, socklen_t*)
-	SYS-accept: func(a1: s32, a2: ptr-struct-sockaddr, a3: ptr-socklen-t) -> syscall-result;
+	SYS-accept: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: ptr-socklen-t) -> syscall-result;
 	// [44] sendto(int, void*, size_t, int, struct sockaddr*, socklen_t)
-	SYS-sendto: func(a1: s32, a2: ptr-void, a3: size-t, a4: s32, a5: ptr-struct-sockaddr, a6: socklen-t) -> syscall-result;
+	SYS-sendto: func(sockfd: s32, buf: ptr-void, len: size-t, flags-id: s32, dest-addr: ptr-struct-sockaddr, addrlen: socklen-t) -> syscall-result;
 	// [45] recvfrom(int, void*, size_t, int, struct sockaddr*, socklen_t*)
-	SYS-recvfrom: func(a1: s32, a2: ptr-void, a3: size-t, a4: s32, a5: ptr-struct-sockaddr, a6: ptr-socklen-t) -> syscall-result;
+	SYS-recvfrom: func(sockfd: s32, buf: ptr-void, len: size-t, flags-id: s32, src-addr: ptr-struct-sockaddr, addrlen: ptr-socklen-t) -> syscall-result;
 	// [46] sendmsg(int, struct msghdr*, int)
-	SYS-sendmsg: func(a1: s32, a2: ptr-struct-msghdr, a3: s32) -> syscall-result;
+	SYS-sendmsg: func(sockfd: s32, msg: ptr-struct-msghdr, flags-id: s32) -> syscall-result;
 	// [47] recvmsg(int, struct msghdr*, int)
-	SYS-recvmsg: func(a1: s32, a2: ptr-struct-msghdr, a3: s32) -> syscall-result;
+	SYS-recvmsg: func(sockfd: s32, msg: ptr-struct-msghdr, flags-id: s32) -> syscall-result;
 	// [48] shutdown(int, int)
-	SYS-shutdown: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-shutdown: func(sockfd: s32, how: s32) -> syscall-result;
 	// [49] bind(int, struct sockaddr*, socklen_t)
-	SYS-bind: func(a1: s32, a2: ptr-struct-sockaddr, a3: socklen-t) -> syscall-result;
+	SYS-bind: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: socklen-t) -> syscall-result;
 	// [50] listen(int, int)
-	SYS-listen: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-listen: func(sockfd: s32, backlog: s32) -> syscall-result;
 	// [51] getsockname(int, struct sockaddr*, socklen_t*)
-	SYS-getsockname: func(a1: s32, a2: ptr-struct-sockaddr, a3: ptr-socklen-t) -> syscall-result;
+	SYS-getsockname: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: ptr-socklen-t) -> syscall-result;
 	// [52] getpeername(int, struct sockaddr*, socklen_t*)
-	SYS-getpeername: func(a1: s32, a2: ptr-struct-sockaddr, a3: ptr-socklen-t) -> syscall-result;
+	SYS-getpeername: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: ptr-socklen-t) -> syscall-result;
 	// [53] socketpair(int, int, int, int*)
-	SYS-socketpair: func(a1: s32, a2: s32, a3: s32, a4: ptr-int) -> syscall-result;
+	SYS-socketpair: func(domain: s32, type-id: s32, protocol: s32, sv: ptr-int) -> syscall-result;
 	// [54] setsockopt(int, int, int, void*, socklen_t)
-	SYS-setsockopt: func(a1: s32, a2: s32, a3: s32, a4: ptr-void, a5: socklen-t) -> syscall-result;
+	SYS-setsockopt: func(sockfd: s32, level: s32, optname: s32, optval: ptr-void, optlen: socklen-t) -> syscall-result;
 	// [55] getsockopt(int, int, int, void*, socklen_t*)
-	SYS-getsockopt: func(a1: s32, a2: s32, a3: s32, a4: ptr-void, a5: ptr-socklen-t) -> syscall-result;
+	SYS-getsockopt: func(sockfd: s32, level: s32, optname: s32, optval: ptr-void, optlen: ptr-socklen-t) -> syscall-result;
+	// [57] fork()
+	SYS-fork: func() -> syscall-result;
 	// [59] execve(char*, char**, char**)
-	SYS-execve: func(a1: ptr-char, a2: ptr-ptr-char, a3: ptr-ptr-char) -> syscall-result;
+	SYS-execve: func(pathname: ptr-char, argv: ptr-ptr-char, envp: ptr-ptr-char) -> syscall-result;
 	// [60] exit(int)
-	SYS-exit: func(a1: s32) -> syscall-result;
+	SYS-exit: func(status: s32) -> syscall-result;
 	// [61] wait4(pid_t, int*, int, struct rusage*)
-	SYS-wait4: func(a1: pid-t, a2: ptr-int, a3: s32, a4: ptr-struct-rusage) -> syscall-result;
+	SYS-wait4: func(pid: pid-t, wstatus: ptr-int, options: s32, rusage: ptr-struct-rusage) -> syscall-result;
 	// [62] kill(pid_t, int)
-	SYS-kill: func(a1: pid-t, a2: s32) -> syscall-result;
+	SYS-kill: func(pid: pid-t, sig: s32) -> syscall-result;
 	// [63] uname(struct utsname*)
-	SYS-uname: func(a1: ptr-struct-utsname) -> syscall-result;
-	// [72] fcntl(int, int, int)
-	SYS-fcntl: func(a1: s32, a2: s32, a3: s32) -> syscall-result;
+	SYS-uname: func(buf: ptr-struct-utsname) -> syscall-result;
+	// [72] fcntl(int, int, unsigned long)
+	SYS-fcntl: func(fd: s32, cmd: s32, arg: unsigned-long) -> syscall-result;
 	// [73] flock(int, int)
-	SYS-flock: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-flock: func(fd: s32, operation: s32) -> syscall-result;
 	// [74] fsync(int)
-	SYS-fsync: func(a1: s32) -> syscall-result;
+	SYS-fsync: func(fd: s32) -> syscall-result;
 	// [75] fdatasync(int)
-	SYS-fdatasync: func(a1: s32) -> syscall-result;
+	SYS-fdatasync: func(fd: s32) -> syscall-result;
 	// [77] ftruncate(int, off_t)
-	SYS-ftruncate: func(a1: s32, a2: off-t) -> syscall-result;
+	SYS-ftruncate: func(fd: s32, length: off-t) -> syscall-result;
 	// [79] getcwd(char*, size_t)
-	SYS-getcwd: func(a1: ptr-char, a2: size-t) -> syscall-result;
+	SYS-getcwd: func(buf: ptr-char, size: size-t) -> syscall-result;
 	// [80] chdir(char*)
-	SYS-chdir: func(a1: ptr-char) -> syscall-result;
+	SYS-chdir: func(path: ptr-char) -> syscall-result;
 	// [81] fchdir(int)
-	SYS-fchdir: func(a1: s32) -> syscall-result;
+	SYS-fchdir: func(fd: s32) -> syscall-result;
 	// [82] rename(char*, char*)
-	SYS-rename: func(a1: ptr-char, a2: ptr-char) -> syscall-result;
+	SYS-rename: func(oldpath: ptr-char, newpath: ptr-char) -> syscall-result;
 	// [83] mkdir(char*, mode_t)
-	SYS-mkdir: func(a1: ptr-char, a2: mode-t) -> syscall-result;
+	SYS-mkdir: func(pathname: ptr-char, mode: mode-t) -> syscall-result;
 	// [84] rmdir(char*)
-	SYS-rmdir: func(a1: ptr-char) -> syscall-result;
+	SYS-rmdir: func(pathname: ptr-char) -> syscall-result;
 	// [86] link(char*, char*)
-	SYS-link: func(a1: ptr-char, a2: ptr-char) -> syscall-result;
+	SYS-link: func(oldpath: ptr-char, newpath: ptr-char) -> syscall-result;
 	// [87] unlink(char*)
-	SYS-unlink: func(a1: ptr-char) -> syscall-result;
+	SYS-unlink: func(pathname: ptr-char) -> syscall-result;
 	// [88] symlink(char*, char*)
-	SYS-symlink: func(a1: ptr-char, a2: ptr-char) -> syscall-result;
+	SYS-symlink: func(target: ptr-char, linkpath: ptr-char) -> syscall-result;
 	// [89] readlink(char*, char*, size_t)
-	SYS-readlink: func(a1: ptr-char, a2: ptr-char, a3: size-t) -> syscall-result;
+	SYS-readlink: func(pathname: ptr-char, buf: ptr-char, bufsiz: size-t) -> syscall-result;
 	// [90] chmod(char*, mode_t)
-	SYS-chmod: func(a1: ptr-char, a2: mode-t) -> syscall-result;
+	SYS-chmod: func(pathname: ptr-char, mode: mode-t) -> syscall-result;
 	// [91] fchmod(int, mode_t)
-	SYS-fchmod: func(a1: s32, a2: mode-t) -> syscall-result;
+	SYS-fchmod: func(fd: s32, mode: mode-t) -> syscall-result;
 	// [92] chown(char*, uid_t, gid_t)
-	SYS-chown: func(a1: ptr-char, a2: uid-t, a3: gid-t) -> syscall-result;
+	SYS-chown: func(pathname: ptr-char, owner: uid-t, group: gid-t) -> syscall-result;
 	// [93] fchown(int, uid_t, gid_t)
-	SYS-fchown: func(a1: s32, a2: uid-t, a3: gid-t) -> syscall-result;
+	SYS-fchown: func(fd: s32, owner: uid-t, group: gid-t) -> syscall-result;
 	// [95] umask(mode_t)
-	SYS-umask: func(a1: mode-t) -> syscall-result;
+	SYS-umask: func(mask: mode-t) -> syscall-result;
 	// [96] gettimeofday(struct timeval*, struct timezone*)
-	SYS-gettimeofday: func(a1: ptr-struct-timeval, a2: ptr-struct-timezone) -> syscall-result;
+	SYS-gettimeofday: func(tv: ptr-struct-timeval, tz: ptr-struct-timezone) -> syscall-result;
 	// [97] getrlimit(int, struct rlimit*)
-	SYS-getrlimit: func(a1: s32, a2: ptr-struct-rlimit) -> syscall-result;
+	SYS-getrlimit: func(resource-id: s32, rlim: ptr-struct-rlimit) -> syscall-result;
 	// [98] getrusage(int, struct rusage*)
-	SYS-getrusage: func(a1: s32, a2: ptr-struct-rusage) -> syscall-result;
+	SYS-getrusage: func(who: s32, usage: ptr-struct-rusage) -> syscall-result;
 	// [99] sysinfo(struct sysinfo*)
-	SYS-sysinfo: func(a1: ptr-struct-sysinfo) -> syscall-result;
+	SYS-sysinfo: func(info: ptr-struct-sysinfo) -> syscall-result;
+	// [102] getuid()
+	SYS-getuid: func() -> syscall-result;
+	// [104] getgid()
+	SYS-getgid: func() -> syscall-result;
 	// [105] setuid(uid_t)
-	SYS-setuid: func(a1: uid-t) -> syscall-result;
+	SYS-setuid: func(uid: uid-t) -> syscall-result;
 	// [106] setgid(gid_t)
-	SYS-setgid: func(a1: gid-t) -> syscall-result;
+	SYS-setgid: func(gid: gid-t) -> syscall-result;
+	// [107] geteuid()
+	SYS-geteuid: func() -> syscall-result;
+	// [108] getegid()
+	SYS-getegid: func() -> syscall-result;
 	// [109] setpgid(pid_t, pid_t)
-	SYS-setpgid: func(a1: pid-t, a2: pid-t) -> syscall-result;
+	SYS-setpgid: func(pid: pid-t, pgid: pid-t) -> syscall-result;
+	// [110] getppid()
+	SYS-getppid: func() -> syscall-result;
+	// [112] setsid()
+	SYS-setsid: func() -> syscall-result;
 	// [113] setreuid(uid_t, uid_t)
-	SYS-setreuid: func(a1: uid-t, a2: uid-t) -> syscall-result;
+	SYS-setreuid: func(ruid: uid-t, euid: uid-t) -> syscall-result;
 	// [114] setregid(gid_t, gid_t)
-	SYS-setregid: func(a1: gid-t, a2: gid-t) -> syscall-result;
+	SYS-setregid: func(rgid: gid-t, egid: gid-t) -> syscall-result;
 	// [115] getgroups(size_t, gid_t*)
-	SYS-getgroups: func(a1: size-t, a2: ptr-gid-t) -> syscall-result;
+	SYS-getgroups: func(size: size-t, list-id: ptr-gid-t) -> syscall-result;
 	// [116] setgroups(size_t, gid_t*)
-	SYS-setgroups: func(a1: size-t, a2: ptr-gid-t) -> syscall-result;
+	SYS-setgroups: func(size: size-t, list-id: ptr-gid-t) -> syscall-result;
 	// [117] setresuid(uid_t, uid_t, uid_t)
-	SYS-setresuid: func(a1: uid-t, a2: uid-t, a3: uid-t) -> syscall-result;
+	SYS-setresuid: func(ruid: uid-t, euid: uid-t, suid: uid-t) -> syscall-result;
 	// [119] setresgid(gid_t, gid_t, gid_t)
-	SYS-setresgid: func(a1: gid-t, a2: gid-t, a3: gid-t) -> syscall-result;
+	SYS-setresgid: func(rgid: gid-t, egid: gid-t, sgid: gid-t) -> syscall-result;
 	// [121] getpgid(pid_t)
-	SYS-getpgid: func(a1: pid-t) -> syscall-result;
+	SYS-getpgid: func(pid: pid-t) -> syscall-result;
 	// [124] getsid(pid_t)
-	SYS-getsid: func(a1: pid-t) -> syscall-result;
+	SYS-getsid: func(pid: pid-t) -> syscall-result;
 	// [127] rt_sigpending(sigset_t*, size_t)
-	SYS-rt-sigpending: func(a1: ptr-sigset-t, a2: size-t) -> syscall-result;
+	SYS-rt-sigpending: func(set: ptr-sigset-t, sigsetsize: size-t) -> syscall-result;
 	// [130] rt_sigsuspend(sigset_t*, size_t)
-	SYS-rt-sigsuspend: func(a1: ptr-sigset-t, a2: size-t) -> syscall-result;
+	SYS-rt-sigsuspend: func(mask: ptr-sigset-t, sigsetsize: size-t) -> syscall-result;
 	// [131] sigaltstack(stack_t*, stack_t*)
-	SYS-sigaltstack: func(a1: ptr-stack-t, a2: ptr-stack-t) -> syscall-result;
-	// [132] utime(char*, struct utimbuf*)
-	SYS-utime: func(a1: ptr-char, a2: ptr-struct-utimbuf) -> syscall-result;
+	SYS-sigaltstack: func(ss: ptr-stack-t, old-ss: ptr-stack-t) -> syscall-result;
 	// [137] statfs(char*, struct statfs*)
-	SYS-statfs: func(a1: ptr-char, a2: ptr-struct-statfs) -> syscall-result;
+	SYS-statfs: func(path: ptr-char, buf: ptr-struct-statfs) -> syscall-result;
 	// [138] fstatfs(int, struct statfs*)
-	SYS-fstatfs: func(a1: s32, a2: ptr-struct-statfs) -> syscall-result;
+	SYS-fstatfs: func(fd: s32, buf: ptr-struct-statfs) -> syscall-result;
 	// [157] prctl(int, unsigned long, unsigned long, unsigned long, unsigned long)
-	SYS-prctl: func(a1: s32, a2: unsigned-long, a3: unsigned-long, a4: unsigned-long, a5: unsigned-long) -> syscall-result;
+	SYS-prctl: func(option-id: s32, arg2: unsigned-long, arg3: unsigned-long, arg4: unsigned-long, arg5: unsigned-long) -> syscall-result;
 	// [160] setrlimit(int, struct rlimit*)
-	SYS-setrlimit: func(a1: s32, a2: ptr-struct-rlimit) -> syscall-result;
+	SYS-setrlimit: func(resource-id: s32, rlim: ptr-struct-rlimit) -> syscall-result;
 	// [161] chroot(char*)
-	SYS-chroot: func(a1: ptr-char) -> syscall-result;
+	SYS-chroot: func(path: ptr-char) -> syscall-result;
+	// [186] gettid()
+	SYS-gettid: func() -> syscall-result;
 	// [200] tkill(int, int)
-	SYS-tkill: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-tkill: func(tid: s32, sig: s32) -> syscall-result;
 	// [202] futex(int*, int, int, struct timespec*, int*, int)
-	SYS-futex: func(a1: ptr-int, a2: s32, a3: s32, a4: ptr-struct-timespec, a5: ptr-int, a6: s32) -> syscall-result;
+	SYS-futex: func(uaddr: ptr-int, futex-op: s32, val: s32, timeout: ptr-struct-timespec, uaddr2: ptr-int, val3: s32) -> syscall-result;
 	// [204] sched_getaffinity(pid_t, size_t, cpu_set_t*)
-	SYS-sched-getaffinity: func(a1: pid-t, a2: size-t, a3: ptr-cpu-set-t) -> syscall-result;
+	SYS-sched-getaffinity: func(pid: pid-t, cpusetsize: size-t, mask: ptr-cpu-set-t) -> syscall-result;
 	// [217] getdents64(int, struct dirent*, int)
-	SYS-getdents64: func(a1: s32, a2: ptr-struct-dirent, a3: s32) -> syscall-result;
+	SYS-getdents64: func(fd: s32, dirp: ptr-struct-dirent, count: s32) -> syscall-result;
 	// [218] set_tid_address(int*)
-	SYS-set-tid-address: func(a1: ptr-int) -> syscall-result;
+	SYS-set-tid-address: func(tidptr: ptr-int) -> syscall-result;
 	// [221] fadvise(int, off_t, off_t, int)
-	SYS-fadvise: func(a1: s32, a2: off-t, a3: off-t, a4: s32) -> syscall-result;
+	SYS-fadvise: func(fd: s32, offset: off-t, len: off-t, advice: s32) -> syscall-result;
 	// [228] clock_gettime(clockid_t, struct timespec*)
-	SYS-clock-gettime: func(a1: clockid-t, a2: ptr-struct-timespec) -> syscall-result;
+	SYS-clock-gettime: func(clockid: clockid-t, tp: ptr-struct-timespec) -> syscall-result;
 	// [229] clock_getres(clockid_t, struct timespec*)
-	SYS-clock-getres: func(a1: clockid-t, a2: ptr-struct-timespec) -> syscall-result;
+	SYS-clock-getres: func(clockid: clockid-t, res: ptr-struct-timespec) -> syscall-result;
 	// [230] clock_nanosleep(clockid_t, int, struct timespec*, struct timespec*)
-	SYS-clock-nanosleep: func(a1: clockid-t, a2: s32, a3: ptr-struct-timespec, a4: ptr-struct-timespec) -> syscall-result;
+	SYS-clock-nanosleep: func(clockid: clockid-t, flags-id: s32, request: ptr-struct-timespec, remain: ptr-struct-timespec) -> syscall-result;
 	// [231] exit_group(int)
-	SYS-exit-group: func(a1: s32) -> syscall-result;
+	SYS-exit-group: func(status: s32) -> syscall-result;
 	// [233] epoll_ctl(int, int, int, struct epoll_event*)
-	SYS-epoll-ctl: func(a1: s32, a2: s32, a3: s32, a4: ptr-struct-epoll-event) -> syscall-result;
+	SYS-epoll-ctl: func(epfd: s32, op: s32, fd: s32, event: ptr-struct-epoll-event) -> syscall-result;
 	// [257] openat(int, char*, int, mode_t)
-	SYS-openat: func(a1: s32, a2: ptr-char, a3: s32, a4: mode-t) -> syscall-result;
+	SYS-openat: func(dirfd: s32, pathname: ptr-char, flags-id: s32, mode: mode-t) -> syscall-result;
 	// [258] mkdirat(int, char*, mode_t)
-	SYS-mkdirat: func(a1: s32, a2: ptr-char, a3: mode-t) -> syscall-result;
+	SYS-mkdirat: func(dirfd: s32, pathname: ptr-char, mode: mode-t) -> syscall-result;
 	// [260] fchownat(int, char*, uid_t, gid_t, int)
-	SYS-fchownat: func(a1: s32, a2: ptr-char, a3: uid-t, a4: gid-t, a5: s32) -> syscall-result;
+	SYS-fchownat: func(dirfd: s32, pathname: ptr-char, owner: uid-t, group: gid-t, flags-id: s32) -> syscall-result;
 	// [262] newfstatat(int, char*, struct stat*, int)
-	SYS-newfstatat: func(a1: s32, a2: ptr-char, a3: ptr-struct-stat, a4: s32) -> syscall-result;
+	SYS-newfstatat: func(dirfd: s32, pathname: ptr-char, statbuf: ptr-struct-stat, flags-id: s32) -> syscall-result;
 	// [263] unlinkat(int, char*, int)
-	SYS-unlinkat: func(a1: s32, a2: ptr-char, a3: s32) -> syscall-result;
+	SYS-unlinkat: func(dirfd: s32, pathname: ptr-char, flags-id: s32) -> syscall-result;
 	// [265] linkat(int, char*, int, char*, int)
-	SYS-linkat: func(a1: s32, a2: ptr-char, a3: s32, a4: ptr-char, a5: s32) -> syscall-result;
+	SYS-linkat: func(olddirfd: s32, oldpath: ptr-char, newdirfd: s32, newpath: ptr-char, flags-id: s32) -> syscall-result;
 	// [266] symlinkat(char*, int, char*)
-	SYS-symlinkat: func(a1: ptr-char, a2: s32, a3: ptr-char) -> syscall-result;
+	SYS-symlinkat: func(target: ptr-char, newdirfd: s32, linkpath: ptr-char) -> syscall-result;
 	// [267] readlinkat(int, char*, char*, size_t)
-	SYS-readlinkat: func(a1: s32, a2: ptr-char, a3: ptr-char, a4: size-t) -> syscall-result;
+	SYS-readlinkat: func(dirfd: s32, pathname: ptr-char, buf: ptr-char, bufsiz: size-t) -> syscall-result;
 	// [268] fchmodat(int, char*, mode_t, int)
-	SYS-fchmodat: func(a1: s32, a2: ptr-char, a3: mode-t, a4: s32) -> syscall-result;
+	SYS-fchmodat: func(dirfd: s32, pathname: ptr-char, mode: mode-t, flags-id: s32) -> syscall-result;
 	// [269] faccessat(int, char*, int, int)
-	SYS-faccessat: func(a1: s32, a2: ptr-char, a3: s32, a4: s32) -> syscall-result;
+	SYS-faccessat: func(dirfd: s32, pathname: ptr-char, mode: s32, flags-id: s32) -> syscall-result;
 	// [270] pselect6(int, fd_set*, fd_set*, fd_set*, struct timespec*, void*)
-	SYS-pselect6: func(a1: s32, a2: ptr-fd-set, a3: ptr-fd-set, a4: ptr-fd-set, a5: ptr-struct-timespec, a6: ptr-void) -> syscall-result;
+	SYS-pselect6: func(nfds: s32, readfds: ptr-fd-set, writefds: ptr-fd-set, exceptfds: ptr-fd-set, timeout: ptr-struct-timespec, sigmask: ptr-void) -> syscall-result;
 	// [271] ppoll(struct pollfd*, nfds_t, struct timespec*, sigset_t*, size_t)
-	SYS-ppoll: func(a1: ptr-struct-pollfd, a2: nfds-t, a3: ptr-struct-timespec, a4: ptr-sigset-t, a5: size-t) -> syscall-result;
+	SYS-ppoll: func(fds: ptr-struct-pollfd, nfds: nfds-t, tmo-p: ptr-struct-timespec, sigmask: ptr-sigset-t, sigsetsize: size-t) -> syscall-result;
 	// [280] utimensat(int, char*, struct timespec*, int)
-	SYS-utimensat: func(a1: s32, a2: ptr-char, a3: ptr-struct-timespec, a4: s32) -> syscall-result;
+	SYS-utimensat: func(dirfd: s32, pathname: ptr-char, times: ptr-struct-timespec, flags-id: s32) -> syscall-result;
 	// [281] epoll_pwait(int, struct epoll_event*, int, int, sigset_t*, size_t)
-	SYS-epoll-pwait: func(a1: s32, a2: ptr-struct-epoll-event, a3: s32, a4: s32, a5: ptr-sigset-t, a6: size-t) -> syscall-result;
+	SYS-epoll-pwait: func(epfd: s32, events: ptr-struct-epoll-event, maxevents: s32, timeout: s32, sigmask: ptr-sigset-t, sigsetsize: size-t) -> syscall-result;
 	// [284] eventfd(int)
-	SYS-eventfd: func(a1: s32) -> syscall-result;
+	SYS-eventfd: func(initval: s32) -> syscall-result;
 	// [288] accept4(int, struct sockaddr*, socklen_t*, int)
-	SYS-accept4: func(a1: s32, a2: ptr-struct-sockaddr, a3: ptr-socklen-t, a4: s32) -> syscall-result;
+	SYS-accept4: func(sockfd: s32, addr: ptr-struct-sockaddr, addrlen: ptr-socklen-t, flags-id: s32) -> syscall-result;
 	// [290] eventfd2(int, int)
-	SYS-eventfd2: func(a1: s32, a2: s32) -> syscall-result;
+	SYS-eventfd2: func(initval: s32, flags-id: s32) -> syscall-result;
 	// [291] epoll_create1(int)
-	SYS-epoll-create1: func(a1: s32) -> syscall-result;
+	SYS-epoll-create1: func(flags-id: s32) -> syscall-result;
 	// [292] dup3(int, int, int)
-	SYS-dup3: func(a1: s32, a2: s32, a3: s32) -> syscall-result;
+	SYS-dup3: func(oldfd: s32, newfd: s32, flags-id: s32) -> syscall-result;
 	// [293] pipe2(int*, int)
-	SYS-pipe2: func(a1: ptr-int, a2: s32) -> syscall-result;
+	SYS-pipe2: func(pipefd: ptr-int, flags-id: s32) -> syscall-result;
 	// [302] prlimit64(pid_t, int, struct rlimit*, struct rlimit*)
-	SYS-prlimit64: func(a1: pid-t, a2: s32, a3: ptr-struct-rlimit, a4: ptr-struct-rlimit) -> syscall-result;
+	SYS-prlimit64: func(pid: pid-t, resource-id: s32, new-limit: ptr-struct-rlimit, old-limit: ptr-struct-rlimit) -> syscall-result;
 	// [316] renameat2(int, char*, int, char*, int)
-	SYS-renameat2: func(a1: s32, a2: ptr-char, a3: s32, a4: ptr-char, a5: s32) -> syscall-result;
+	SYS-renameat2: func(olddirfd: s32, oldpath: ptr-char, newdirfd: s32, newpath: ptr-char, flags-id: s32) -> syscall-result;
 	// [318] getrandom(void*, size_t, int)
-	SYS-getrandom: func(a1: ptr-void, a2: size-t, a3: s32) -> syscall-result;
+	SYS-getrandom: func(buf: ptr-void, buflen: size-t, flags-id: s32) -> syscall-result;
 	// [332] statx(int, char*, int, unsigned int, struct statx*)
-	SYS-statx: func(a1: s32, a2: ptr-char, a3: s32, a4: unsigned-int, a5: ptr-struct-statx) -> syscall-result;
+	SYS-statx: func(dirfd: s32, pathname: ptr-char, flags-id: s32, mask: unsigned-int, statxbuf: ptr-struct-statx) -> syscall-result;
 	// [439] faccessat2(int, char*, int, int)
-	SYS-faccessat2: func(a1: s32, a2: ptr-char, a3: s32, a4: s32) -> syscall-result;
+	SYS-faccessat2: func(dirfd: s32, pathname: ptr-char, mode: s32, flags-id: s32) -> syscall-result;
 }
 
-interface threads {
-    wasm-thread-spawn: func(setup-funcptr: u32, arg-wasm: s32) -> s32;
-}
+/// Auxilary syscalls for WALI
+interface aux {
+	use types.{syscall-result, int, long, long-long, short, reg, unsigned, unsigned-int, unsigned-long, unsigned-long-long, unsigned-short, unsigned-reg, ptr, ptr-func, off-t, size-t, nfds-t, socklen-t, clockid-t, mode-t, uid-t, pid-t, gid-t, rlim-t, time-t, suseconds-t, sigset-t, sa-family-t, ino-t, dev-t, nlink-t, blksize-t, blkcnt-t, fsblkcnt-t, fsfilcnt-t, fsid-t, uts-str, epoll-data-t};
+	use syscalls.{ptr-char, ptr-void};
 
-interface environment {
-    use syscalls.{ptr-char};
-    // Startup
-    call-ctors: func();
-    // Cleanup
-    call-dtors: func();
-    proc-exit: func(status: s32);
-    // Environment variables
-    get-init-envfile: func(filepath: ptr-char, pathsize: u32) -> bool;
-}
-
-interface cl-args {
-    use syscalls.{ptr-char};
-    // Get number of CL arguments
-    cl-get-argc: func() -> u32;
-    // Get size of a specific CL argument
-    cl-get-argv-len: func(arg-idx: u32) -> u32;
-    // Copy the contents of a specific CL argument
-    cl-copy-argv: func(argv-addr: ptr-char, arg-idx: u32) -> u32; 
-}
-
-interface misc {
-    use types.{ptr};
-    type ptr-sigjmpbuf = ptr;
-    // Setjmp/longjmp temporary stubs
-    sigsetjmp: func(sigjmpbuf: ptr-sigjmpbuf, savesigs: s32) -> s32;
-    siglongjmp: func(sigjmpbuf: ptr-sigjmpbuf, val: s32);
+	/// Aux methods
+	// __init()
+	init: func() -> s32;
+	// __deinit()
+	deinit: func() -> s32;
+	// __proc_exit(int)
+	proc-exit: func(status: s32);
+	// __cl_get_argc()
+	cl-get-argc: func() -> u32;
+	// __cl_get_argv_len(unsigned int)
+	cl-get-argv-len: func(arg-index: unsigned-int) -> u32;
+	// __cl_copy_argv(char*, unsigned int)
+	cl-copy-argv: func(argbuf: ptr-char, arg-index: unsigned-int) -> s32;
+	// __get_init_envfile(char*, unsigned int)
+	get-init-envfile: func(pathbuf: ptr-char, bufsize: unsigned-int) -> s32;
+	// __wasm_thread_spawn(fn(int, void*), void*)
+	wasm-thread-spawn: func(wasm-start-fn: ptr-func, args: ptr-void) -> s32;
+	// sigsetjmp(void*, int)
+	sigsetjmp: func(sigjmp-buf: ptr-void, savesigs: s32) -> s32;
+	// longjmp(void*, int)
+	longjmp: func(env: ptr-void, val: s32);
+	// setjmp(void*)
+	setjmp: func(env: ptr-void) -> s32;
 }
