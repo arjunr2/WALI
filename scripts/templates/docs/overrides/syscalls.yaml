@@ -1,0 +1,53 @@
+# Syscall Overrides
+# Add custom descriptions here. These will be merged with auto-generated content.
+# Only syscalls listed here will have custom documentation; others get defaults.
+
+# Format:
+# syscall_name:
+#   description: |
+#     Main description text (markdown supported)
+#   notes: |
+#     Additional notes or caveats
+#   see_also: [related_syscall1, related_syscall2]
+
+read:
+  description: |
+    Attempts to read up to `count` bytes from file descriptor `fd` into the buffer 
+    starting at `buf`.
+  notes: |
+    - On success, returns the number of bytes read (zero indicates end of file)
+    - On error, returns -1 and sets errno appropriately
+    - The file position is advanced by the number of bytes read
+
+write:
+  description: |
+    Writes up to `count` bytes from the buffer starting at `buf` to the file 
+    referred to by the file descriptor `fd`.
+  notes: |
+    - On success, returns the number of bytes written
+    - On error, returns -1 and sets errno appropriately
+    - A successful return does not guarantee the data has been committed to disk
+
+# Auxiliary functions
+__init:
+  description: |
+    Initializes the WALI runtime environment. This must be called before any 
+    other WALI operations.
+  notes: |
+    - Called automatically by the WALI-aware libc during startup
+    - Returns 0 on success, non-zero on failure
+
+__proc_exit:
+  description: |
+    Terminates the WebAssembly module execution with the given exit status.
+  notes: |
+    - This is a no-return function
+    - The runtime will clean up resources after this call
+
+sigsetjmp:
+  description: |
+    Saves the calling environment for later use by `longjmp`, optionally saving 
+    the signal mask.
+  notes: |
+    - If `savesigs` is non-zero, the current signal mask is saved
+    - Returns 0 when called directly, non-zero when returning via `longjmp`

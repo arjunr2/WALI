@@ -21,14 +21,19 @@ class GeneratorContext:
     @classmethod
     def create(cls) -> 'GeneratorContext':
         logging.info("Creating context...")
-        # Load Type System
-        ts = TypeSystem.load(Path('templates'))
+        # Load Type System from wit templates
+        script_dir = Path(__file__).parent
+        ts = TypeSystem.load(script_dir / 'templates' / 'wit')
         archs = [f.name for f in fields(Nrs)]
         return cls(ts, archs, SYSCALLS, AUX_SYSCALLS)
 
 
 # --- Base Generator ---
 class StubGenerator:
+    # Shared paths for all generators
+    SCRIPT_DIR = Path(__file__).parent
+    TEMPLATES_DIR = SCRIPT_DIR / 'templates'
+    
     def __init__(self, spath: Path, context: GeneratorContext):
         self.spath = spath
         self.spath.mkdir(parents=True, exist_ok=True)
@@ -55,7 +60,9 @@ class StubGenerator:
 
     def write_file(self, filename: str, content: str):
         """Writes content to file at self.spath / filename."""
-        with open(self.spath / filename, 'w') as f:
+        filepath = self.spath / filename
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w') as f:
             f.write(content)
 
     def gen_and_write(self, stub_fn: Callable, filename: str, include_unimplemented_calls: bool = False, prelude: str = "", postlude: str = ""):
@@ -289,8 +296,7 @@ class WitGenerator(StubGenerator):
                   ["}"]
 
         # Process Records
-        # Assuming templates dir relative to CWD
-        with open('templates/records.wit.template') as f:
+        with open(self.TEMPLATES_DIR / 'wit' / 'records.wit.template') as f:
             record_content = f.read()
 
         record_types = set(re.findall(r'record (\S+)', record_content))
@@ -335,7 +341,7 @@ class WitGenerator(StubGenerator):
         sc_if = sc_prelude + ["\t/// Syscall methods"] + buf + ["}"]
         aux_if = aux_prelude + ["\t/// Aux methods"] + buf_aux + ["}"]
 
-        with open('templates/wali.wit.template', 'r') as f:
+        with open(self.TEMPLATES_DIR / 'wit' / 'wali.wit.template', 'r') as f:
             template = f.read()
 
         fill_temp = template.replace(
@@ -356,61 +362,226 @@ class WitGenerator(StubGenerator):
         self.write_file('wali.wit', fill_temp)
 
 
-class MarkdownGenerator(StubGenerator):
+class DocsGenerator(StubGenerator):
+    """Generates MkDocs-compatible markdown documentation for WALI syscalls."""
+    
+    # Docs-specific paths (uses inherited TEMPLATES_DIR)
+    DOCS_TEMPLATES_DIR = StubGenerator.TEMPLATES_DIR / 'docs'
+    OVERRIDES_FILE = DOCS_TEMPLATES_DIR / 'overrides' / 'syscalls.yaml'
+    
+    # Badge colors for architectures
+    ARCH_COLORS = {
+        'x86_64': '4c8cbf',   # Blue
+        'ARM64': 'c73e3a',    # Red  
+        'RV64': '6b4c9a',     # Purple
+    }
+    
+    def __init__(self, spath: Path, context: GeneratorContext):
+        super().__init__(spath, context)
+        self.overrides = self._load_overrides()
+        self.templates = self._load_templates()
+    
+    def _load_overrides(self) -> Dict[str, Any]:
+        """Load manual documentation overrides from YAML file."""
+        import yaml
+        if self.OVERRIDES_FILE.exists():
+            with open(self.OVERRIDES_FILE) as f:
+                return yaml.safe_load(f) or {}
+        return {}
+    
+    def _load_templates(self) -> Dict[str, str]:
+        """Load markdown templates."""
+        templates = {}
+        for name in ['syscall', 'aux', 'reference']:
+            tpl_path = self.DOCS_TEMPLATES_DIR / f'{name}.md.template'
+            if not tpl_path.exists():
+                raise FileNotFoundError(f"Required template not found: {tpl_path}")
+            with open(tpl_path) as f:
+                templates[name] = f.read()
+        return templates
+    
     def generate(self):
-        syscalls_lib = system_calls.syscalls()
-        arch_remap = {'rv64': 'riscv64'}
-        arch_supp_mapped = {arch_remap.get(x, x) for x in self.archs}
+        """Generate all documentation files."""
+        self._gen_reference_index()
+        self._gen_syscall_pages()
+        self._gen_aux_pages()
+        self._copy_static_docs()
+    
+    def _copy_static_docs(self):
+        """Copy static docs (index.md, etc.) to output."""
+        import shutil
+        src_index = self.DOCS_TEMPLATES_DIR / 'index.md'
+        if src_index.exists():
+            shutil.copy(src_index, self.spath / 'index.md')
+    
+    def _make_badge(self, arch: str, number: int) -> str:
+        """Generate a Shields.io style badge for syscall number."""
+        color = self.ARCH_COLORS.get(arch, '555555')
+        if number < 0:
+            # Show dash for unsupported architectures
+            return f"![{arch}](https://img.shields.io/badge/{arch}----{color})"
+        # Using shields.io static badge format
+        return f"![{arch}](https://img.shields.io/badge/{arch}-{number}-{color})"
+    
+    def _make_badges(self, sc: Syscall) -> str:
+        """Generate all architecture badges for a syscall."""
+        badges = [
+            self._make_badge('x86_64', sc.nrs.x86_64),
+            self._make_badge('ARM64', sc.nrs.arm64),
+            self._make_badge('RV64', sc.nrs.rv64),
+        ]
+        return " ".join(badges)
+    
+    def _c_signature(self, name: str, args: List, args_id: List, ret_type: str = "long") -> str:
+        """Generate C function signature."""
+        args_str = ", ".join([f"{ty} {id}" for ty, id in zip(args, args_id)]) if args else "void"
+        return f"{ret_type} {name}({args_str});"
+    
+    def _wasm_signature(self, name: str, args: List, args_id: List, ret_type: str = "i64", is_syscall: bool = True) -> str:
+        """Generate Wasm32 import signature in WAT format."""
+        # Map C types to Wasm types
+        def to_wasm_type(ctype: str) -> str:
+            ctype = ctype.strip()
+            if ctype.endswith('*'):
+                return 'i32'  # Pointers are i32 in wasm32
+            if ctype in ('int', 'unsigned int', 'pid_t', 'uid_t', 'gid_t', 'mode_t', 
+                        'socklen_t', 'nfds_t', 'clockid_t'):
+                return 'i32'
+            if ctype in ('long', 'long long', 'off_t', 'size_t', 'ssize_t', 'time_t'):
+                return 'i64'
+            return 'i32'  # Default
         
-        arch_calls = [set(syscalls_lib.load_arch_table(v).keys()) for v in arch_supp_mapped]
-        arch_call_set = set().union(*arch_calls)
-
-        # Build list of dicts for pandas-free table generation or just bare formatting
-        # Note: raw_syscalls is now List[Syscall] objects
+        params = " ".join([f"(param ${id} {to_wasm_type(ty)})" for ty, id in zip(args, args_id)])
+        result = f"(result {ret_type})" if ret_type else ""
         
-        # Supported set: where args are present (implemented)
+        # Syscalls use SYS_ prefix, aux functions don't
+        import_name = f"SYS_{name}" if is_syscall else name
+        
+        func_body = f"(func {params} {result})".strip()
+        return f'(import "wali" "{import_name}" {func_body})'
+    
+    def _gen_reference_index(self):
+        """Generate the reference overview page with syscall table."""
         supp_sc = [s for s in self.syscalls.values() if s.implemented]
-        supp_set = set(s.name for s in supp_sc)
         
-        # Generate markdown table
-        # Columns: Syscall, # Args, a1..a6
-        header = "| Syscall | # Args | a1 | a2 | a3 | a4 | a5 | a6 |"
-        sep = "| --- | --- | --- | --- | --- | --- | --- | --- |"
+        # Build syscall table - only name and arch numbers, with SYS_ prefix
+        header = "| Syscall | x86_64 | ARM64 | RV64 |"
+        sep = "|---------|--------|-------|------|"
         rows = []
-        for s in supp_sc:
-            args = [f"{arg} {id}" for arg, id in zip(s.args, s.args_id)]
-            nargs = len(args)
-            # Pad args to 6
-            padded_args = args + [''] * (6 - nargs)
-            # Escape strings
-            def esc(x): return str(x).replace('*', r'\*').replace('_', r'\_')
-            
-            row_vals = [esc(s.name), str(nargs)] + [esc(a) for a in padded_args]
-            rows.append("| " + " | ".join(row_vals) + " |")
+        for s in sorted(supp_sc, key=lambda x: x.nrs.x86_64):
+            x86 = s.nrs.x86_64 if s.nrs.x86_64 >= 0 else "-"
+            arm = s.nrs.arm64 if s.nrs.arm64 >= 0 else "-"
+            rv = s.nrs.rv64 if s.nrs.rv64 >= 0 else "-"
+            rows.append(f"| [SYS_{s.name}](syscalls/{s.name}.md) | {x86} | {arm} | {rv} |")
         
-        md_table = "\n".join([header, sep] + rows)
-
-        unsupp_set = arch_call_set.difference(supp_set)
-        unsupp_list = [f"* {x}" for x in sorted(unsupp_set)]
-
-        try:
-            with open('templates/support.md.template', 'r') as f:
-                template = f.read()
-        except FileNotFoundError:
-            template = ""
-
-        fill_temp = template.replace(
-            '[[NUM_SUPPORTED_SYSCALLS_STUB]]', 
-            str(len(supp_sc))
+        syscall_table = "\n".join([header, sep] + rows)
+        
+        # Build aux table - single column with just names
+        aux_header = "| Function |"
+        aux_sep = "|----------|"
+        aux_rows = []
+        for s in self.aux_syscalls.values():
+            name_clean = s.name.lstrip('_')
+            aux_rows.append(f"| [{s.name}](aux/{name_clean}.md) |")
+        
+        aux_table = "\n".join([aux_header, aux_sep] + aux_rows)
+        
+        content = self.templates['reference'].replace(
+            '[[NUM_SYSCALLS]]', str(len(supp_sc))
         ).replace(
-            '[[SUPPORTED_SYSCALLS_STUB]]', 
-            md_table
+            '[[NUM_AUX]]', str(len(self.aux_syscalls))
         ).replace(
-            '[[UNSUPPORTED_SYSCALLS_STUB]]', 
-            '\n'.join(unsupp_list).replace('_', r'\_')
+            '[[SYSCALL_TABLE]]', syscall_table
+        ).replace(
+            '[[AUX_TABLE]]', aux_table
         )
-
-        self.write_file('support.md', fill_temp)
+        
+        self.write_file('reference/index.md', content)
+    
+    def _gen_syscall_pages(self):
+        """Generate individual syscall documentation pages."""
+        (self.spath / 'reference' / 'syscalls').mkdir(parents=True, exist_ok=True)
+        
+        for sc in self.syscalls.values():
+            if not sc.implemented:
+                continue
+            self._gen_syscall_page(sc)
+    
+    def _gen_syscall_page(self, sc: Syscall):
+        """Generate a single syscall documentation page."""
+        override = self.overrides.get(sc.name, {})
+        
+        # Build signatures
+        c_sig = self._c_signature(sc.name, sc.args, sc.args_id)
+        wasm_sig = self._wasm_signature(sc.name, sc.args, sc.args_id)
+        
+        # Build badges
+        badges = self._make_badges(sc)
+        
+        # Description from override only
+        description = override.get('description', '')
+        
+        # Notes section
+        notes = override.get('notes', '')
+        notes_md = f"## Notes\n\n{notes}" if notes else ""
+        
+        content = self.templates['syscall'].replace(
+            '[[NAME]]', sc.name
+        ).replace(
+            '[[BADGES]]', badges
+        ).replace(
+            '[[DESCRIPTION]]', description
+        ).replace(
+            '[[C_SIGNATURE]]', c_sig
+        ).replace(
+            '[[WASM_SIGNATURE]]', wasm_sig
+        ).replace(
+            '[[NOTES]]', notes_md
+        )
+        
+        self.write_file(f'reference/syscalls/{sc.name}.md', content)
+    
+    def _gen_aux_pages(self):
+        """Generate auxiliary function documentation pages."""
+        (self.spath / 'reference' / 'aux').mkdir(parents=True, exist_ok=True)
+        
+        for aux in self.aux_syscalls.values():
+            self._gen_aux_page(aux)
+    
+    def _gen_aux_page(self, aux: AuxSyscall):
+        """Generate a single auxiliary function documentation page."""
+        override = self.overrides.get(aux.name, {})
+        
+        # Build signatures
+        ret_type = aux.result if aux.result else "void"
+        c_sig = self._c_signature(aux.name, aux.args, aux.args_id, ret_type)
+        wasm_ret = "i32" if ret_type in ("int", "unsigned int") else ("i64" if ret_type else "")
+        wasm_sig = self._wasm_signature(aux.name, aux.args, aux.args_id, wasm_ret, is_syscall=False)
+        
+        # Description from override only
+        description = override.get('description', '')
+        
+        # Notes section
+        notes = override.get('notes', '')
+        notes_md = f"## Notes\n\n{notes}" if notes else ""
+        
+        name_clean = aux.name.lstrip('_')
+        
+        content = self.templates['aux'].replace(
+            '[[NAME]]', aux.name
+        ).replace(
+            '[[DESCRIPTION]]', description
+        ).replace(
+            '[[C_SIGNATURE]]', c_sig
+        ).replace(
+            '[[WASM_SIGNATURE]]', wasm_sig
+        ).replace(
+            '[[RETURN_TYPE]]', ret_type
+        ).replace(
+            '[[NOTES]]', notes_md
+        )
+        
+        self.write_file(f'reference/aux/{name_clean}.md', content)
 
 
 # --- Registry & Main ---
@@ -419,7 +590,7 @@ GENERATORS = {
     'libc': LibcGenerator,
     'wamr': WamrGenerator,
     'wit': WitGenerator,
-    'markdown': MarkdownGenerator
+    'docs': DocsGenerator
 }
 
 def parse_args() -> argparse.Namespace:
@@ -458,6 +629,7 @@ def main():
             continue
             
         logging.info(f"Generating {stub_name} stubs")
+        
         spath = Path('autogen') / stub_name
         
         # Instantiate and run generator

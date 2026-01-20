@@ -1,0 +1,23 @@
+# [[NAME]]
+
+[[DESCRIPTION]]
+
+## Signature
+
+=== "Wasm32"
+
+    ```wat
+    [[WASM_SIGNATURE]]
+    ```
+
+=== "C"
+
+    ```c
+    [[C_SIGNATURE]]
+    ```
+
+## Return Value
+
+Returns `[[RETURN_TYPE]]`.
+
+[[NOTES]]
