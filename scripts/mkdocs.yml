@@ -27,6 +27,7 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.expand
+    - navigation.footer
     - search.highlight
     - search.suggest
     - content.code.copy
@@ -47,8 +48,6 @@ markdown_extensions:
   - attr_list
   - def_list
   - md_in_html
-  - toc:
-      permalink: true
 
 plugins:
   - search

@@ -34,7 +34,7 @@ __init:
     Initializes the WALI runtime environment. This must be called before any 
     other WALI operations.
   notes: |
-    - Called automatically by the WALI-aware libc during startup
+    - Called automatically in libc startup files.
     - Returns 0 on success, non-zero on failure
 
 __proc_exit:

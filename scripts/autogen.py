@@ -94,15 +94,8 @@ class LibcGenerator(StubGenerator):
     def rustify_args(self, sc: Syscall) -> List[str]:
         """Convert argument types to Rust compatible types"""
         def f(arg: ScArg):
-            if arg.is_ptr():
-                return 'i32'
-            while arg not in self.ts.wit_primitive_set:
-                try:
-                    arg = self.ts.combined_types[arg]
-                except KeyError as e:
-                    raise RuntimeError(f"Type '{arg}' not found in combined types (used in syscall '{sc.name}')") from e
-
-            return arg if not arg.startswith('s') else 'i' + arg[1:]
+            prim = arg.wit_primitive_type(self.ts)
+            return prim if not prim.startswith('s') else 'i' + prim[1:]
         
         return [f(x) for x in sc.args_reduce(self.ts)]
 
@@ -228,8 +221,8 @@ class WitGenerator(StubGenerator):
         uniq_ptr_types = set()
         aux_ptr_types = set()
 
-        def transform_ptr_arg(arg):
-            if arg.startswith('fn('):
+        def transform_ptr_arg(arg: ScArg):
+            if arg.is_fn_ptr():
                 return 'ptr-func'
             arg_no_ptr = arg.rstrip('*')
             ptr_indirection = len(arg) - len(arg_no_ptr)
@@ -253,7 +246,7 @@ class WitGenerator(StubGenerator):
 
         for sc in self.aux_syscalls.values():
             args = [x.strip().replace(' ', '-').replace('_', '-') for x in sc.args]
-            args = [transform_ptr_arg(x) for x in args]
+            args = [transform_ptr_arg(ScArg(x)) for x in args]
             
             up_types = set([x for x in args if x.startswith('ptr-')])
             aux_ptr_types.update(up_types)
@@ -392,7 +385,7 @@ class DocsGenerator(StubGenerator):
     def _load_templates(self) -> Dict[str, str]:
         """Load markdown templates."""
         templates = {}
-        for name in ['syscall', 'aux', 'reference']:
+        for name in ['syscall', 'aux', 'specification']:
             tpl_path = self.DOCS_TEMPLATES_DIR / f'{name}.md.template'
             if not tpl_path.exists():
                 raise FileNotFoundError(f"Required template not found: {tpl_path}")
@@ -402,7 +395,7 @@ class DocsGenerator(StubGenerator):
     
     def generate(self):
         """Generate all documentation files."""
-        self._gen_reference_index()
+        self._gen_specification_index()
         self._gen_syscall_pages()
         self._gen_aux_pages()
         self._copy_static_docs()
@@ -440,16 +433,10 @@ class DocsGenerator(StubGenerator):
     def _wasm_signature(self, name: str, args: List, args_id: List, ret_type: str = "i64", is_syscall: bool = True) -> str:
         """Generate Wasm32 import signature in WAT format."""
         # Map C types to Wasm types
-        def to_wasm_type(ctype: str) -> str:
-            ctype = ctype.strip()
-            if ctype.endswith('*'):
-                return 'i32'  # Pointers are i32 in wasm32
-            if ctype in ('int', 'unsigned int', 'pid_t', 'uid_t', 'gid_t', 'mode_t', 
-                        'socklen_t', 'nfds_t', 'clockid_t'):
-                return 'i32'
-            if ctype in ('long', 'long long', 'off_t', 'size_t', 'ssize_t', 'time_t'):
-                return 'i64'
-            return 'i32'  # Default
+        def to_wasm_type(ty: ScArg) -> str:
+            prim = ty.wit_primitive_type(self.ts)
+            bitwidth = "32" if int(prim[1:]) < 32 else prim[1:]
+            return f"i{bitwidth}"
         
         params = " ".join([f"(param ${id} {to_wasm_type(ty)})" for ty, id in zip(args, args_id)])
         result = f"(result {ret_type})" if ret_type else ""
@@ -460,8 +447,8 @@ class DocsGenerator(StubGenerator):
         func_body = f"(func {params} {result})".strip()
         return f'(import "wali" "{import_name}" {func_body})'
     
-    def _gen_reference_index(self):
-        """Generate the reference overview page with syscall table."""
+    def _gen_specification_index(self):
+        """Generate the specification overview page with syscall table."""
         supp_sc = [s for s in self.syscalls.values() if s.implemented]
         
         # Build syscall table - only name and arch numbers, with SYS_ prefix
@@ -486,7 +473,7 @@ class DocsGenerator(StubGenerator):
         
         aux_table = "\n".join([aux_header, aux_sep] + aux_rows)
         
-        content = self.templates['reference'].replace(
+        content = self.templates['specification'].replace(
             '[[NUM_SYSCALLS]]', str(len(supp_sc))
         ).replace(
             '[[NUM_AUX]]', str(len(self.aux_syscalls))
@@ -496,11 +483,11 @@ class DocsGenerator(StubGenerator):
             '[[AUX_TABLE]]', aux_table
         )
         
-        self.write_file('reference/index.md', content)
+        self.write_file('specification/index.md', content)
     
     def _gen_syscall_pages(self):
         """Generate individual syscall documentation pages."""
-        (self.spath / 'reference' / 'syscalls').mkdir(parents=True, exist_ok=True)
+        (self.spath / 'specification' / 'syscalls').mkdir(parents=True, exist_ok=True)
         
         for sc in self.syscalls.values():
             if not sc.implemented:
@@ -539,11 +526,11 @@ class DocsGenerator(StubGenerator):
             '[[NOTES]]', notes_md
         )
         
-        self.write_file(f'reference/syscalls/{sc.name}.md', content)
+        self.write_file(f'specification/syscalls/{sc.name}.md', content)
     
     def _gen_aux_pages(self):
         """Generate auxiliary function documentation pages."""
-        (self.spath / 'reference' / 'aux').mkdir(parents=True, exist_ok=True)
+        (self.spath / 'specification' / 'aux').mkdir(parents=True, exist_ok=True)
         
         for aux in self.aux_syscalls.values():
             self._gen_aux_page(aux)
@@ -581,7 +568,7 @@ class DocsGenerator(StubGenerator):
             '[[NOTES]]', notes_md
         )
         
-        self.write_file(f'reference/aux/{name_clean}.md', content)
+        self.write_file(f'specification/aux/{name_clean}.md', content)
 
 
 # --- Registry & Main ---

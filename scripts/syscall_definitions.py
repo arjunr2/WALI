@@ -12,6 +12,9 @@ class ScArg(str):
     def is_ptr(self) -> bool:
         return self.endswith('*')
 
+    def is_fn_ptr(self) -> bool:
+        return self.startswith('fn(')
+
     def is_basic_type(self, ts: TypeSystem) -> bool:
         return self in ts.basic_types
     
@@ -22,6 +25,18 @@ class ScArg(str):
         if max is not None and indirection > max:
             a += '*' * (indirection - max)
         return (len(self) - len(a), ScArg(a))
+    
+    def wit_primitive_type(self, ts: TypeSystem) -> str:
+        """Resolves the argument to its underlying WIT primitive type."""
+        if self.is_ptr() or self.is_fn_ptr():
+            return 's32'
+        r = self
+        while r not in ts.wit_primitive_set:
+            try:
+                r = ts.combined_types[r]
+            except KeyError as e:
+                raise RuntimeError(f"Type '{r}' not found in combined types") from e
+        return r
 
 
 
