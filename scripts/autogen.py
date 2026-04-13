@@ -2,7 +2,6 @@ import re
 import argparse
 import logging
 import textwrap
-import system_calls
 from pathlib import Path
 from dataclasses import dataclass, fields
 from typing import List, Dict, Any, Callable, Set, Optional, Tuple, Type
@@ -229,7 +228,7 @@ class WitGenerator(StubGenerator):
             return ("ptr-" * ptr_indirection) + arg_no_ptr
 
         for sc in self.syscalls.values():
-            args = [x.strip().replace(' ', '-').replace('_', '-') for x in sc.args]
+            args = [ScArg(x.strip().replace(' ', '-').replace('_', '-')) for x in sc.args]
             args = [transform_ptr_arg(x) for x in args]
             
             up_types = set([x for x in args if x.startswith('ptr-')])
