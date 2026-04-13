@@ -2,6 +2,9 @@ site_name: WALI
 site_description: WebAssembly Linux Interface - System Call Specification
 site_url: https://aspect-labs.github.io/wali  # Update with actual URL
 
+repo_url: https://github.com/arjunr2/WALI
+repo_name: arjunr2/WALI
+
 docs_dir: autogen/docs
 
 theme:
