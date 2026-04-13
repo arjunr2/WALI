@@ -4,8 +4,9 @@
 
 ***A (Nearly-Complete) Linux API for WebAssembly!***
 
-This work is published at *EuroSys 2025* on [**Empowering WebAssembly with Thin Kernel Interfaces**](https://dl.acm.org/doi/abs/10.1145/3689031.3717470).
-This repo contains all the compiler and engine prototypes for an implementation of the *WebAssembly Linux Interface* and a brief description of the project's [goals](docs/goals.md). The list of currently supported syscalls can be found [here](docs/support.md)
+The **[WALI website](https://arjunr2.github.io/WALI/)** contains information about 
+the overarching project and specification. 
+This repo contains the compiler and engine prototypes for the *WALI* implementation.
 
 ## Getting Started
 
@@ -113,6 +114,4 @@ make && python3 run_tests.py
 
 ## Additional Resources
 * [Compiler ports](compiler_ports/README.md) of WALI for other languages.
-* [Constraints](docs/constraints.md) of WALI
 * [Zenodo](https://zenodo.org/records/14829424) Ubuntu 22.04 VM artifact for experimenting with WALI
-* Related Work: [Verifying System Interfaces Paper](https://cseweb.ucsd.edu/~dstefan/pubs/johnson:2023:wave.pdf)
