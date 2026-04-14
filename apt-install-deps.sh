@@ -2,4 +2,5 @@
 apt update
 apt install -y make cmake ninja-build gcc wabt libstdc++-12-dev g++ lld
 # WAMRC deps
-apt install -y build-essential g++-multilib libgcc-9-dev lib32gcc-9-dev ccache
+apt install -y build-essential ccache
+#g++-multilib libgcc-9-dev lib32gcc-9-dev ccache
