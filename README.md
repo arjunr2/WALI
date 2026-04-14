@@ -60,7 +60,7 @@ docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
 First build the LLVM backend for WALI:
 ```shell
 git submodule update --init --depth=1 llvm-project
-make wali-compiler
+make compiler
 ```
 
 > **Note**: Building the LLVM suite takes a long time and can consume up to 150GB of disk.
@@ -110,7 +110,6 @@ cd tests
 # Ensure iwasm, libc, and compiler toolchains were all built prior to this
 make && python3 run_tests.py
 ```
-
 
 ## Additional Resources
 * [Compiler ports](compiler_ports/README.md) of WALI for other languages.

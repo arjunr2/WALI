@@ -1,6 +1,7 @@
 include toolchains/wali.mk
 
 UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
 
 ifeq ($(UNAME_S),Linux)
 	MEMGB := $(shell free -g | sed -n '2p' | awk '{print $$2}')
@@ -14,8 +15,22 @@ endif
 
 LINK_PARALLEL := $(shell echo $$(($(MEMGB) < 16 ? 1 : $(MEMGB) / 16)))
 
+# LLVM release configuration
+LLVM_VERSION := 22.1.3
+
+MAP_Linux := Linux
+MAP_Darwin := macOS
+MAP_x86_64 := X64
+MAP_aarch64 := ARM64
+
+LLVM_RELEASE_PLATFORM := $(MAP_$(UNAME_S))-$(MAP_$(UNAME_M))
+LLVM_RELEASE_NAME := LLVM-$(LLVM_VERSION)-$(LLVM_RELEASE_PLATFORM)
+LLVM_RELEASE_BASE := https://github.com/llvm/llvm-project/releases/download
+LLVM_RELEASE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(LLVM_VERSION)/$(LLVM_RELEASE_NAME).tar.xz
+LLVM_SOURCE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(LLVM_VERSION)/llvm-project-$(LLVM_VERSION).src.tar.xz
+
 # Source directories
-LLVM_SOURCE_DIR := $(WALI_ROOT_DIR)/llvm-project
+LLVM_SOURCE_DIR := $(WALI_BUILD_DIR)/llvm-source
 MUSL_SOURCE_DIR := $(WALI_ROOT_DIR)/wali-musl
 IWASM_SOURCE_DIR := $(WALI_ROOT_DIR)/wasm-micro-runtime/product-mini/platforms/linux
 WAMRC_SOURCE_DIR := wasm-micro-runtime/wamr-compiler
@@ -25,12 +40,12 @@ WALI_WAMR_BUILD_DIR := $(WALI_BUILD_DIR)/wamr
 WALI_IWASM_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/iwasm
 WALI_WAMRC_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/wamrc
 
-.PHONY: default libc libcxx iwasm wali-compiler llvm-base tests clean clean-runtime clean-all clean-llvm wamrc
-.PHONY: rustc
+.PHONY: default libc libcxx iwasm compiler llvm-base llvm-source tests wamrc rustc
+.PHONY: clean-llvm-source clean clean-runtime clean-all clean-llvm 
 
 default: iwasm
 
-all: libc iwasm wali-compiler libcxx tests
+all: libc iwasm compiler libcxx tests
 
 # --- Build Directory rules --- #
 build_dir:
@@ -68,9 +83,24 @@ libc: | build_dir musl_config
 	mkdir -p $(WALI_SYSROOT_DIR)/lib/$(WALI_TARGET_NOVENDOR)
 	cp $(WALI_SYSROOT_DIR)/lib/*.o $(WALI_SYSROOT_DIR)/lib/$(WALI_TARGET_NOVENDOR)
 
+# LLVM source is needed for libcxx build only... figure out how to get rid of this later
+.ONESHELL:
+llvm-source: | build_dir
+	@if [ -d "$(LLVM_SOURCE_DIR)/runtimes" ]; then \
+		echo "LLVM source already at $(LLVM_SOURCE_DIR)"; \
+	else \
+		echo "Downloading llvm-project-$(LLVM_VERSION) source..." && \
+		curl -L -o $(WALI_BUILD_DIR)/llvm-source.tar.xz $(LLVM_SOURCE_URL) && \
+		echo "Extracting to $(LLVM_SOURCE_DIR)..." && \
+		mkdir -p $(LLVM_SOURCE_DIR) && \
+		tar -xf $(WALI_BUILD_DIR)/llvm-source.tar.xz -C $(LLVM_SOURCE_DIR) --strip-components=1 && \
+		rm $(WALI_BUILD_DIR)/llvm-source.tar.xz && \
+		echo "LLVM $(LLVM_VERSION) source at $(LLVM_SOURCE_DIR)"; \
+	fi
+
 # NOTE: Catching Exceptions only seems to work when libcxx is compiled in Debug mode (O0) #
 .ONESHELL:
-libcxx: libc
+libcxx: libc llvm-source
 	cmake -S $(LLVM_SOURCE_DIR)/runtimes -B $(WALI_LIBCXX_DIR) \
 		-DCMAKE_BUILD_TYPE=Debug  \
 		-DCMAKE_C_COMPILER_WORKS=ON \
@@ -138,21 +168,26 @@ wamrc: | wamrc_build_dir
 	ln -sf $(WALI_WAMRC_BUILD_DIR)/wamrc .
 
 
-# --- LLVM COMPILER --- #
+# --- LLVM COMPILER (pre-built release) --- #
 .ONESHELL:
 llvm-base: | build_dir
-	cmake -S $(LLVM_SOURCE_DIR)/llvm -B $(WALI_LLVM_DIR) -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DLLVM_ENABLE_PROJECTS="lld;clang" -DLLVM_TARGETS_TO_BUILD="host;WebAssembly" \
-		-DLLVM_PARALLEL_COMPILE_JOBS=$(COMPILE_PARALLEL) -DLLVM_PARALLEL_LINK_JOBS=$(LINK_PARALLEL) \
-		-DLLVM_USE_LINKER=lld \
-		-DLLVM_STATIC_LINK_CXX_STDLIB=ON -DLLVM_STATIC_LINK_CXX_STDLIB=ON \
-		-DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF
-	ninja -C $(WALI_LLVM_DIR)
+	@if [ -x "$(WALI_LLVM_BIN_DIR)/clang" ]; then \
+		echo "LLVM already installed at $(WALI_LLVM_DIR)"; \
+	else \
+		echo "Downloading $(LLVM_RELEASE_NAME).tar.xz..." && \
+		curl -L -o $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz $(LLVM_RELEASE_URL) && \
+		echo "Extracting to $(WALI_LLVM_DIR)..." && \
+		mkdir -p $(WALI_LLVM_DIR) && \
+		tar -xf $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz -C $(WALI_LLVM_DIR) --strip-components=1 && \
+		rm $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz && \
+		echo "LLVM $(LLVM_VERSION) installed at $(WALI_LLVM_DIR)"; \
+	fi
 
 .ONESHELL:
-wali-compiler: llvm-base
-	mkdir -p $(dir $(WALI_LIBCLANG_RT_LIB))
-	cp $(WALI_ROOT_DIR)/toolchains/rt_builtins/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32-wali.a $(WALI_LIBCLANG_RT_LIB)
+compiler: llvm-base
+	@mkdir -p $(dir $(WALI_LIBCLANG_RT_LIB))
+	@echo "Copying $(WALI_LIBCLANG_RT_LIB) to the LLVM tree"
+	@cp $(WALI_ROOT_DIR)/toolchains/rt_builtins/llvm-$(WALI_LLVM_MAJOR_VERSION).libclang_rt.builtins-wasm32-wali.a $(WALI_LIBCLANG_RT_LIB)
 	
 
 # --- COMPILER PORTS --- #
@@ -181,6 +216,9 @@ clean-runtime:
 clean-llvm:
 	rm -rf $(WALI_LLVM_DIR)
 
+clean-llvm-source:
+	rm -rf $(LLVM_SOURCE_DIR)
+
 clean-libs:
 	# Clean musl object artifacts
 	make -C $(MUSL_SOURCE_DIR) clean
@@ -190,5 +228,5 @@ clean-libs:
 clean: clean-runtime clean-libs
 	make -C tests clean $(TEST_DIR_ARGS)
 
-clean-all: clean clean-llvm
+clean-all: clean clean-llvm clean-llvm-source
 

@@ -17,7 +17,7 @@ libcxx     = "libcxx"
 extra_cflags  = ["-O0", "-pthread", "-fdeclspec", "-fwasm-exceptions"]
 extra_cxxflags = []
 # Used as "-W{value}
-warning_cflags = ["no-implicit-function-declaration", "no-int-conversion", "no-incompatible-function-pointer-types", "no-incompatible-pointer-types"]
+warning_cflags = ["no-implicit-function-declaration", "no-int-conversion", "no-incompatible-function-pointer-types", "no-incompatible-pointer-types", "no-nullability-completeness"]
 wasm_features = ["-mcpu=generic", "-matomics", "-mbulk-memory", "-mexception-handling"]
 
 [flags.link]
