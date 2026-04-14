@@ -33,8 +33,8 @@ int test(void) {
     // Test 2: EEXIST
     TEST_ASSERT(wali_syscall_mkdirat(dirfd, SUB_DIR, 0755) < 0);
 
-    // Test 3: Invalid FD
-    TEST_ASSERT(wali_syscall_mkdirat(-100, "foo", 0755) < 0);
+    // Test 3: Invalid FD (not AT_FDCWD which is -100)
+    TEST_ASSERT(wali_syscall_mkdirat(-1, "foo", 0755) < 0);
 
     wali_syscall_close(dirfd);
 

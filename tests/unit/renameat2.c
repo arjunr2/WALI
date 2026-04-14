@@ -49,8 +49,8 @@ int wali_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 
 int test(void) {
     if (test_init_args() != 0) return -1;
-    const char *src = argv[0];
-    const char *dst = argv[1];
+    const char *src = argv[1];
+    const char *dst = argv[2];
     
     // Rename with no flags
     if (wali_renameat2(AT_FDCWD, src, AT_FDCWD, dst, 0) != 0) return -1;

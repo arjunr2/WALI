@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Init required submodules
+        run: git submodule update --init wali-musl wasm-micro-runtime
+
+      - name: Install dependencies
+        run: sudo ./apt-install-deps.sh
+
+      - name: Generate toolchain configs
+        run: python3 toolchains/gen_toolchains.py
+
+      - name: Build compiler
+        run: make compiler
+
+      - name: Build iwasm
+        run: make iwasm
+
+      - name: Build libc
+        run: make libc
+
+      - name: Build tests
+        run: make -C tests
+
+      - name: Run tests
+        run: cd tests && python3 run_tests.py
