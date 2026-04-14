@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 
@@ -79,25 +80,57 @@ WALI_IMPORT("SYS_clock_nanosleep") long wali_syscall_clock_nanosleep(clockid_t c
 
 static inline long wali_syscall_fchown(int fd, int owner, int group) { return syscall(SYS_fchown, fd, owner, group); }
 static inline long wali_syscall_mkdirat(int dirfd, const char *pathname, int mode) { return syscall(SYS_mkdirat, dirfd, pathname, mode); }
-static inline long wali_syscall_mkdir(const char *pathname, int mode) { return syscall(SYS_mkdir, pathname, mode); }
-static inline long wali_syscall_rmdir(const char *pathname) { return syscall(SYS_rmdir, pathname); }
+static inline long wali_syscall_mkdir(const char *pathname, int mode) {
+#ifdef SYS_mkdir
+    return syscall(SYS_mkdir, pathname, mode);
+#else
+    return syscall(SYS_mkdirat, AT_FDCWD, pathname, mode);
+#endif
+}
+static inline long wali_syscall_rmdir(const char *pathname) {
+#ifdef SYS_rmdir
+    return syscall(SYS_rmdir, pathname);
+#else
+    return syscall(SYS_unlinkat, AT_FDCWD, pathname, AT_REMOVEDIR);
+#endif
+}
 static inline long wali_syscall_chdir(const char *pathname) { return syscall(SYS_chdir, pathname); }
 static inline long wali_syscall_getcwd(char *buf, unsigned long size) { return syscall(SYS_getcwd, buf, size); }
 static inline long wali_syscall_write(int fd, const void *buf, size_t count) { return syscall(SYS_write, fd, buf, count); }
 static inline long wali_syscall_read(int fd, void *buf, size_t count) { return syscall(SYS_read, fd, buf, count); }
 static inline long wali_syscall_close(int fd) { return syscall(SYS_close, fd); }
-static inline long wali_syscall_open(const char *pathname, int flags, int mode) { return syscall(SYS_open, pathname, flags, mode); }
-static inline long wali_syscall_fchownat(int dirfd, const char *pathname, int owner, int group, int flags) { 
-#ifdef SYS_fchownat
-    return syscall(SYS_fchownat, dirfd, pathname, owner, group, flags); 
+static inline long wali_syscall_open(const char *pathname, int flags, int mode) {
+#ifdef SYS_open
+    return syscall(SYS_open, pathname, flags, mode);
 #else
-    return syscall(SYS_chown, pathname, owner, group); // Fallback approximate
+    return syscall(SYS_openat, AT_FDCWD, pathname, flags, mode);
 #endif
 }
-static inline long wali_syscall_chown(const char *pathname, int owner, int group) { return syscall(SYS_chown, pathname, owner, group); }
-static inline long wali_syscall_chmod(const char *pathname, int mode) { return syscall(SYS_chmod, pathname, mode); }
+static inline long wali_syscall_fchownat(int dirfd, const char *pathname, int owner, int group, int flags) {
+    return syscall(SYS_fchownat, dirfd, pathname, owner, group, flags);
+}
+static inline long wali_syscall_chown(const char *pathname, int owner, int group) {
+#ifdef SYS_chown
+    return syscall(SYS_chown, pathname, owner, group);
+#else
+    return syscall(SYS_fchownat, AT_FDCWD, pathname, owner, group, 0);
+#endif
+}
+static inline long wali_syscall_chmod(const char *pathname, int mode) {
+#ifdef SYS_chmod
+    return syscall(SYS_chmod, pathname, mode);
+#else
+    return syscall(SYS_fchmodat, AT_FDCWD, pathname, mode, 0);
+#endif
+}
 static inline long wali_syscall_fchmod(int fd, int mode) { return syscall(SYS_fchmod, fd, mode); }
-static inline long wali_syscall_stat(const char *pathname, struct stat *statbuf) { return syscall(SYS_stat, pathname, statbuf); }
+static inline long wali_syscall_stat(const char *pathname, struct stat *statbuf) {
+#ifdef SYS_stat
+    return syscall(SYS_stat, pathname, statbuf);
+#else
+    return syscall(SYS_newfstatat, AT_FDCWD, pathname, statbuf, 0);
+#endif
+}
 static inline long wali_syscall_pipe2(int pipefd[2], int flags) { return syscall(SYS_pipe2, pipefd, flags); }
 static inline long wali_syscall_dup(int fd) { return syscall(SYS_dup, fd); }
 
@@ -105,7 +138,13 @@ static inline long wali_syscall_dup(int fd) { return syscall(SYS_dup, fd); }
 static inline long wali_syscall_socket(int domain, int type, int protocol) { return syscall(SYS_socket, domain, type, protocol); }
 static inline long wali_syscall_bind(int sockfd, const void *addr, int addrlen) { return syscall(SYS_bind, sockfd, addr, addrlen); }
 static inline long wali_syscall_listen(int sockfd, int backlog) { return syscall(SYS_listen, sockfd, backlog); }
-static inline long wali_syscall_accept(int sockfd, void *addr, void *addrlen) { return syscall(SYS_accept, sockfd, addr, addrlen); }
+static inline long wali_syscall_accept(int sockfd, void *addr, void *addrlen) {
+#ifdef SYS_accept
+    return syscall(SYS_accept, sockfd, addr, addrlen);
+#else
+    return syscall(SYS_accept4, sockfd, addr, addrlen, 0);
+#endif
+}
 static inline long wali_syscall_accept4(int sockfd, void *addr, void *addrlen, int flags) { 
 #ifdef SYS_accept4
     return syscall(SYS_accept4, sockfd, addr, addrlen, flags);
@@ -118,14 +157,26 @@ static inline long wali_syscall_connect(int sockfd, const void *addr, int addrle
 static inline long wali_syscall_getsockname(int sockfd, void *addr, void *addrlen) { return syscall(SYS_getsockname, sockfd, addr, addrlen); }
 
 // Process
-static inline long wali_syscall_fork(void) { return syscall(SYS_fork); }
+static inline long wali_syscall_fork(void) {
+#ifdef SYS_fork
+    return syscall(SYS_fork);
+#else
+    return syscall(SYS_clone, SIGCHLD, 0, 0, 0, 0);
+#endif
+}
 static inline void wali_syscall_exit(int status) { syscall(SYS_exit, status); }
 static inline long wali_syscall_wait4(int pid, int *status, int options, void *rusage) { return syscall(SYS_wait4, pid, status, options, rusage); }
 // static inline long wali_syscall_brk(void *addr) { return syscall(SYS_brk, addr); }
 
 // Misc
 static inline long wali_syscall_fcntl(int fd, int cmd, long arg) { return syscall(SYS_fcntl, fd, cmd, arg); }
-static inline long wali_syscall_access(const char *pathname, int mode) { return syscall(SYS_access, pathname, mode); }
+static inline long wali_syscall_access(const char *pathname, int mode) {
+#ifdef SYS_access
+    return syscall(SYS_access, pathname, mode);
+#else
+    return syscall(SYS_faccessat, AT_FDCWD, pathname, mode, 0);
+#endif
+}
 // static inline long wali_syscall_alarm(unsigned int seconds) { return syscall(SYS_alarm, seconds); }
 static inline long wali_syscall_rt_sigaction(int signum, const void *act, void *oldact, size_t sigsetsize) { return syscall(SYS_rt_sigaction, signum, act, oldact, sigsetsize); }
 

@@ -65,22 +65,16 @@ int wali_close(int fd) {
 }
 
 #else
-// Native
-#include <unistd.h>
-#include <sys/syscall.h>
-
-int wali_stat(const char *pathname, struct stat *statbuf) {
-  return syscall(SYS_stat, pathname, statbuf);
-}
+int wali_stat(const char *pathname, struct stat *statbuf) { return wali_syscall_stat(pathname, statbuf); }
 int wali_fstat(int fd, struct stat *statbuf) {
+#ifdef SYS_fstat
   return syscall(SYS_fstat, fd, statbuf);
+#else
+  return syscall(SYS_newfstatat, fd, "", statbuf, AT_EMPTY_PATH);
+#endif
 }
-int wali_open(const char *pathname, int flags, int mode) {
-  return syscall(SYS_open, pathname, flags, mode);
-}
-int wali_close(int fd) {
-  return syscall(SYS_close, fd);
-}
+int wali_open(const char *pathname, int flags, int mode) { return wali_syscall_open(pathname, flags, mode); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
 #endif
 
 int test(void) {

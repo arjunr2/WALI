@@ -64,12 +64,18 @@ int wali_rt_sigprocmask(int how, const sigset_t *set, sigset_t *oldset, size_t s
 int wali_rt_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact, size_t sigsetsize) { 
     return syscall(SYS_rt_sigaction, signum, act, oldact, sigsetsize); 
 }
-pid_t wali_fork(void) { return syscall(SYS_fork); }
-void wali_exit(int status) { syscall(SYS_exit, status); }
+pid_t wali_fork(void) { return wali_syscall_fork(); }
+void wali_exit(int status) { wali_syscall_exit(status); }
 int wali_kill(pid_t pid, int sig) { return syscall(SYS_kill, pid, sig); }
 pid_t wali_getppid(void) { return syscall(SYS_getppid); }
-int wali_nanosleep(const struct timespec *req, struct timespec *rem) { return syscall(SYS_nanosleep, req, rem); }
-int wali_wait4(pid_t pid, int *status, int options, void *rusage) { return syscall(SYS_wait4, pid, status, options, rusage); }
+int wali_nanosleep(const struct timespec *req, struct timespec *rem) {
+#ifdef SYS_nanosleep
+    return syscall(SYS_nanosleep, req, rem);
+#else
+    return syscall(SYS_clock_nanosleep, CLOCK_REALTIME, 0, req, rem);
+#endif
+}
+int wali_wait4(pid_t pid, int *status, int options, void *rusage) { return wali_syscall_wait4(pid, status, options, rusage); }
 #endif
 
 int test(void) {

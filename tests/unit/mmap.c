@@ -63,15 +63,14 @@ int wali_munmap(void *addr, size_t length) {
   return (int)__imported_wali_munmap(addr, length);
 }
 #else
-#include <sys/syscall.h>
 void *wali_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) {
   return (void *)syscall(SYS_mmap, addr, length, prot, flags, fd, offset);
 }
 int wali_munmap(void *addr, size_t length) {
   return syscall(SYS_munmap, addr, length);
 }
-int wali_open(const char *pathname, int flags, int mode) { return syscall(SYS_open, pathname, flags, mode); }
-int wali_close(int fd) { return syscall(SYS_close, fd); }
+int wali_open(const char *pathname, int flags, int mode) { return wali_syscall_open(pathname, flags, mode); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
 #endif
 
 int test(void) {

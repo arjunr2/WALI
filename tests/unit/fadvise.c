@@ -32,10 +32,9 @@ int wali_fadvise(int fd, long long offset, long long len, int advice) { return (
 int wali_open(const char *pathname, int flags, int mode) { return (int)__imported_wali_open(pathname, flags, mode); }
 int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 #else
-#include <sys/syscall.h>
 int wali_fadvise(int fd, long long offset, long long len, int advice) { return syscall(SYS_fadvise64, fd, offset, len, advice); }
-int wali_open(const char *pathname, int flags, int mode) { return syscall(SYS_open, pathname, flags, mode); }
-int wali_close(int fd) { return syscall(SYS_close, fd); }
+int wali_open(const char *pathname, int flags, int mode) { return wali_syscall_open(pathname, flags, mode); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
 #endif
 
 #ifndef POSIX_FADV_NORMAL

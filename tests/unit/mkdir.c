@@ -51,13 +51,8 @@ int wali_rmdir(const char *pathname) {
   return (int) __imported_wali_rmdir(pathname);
 }
 #else
-#include <sys/syscall.h>
-int wali_mkdir(const char *pathname, int mode) {
-  return syscall(SYS_mkdir, pathname, mode);
-}
-int wali_rmdir(const char *pathname) {
-  return syscall(SYS_rmdir, pathname);
-}
+int wali_mkdir(const char *pathname, int mode) { return wali_syscall_mkdir(pathname, mode); }
+int wali_rmdir(const char *pathname) { return wali_syscall_rmdir(pathname); }
 #endif
 
 int test(void) {

@@ -20,8 +20,13 @@ int wali_nanosleep(const struct timespec *req, struct timespec *rem) { return (i
 int wali_clock_gettime(clockid_t clockid, struct timespec *tp) { return (int)__imported_wali_clock_gettime(clockid, tp); }
 
 #else
-#include <sys/syscall.h>
-int wali_nanosleep(const struct timespec *req, struct timespec *rem) { return syscall(SYS_nanosleep, req, rem); }
+int wali_nanosleep(const struct timespec *req, struct timespec *rem) {
+#ifdef SYS_nanosleep
+    return syscall(SYS_nanosleep, req, rem);
+#else
+    return syscall(SYS_clock_nanosleep, CLOCK_REALTIME, 0, req, rem);
+#endif
+}
 int wali_clock_gettime(clockid_t clockid, struct timespec *tp) { return syscall(SYS_clock_gettime, clockid, tp); }
 #endif
 

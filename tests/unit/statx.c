@@ -70,8 +70,8 @@ int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 int wali_statx(int dirfd, const char *pathname, int flags, unsigned int mask, void *statxbuf) {
     return syscall(SYS_statx, dirfd, pathname, flags, mask, statxbuf);
 }
-int wali_open(const char *pathname, int flags, int mode) { return syscall(SYS_open, pathname, flags, mode); }
-int wali_close(int fd) { return syscall(SYS_close, fd); }
+int wali_open(const char *pathname, int flags, int mode) { return wali_syscall_open(pathname, flags, mode); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
 #endif
 
 #ifndef AT_FDCWD

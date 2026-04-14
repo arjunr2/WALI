@@ -43,10 +43,12 @@ int wali_unlink(const char *pathname) {
   return (int) __imported_wali_unlink(pathname);
 }
 #else
-#include <unistd.h>
-#include <sys/syscall.h>
 int wali_unlink(const char *pathname) {
-  return syscall(SYS_unlink, pathname);
+#ifdef SYS_unlink
+    return syscall(SYS_unlink, pathname);
+#else
+    return syscall(SYS_unlinkat, AT_FDCWD, pathname, 0);
+#endif
 }
 #endif
 

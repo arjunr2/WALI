@@ -48,16 +48,16 @@ int wali_wait4(int pid, int *status, int options, void *rusage) { return (int)__
 #else
 #include <sys/syscall.h>
 #include <sys/wait.h>
-int wali_socket(int domain, int type, int protocol) { return syscall(SYS_socket, domain, type, protocol); }
-int wali_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { return syscall(SYS_bind, sockfd, addr, addrlen); }
-int wali_listen(int sockfd, int backlog) { return syscall(SYS_listen, sockfd, backlog); }
-int wali_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) { return syscall(SYS_accept, sockfd, addr, addrlen); }
-int wali_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { return syscall(SYS_connect, sockfd, addr, addrlen); }
+int wali_socket(int domain, int type, int protocol) { return wali_syscall_socket(domain, type, protocol); }
+int wali_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { return wali_syscall_bind(sockfd, (const void *)addr, addrlen); }
+int wali_listen(int sockfd, int backlog) { return wali_syscall_listen(sockfd, backlog); }
+int wali_accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) { return wali_syscall_accept(sockfd, addr, addrlen); }
+int wali_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) { return wali_syscall_connect(sockfd, (const void *)addr, addrlen); }
 int wali_getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen) { return syscall(SYS_getpeername, sockfd, addr, addrlen); }
-int wali_close(int fd) { return syscall(SYS_close, fd); }
-int wali_fork(void) { return syscall(SYS_fork); }
-void wali_exit(int status) { syscall(SYS_exit, status); }
-int wali_wait4(int pid, int *status, int options, void *rusage) { return syscall(SYS_wait4, pid, status, options, rusage); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
+int wali_fork(void) { return wali_syscall_fork(); }
+void wali_exit(int status) { wali_syscall_exit(status); }
+int wali_wait4(int pid, int *status, int options, void *rusage) { return wali_syscall_wait4(pid, status, options, rusage); }
 #endif
 
 int test(void) {

@@ -23,13 +23,9 @@ int wali_wait4(int pid, int *wstatus, int options, void *rusage) {
 }
 
 #else
-#include <sys/syscall.h>
-#include <sys/wait.h>
-void wali_exit(int status) { syscall(SYS_exit, status); }
-int wali_fork(void) { return syscall(SYS_fork); }
-int wali_wait4(int pid, int *wstatus, int options, void *rusage) { 
-    return syscall(SYS_wait4, pid, wstatus, options, rusage); 
-}
+void wali_exit(int status) { wali_syscall_exit(status); }
+int wali_fork(void) { return wali_syscall_fork(); }
+int wali_wait4(int pid, int *wstatus, int options, void *rusage) { return wali_syscall_wait4(pid, wstatus, options, rusage); }
 #endif
 
 int test(void) {

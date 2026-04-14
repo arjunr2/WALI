@@ -36,10 +36,15 @@ int wali_openat(int dirfd, const char *pathname, int flags, int mode) { return (
 int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 
 #else
-#include <sys/syscall.h>
-int wali_fstat(int fd, struct stat *statbuf) { return syscall(SYS_fstat, fd, statbuf); }
+int wali_fstat(int fd, struct stat *statbuf) {
+#ifdef SYS_fstat
+    return syscall(SYS_fstat, fd, statbuf);
+#else
+    return syscall(SYS_newfstatat, fd, "", statbuf, AT_EMPTY_PATH);
+#endif
+}
 int wali_openat(int dirfd, const char *pathname, int flags, int mode) { return syscall(SYS_openat, dirfd, pathname, flags, mode); }
-int wali_close(int fd) { return syscall(SYS_close, fd); }
+int wali_close(int fd) { return wali_syscall_close(fd); }
 #endif
 
 int test(void) {

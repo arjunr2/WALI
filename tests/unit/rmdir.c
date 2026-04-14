@@ -31,10 +31,9 @@ int wali_faccessat(int dirfd, const char *pathname, int mode, int flags) {
 }
 
 #else
-#include <sys/syscall.h>
-int wali_rmdir(const char *pathname) { return syscall(SYS_rmdir, pathname); }
-int wali_faccessat(int dirfd, const char *pathname, int mode, int flags) { 
-    return syscall(SYS_faccessat, dirfd, pathname, mode, flags); 
+int wali_rmdir(const char *pathname) { return wali_syscall_rmdir(pathname); }
+int wali_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+    return syscall(SYS_faccessat, dirfd, pathname, mode, flags);
 }
 #endif
 
