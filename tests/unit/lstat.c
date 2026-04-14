@@ -28,7 +28,13 @@ long long __imported_wali_lstat(const char *pathname, struct stat *statbuf);
 int wali_lstat(const char *pathname, struct stat *statbuf) { return (int)__imported_wali_lstat(pathname, statbuf); }
 #else
 #include <sys/syscall.h>
-int wali_lstat(const char *pathname, struct stat *statbuf) { return syscall(SYS_lstat, pathname, statbuf); }
+int wali_lstat(const char *pathname, struct stat *statbuf) {
+#ifdef SYS_lstat
+    return syscall(SYS_lstat, pathname, statbuf);
+#else
+    return syscall(SYS_newfstatat, AT_FDCWD, pathname, statbuf, AT_SYMLINK_NOFOLLOW);
+#endif
+}
 #endif
 
 int test(void) {

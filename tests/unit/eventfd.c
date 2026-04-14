@@ -24,7 +24,13 @@ int wali_eventfd(unsigned int initval) { return (int)wali_syscall_eventfd(initva
 int wali_eventfd2(unsigned int initval, int flags) { return (int)wali_syscall_eventfd2(initval, flags); }
 #else
 #include <sys/syscall.h>
-int wali_eventfd(unsigned int initval) { return syscall(SYS_eventfd, initval); }
+int wali_eventfd(unsigned int initval) {
+#ifdef SYS_eventfd
+    return syscall(SYS_eventfd, initval);
+#else
+    return syscall(SYS_eventfd2, initval, 0);
+#endif
+}
 int wali_eventfd2(unsigned int initval, int flags) { return syscall(SYS_eventfd2, initval, flags); }
 #endif
 

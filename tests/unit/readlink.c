@@ -37,7 +37,13 @@ long long __imported_wali_readlink(const char *pathname, char *buf, size_t bufsi
 ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) { return (ssize_t)__imported_wali_readlink(pathname, buf, bufsiz); }
 #else
 #include <sys/syscall.h>
-ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) { return syscall(SYS_readlink, pathname, buf, bufsiz); }
+ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) {
+#ifdef SYS_readlink
+    return syscall(SYS_readlink, pathname, buf, bufsiz);
+#else
+    return syscall(SYS_readlinkat, AT_FDCWD, pathname, buf, bufsiz);
+#endif
+}
 #endif
 
 int test(void) {

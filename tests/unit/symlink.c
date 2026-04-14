@@ -40,9 +40,27 @@ ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) { return (
 int wali_lstat(const char *pathname, struct stat *statbuf) { return (int)__imported_wali_lstat(pathname, statbuf); }
 #else
 #include <sys/syscall.h>
-int wali_symlink(const char *target, const char *linkpath) { return syscall(SYS_symlink, target, linkpath); }
-ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) { return syscall(SYS_readlink, pathname, buf, bufsiz); }
-int wali_lstat(const char *pathname, struct stat *statbuf) { return syscall(SYS_lstat, pathname, statbuf); }
+int wali_symlink(const char *target, const char *linkpath) {
+#ifdef SYS_symlink
+    return syscall(SYS_symlink, target, linkpath);
+#else
+    return syscall(SYS_symlinkat, target, AT_FDCWD, linkpath);
+#endif
+}
+ssize_t wali_readlink(const char *pathname, char *buf, size_t bufsiz) {
+#ifdef SYS_readlink
+    return syscall(SYS_readlink, pathname, buf, bufsiz);
+#else
+    return syscall(SYS_readlinkat, AT_FDCWD, pathname, buf, bufsiz);
+#endif
+}
+int wali_lstat(const char *pathname, struct stat *statbuf) {
+#ifdef SYS_lstat
+    return syscall(SYS_lstat, pathname, statbuf);
+#else
+    return syscall(SYS_newfstatat, AT_FDCWD, pathname, statbuf, AT_SYMLINK_NOFOLLOW);
+#endif
+}
 #endif
 
 int test(void) {
