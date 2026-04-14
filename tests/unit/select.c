@@ -30,10 +30,20 @@ int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 
 #else
 #include <sys/syscall.h>
-int wali_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) { 
-    return syscall(SYS_select, nfds, readfds, writefds, exceptfds, timeout); 
+int wali_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
+#ifdef SYS_select
+    return syscall(SYS_select, nfds, readfds, writefds, exceptfds, timeout);
+#else
+    return syscall(SYS_pselect6, nfds, readfds, writefds, exceptfds, NULL, (long)((long[]){ 0, 7 }));
+#endif
 }
-int wali_pipe(int *pipefd) { return syscall(SYS_pipe, pipefd); }
+int wali_pipe(int *pipefd) {
+#ifdef SYS_pipe
+    return syscall(SYS_pipe, pipefd);
+#else
+    return syscall(SYS_pipe2, pipefd, 0);
+#endif
+}
 int wali_write(int fd, const void *buf, size_t count) { return syscall(SYS_write, fd, buf, count); }
 int wali_close(int fd) { return syscall(SYS_close, fd); }
 #endif

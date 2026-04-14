@@ -135,7 +135,7 @@ _syscall_list: List[Syscall] = [
     unimpl("pause", Nrs(x86_64=34)),
     impl("nanosleep", ["struct timespec* req", "struct timespec* rem"], Nrs(x86_64=35, arm64=101, rv64=101)),
     unimpl("getitimer", Nrs(x86_64=36, arm64=102, rv64=102)),
-    impl("alarm", ["int seconds"], Nrs(x86_64=37)),
+    unimpl("alarm", Nrs(x86_64=37)),
     impl("setitimer", ["int which", "struct itimerval* new_value", "struct itimerval* old_value"], Nrs(x86_64=38, arm64=103, rv64=103)),
     impl("getpid", [], Nrs(x86_64=39, arm64=172, rv64=172)),
     unimpl("sendfile", Nrs(x86_64=40, arm64=71, rv64=71)),

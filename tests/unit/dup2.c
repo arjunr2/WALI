@@ -33,7 +33,13 @@ int test_cleanup(int argc, char **argv) {
 WALI_IMPORT("SYS_dup2") long wali_syscall_dup2(int oldfd, int newfd);
 #else
 #include <sys/syscall.h>
-long wali_syscall_dup2(int oldfd, int newfd) { return syscall(SYS_dup2, oldfd, newfd); }
+long wali_syscall_dup2(int oldfd, int newfd) {
+#ifdef SYS_dup2
+    return syscall(SYS_dup2, oldfd, newfd);
+#else
+    return syscall(SYS_dup3, oldfd, newfd, 0);
+#endif
+}
 #endif
 
 int test(void) {

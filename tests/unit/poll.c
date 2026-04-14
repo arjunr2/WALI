@@ -35,10 +35,23 @@ int wali_poll(struct pollfd *fds, nfds_t nfds, int timeout) { return (int)__impo
 
 #else
 #include <sys/syscall.h>
-int wali_pipe(int *pipefd) { return syscall(SYS_pipe, pipefd); }
+int wali_pipe(int *pipefd) {
+#ifdef SYS_pipe
+    return syscall(SYS_pipe, pipefd);
+#else
+    return syscall(SYS_pipe2, pipefd, 0);
+#endif
+}
 int wali_write(int fd, const void *buf, size_t count) { return syscall(SYS_write, fd, buf, count); }
 int wali_close(int fd) { return syscall(SYS_close, fd); }
-int wali_poll(struct pollfd *fds, nfds_t nfds, int timeout) { return syscall(SYS_poll, fds, nfds, timeout); }
+int wali_poll(struct pollfd *fds, nfds_t nfds, int timeout) {
+#ifdef SYS_poll
+    return syscall(SYS_poll, fds, nfds, timeout);
+#else
+    struct timespec ts = { .tv_sec = timeout / 1000, .tv_nsec = (timeout % 1000) * 1000000L };
+    return syscall(SYS_ppoll, fds, nfds, timeout >= 0 ? &ts : NULL, NULL, 0);
+#endif
+}
 #endif
 
 int test(void) {

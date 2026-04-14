@@ -33,7 +33,13 @@ int wali_close(int fd) { return (int)__imported_wali_close(fd); }
 int wali_ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *tmo_p, const sigset_t *sigmask, size_t sigsetsize) { 
     return syscall(SYS_ppoll, fds, nfds, tmo_p, sigmask, sigsetsize); 
 }
-int wali_pipe(int *pipefd) { return syscall(SYS_pipe, pipefd); }
+int wali_pipe(int *pipefd) {
+#ifdef SYS_pipe
+    return syscall(SYS_pipe, pipefd);
+#else
+    return syscall(SYS_pipe2, pipefd, 0);
+#endif
+}
 ssize_t wali_write(int fd, const void *buf, size_t count) { return syscall(SYS_write, fd, buf, count); }
 int wali_close(int fd) { return syscall(SYS_close, fd); }
 #endif
