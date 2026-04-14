@@ -65,6 +65,8 @@ def parse_runs(source_file):
         
     return final_runs
 
+TEST_TIMEOUT = 20
+
 def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num_runs):
     run_args_setup = run_config['setup']
     run_args_cleanup = run_config.get('cleanup', [])
@@ -105,10 +107,13 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
 
     try:
         native_out = subprocess.check_output(
-            native_cmd, 
-            stderr=subprocess.STDOUT, 
-            env=env
+            native_cmd,
+            stderr=subprocess.STDOUT,
+            env=env,
+            timeout=TEST_TIMEOUT
         ).decode('utf-8')
+    except subprocess.TimeoutExpired:
+        return False, (f"Native timed out after {TEST_TIMEOUT}s", "", "")
     except subprocess.CalledProcessError as e:
         native_returncode = e.returncode
         native_out = e.output.decode('utf-8')
@@ -168,10 +173,13 @@ def run_test_case_execution(base_name, run_config, engine, verbose, run_idx, num
     wasm_out = ""
     try:
         wasm_out = subprocess.check_output(
-            iwasm_cmd, 
-            stderr=subprocess.STDOUT, 
-            env=env
+            iwasm_cmd,
+            stderr=subprocess.STDOUT,
+            env=env,
+            timeout=TEST_TIMEOUT
         ).decode('utf-8')
+    except subprocess.TimeoutExpired:
+        return False, (f"Wasm timed out after {TEST_TIMEOUT}s", native_out, "")
     except subprocess.CalledProcessError as e:
         wasm_returncode = e.returncode
         wasm_out = e.output.decode('utf-8')
