@@ -3,6 +3,8 @@ name: Docs
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
     paths:
       - 'scripts/**'
   workflow_dispatch:
