@@ -26,8 +26,8 @@ See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
 
 ### Native Linux Host
 ```shell
-# Install dependencies
-sudo ./apt-install-deps.sh
+# Install dependencies (or equivalent packages without apt)
+sudo ./apt-install-deps.sh 
 git submodule update --init wasm-micro-runtime
 # Generates `iwasm` symlink in root directory
 make iwasm
@@ -37,7 +37,7 @@ make iwasm
 This is **necessary** to build some [applications](applications) that execute intermediate binaries.
 To do this, run:
 ```shell
-# Specify '-p' option to register with systemd-binfmt for reboot survival. Default binfmt_register does not survive system reboots
+# Specify '-p' option to register with systemd-binfmt to survive system reboots.
 sudo ./toolchains/binfmt/binfmt_register.sh -p
 ```
 
@@ -57,13 +57,10 @@ docker run --rm -it -w /dir -v (pwd):/dir wali <prog.wasm> <args..>
 
 ## Compile Toolchain
 
-First build the LLVM backend for WALI:
+First download the LLVM backend for WALI:
 ```shell
-git submodule update --init --depth=1 llvm-project
-make compiler
+make compiler SLIM=1  # SLIM only includes a minimal set of llvm bins.
 ```
-
-> **Note**: Building the LLVM suite takes a long time and can consume up to 150GB of disk.
 
 Then, we can proceed to build the musl sysroot:
 ```shell
