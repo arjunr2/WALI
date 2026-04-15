@@ -40,7 +40,7 @@ WALI_WAMR_BUILD_DIR := $(WALI_BUILD_DIR)/wamr
 WALI_IWASM_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/iwasm
 WALI_WAMRC_BUILD_DIR := $(WALI_WAMR_BUILD_DIR)/wamrc
 
-.PHONY: default libc libcxx iwasm compiler llvm-base llvm-source tests wamrc rustc
+.PHONY: default libc libcxx iwasm compiler compiler-slim llvm-base llvm-slim llvm-source tests wamrc rustc
 .PHONY: clean-llvm-source clean clean-runtime clean-all clean-llvm 
 
 default: iwasm
@@ -169,17 +169,31 @@ wamrc: | wamrc_build_dir
 
 
 # --- LLVM COMPILER (pre-built release) --- #
+# Use SLIM=1 to only extract binaries needed for compilation (clang, lld, llvm-ar, etc.)
+SLIM ?= 0
+
+LLVM_SLIM_PATHS = \
+	'*/bin/clang-$(WALI_LLVM_MAJOR_VERSION)' '*/bin/clang' '*/bin/clang++' \
+	'*/bin/lld' '*/bin/ld.lld' '*/bin/wasm-ld' \
+	'*/bin/llvm-ar' '*/bin/llvm-ranlib' '*/bin/llvm-config' \
+	'*/lib/clang/*'
+
 .ONESHELL:
 llvm-base: | build_dir
 	@if [ -x "$(WALI_LLVM_BIN_DIR)/clang" ]; then \
 		echo "LLVM already installed at $(WALI_LLVM_DIR)"; \
 	else \
-		echo "Downloading $(LLVM_RELEASE_NAME).tar.xz..." && \
-		curl -L -o $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz $(LLVM_RELEASE_URL) && \
-		echo "Extracting to $(WALI_LLVM_DIR)..." && \
 		mkdir -p $(WALI_LLVM_DIR) && \
-		tar -xf $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz -C $(WALI_LLVM_DIR) --strip-components=1 && \
-		rm $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz && \
+		if [ "$(SLIM)" = "1" ]; then \
+			echo "Downloading $(LLVM_RELEASE_NAME).tar.xz (slim)..." && \
+			curl -L $(LLVM_RELEASE_URL) \
+				| tar -xJ -C $(WALI_LLVM_DIR) --strip-components=1 --wildcards $(LLVM_SLIM_PATHS); \
+		else \
+			echo "Downloading $(LLVM_RELEASE_NAME).tar.xz..." && \
+			curl -L -o $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz $(LLVM_RELEASE_URL) && \
+			tar -xf $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz -C $(WALI_LLVM_DIR) --strip-components=1 && \
+			rm $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz; \
+		fi && \
 		echo "LLVM $(LLVM_VERSION) installed at $(WALI_LLVM_DIR)"; \
 	fi
 
