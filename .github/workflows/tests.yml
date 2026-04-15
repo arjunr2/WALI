@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-x86_64:
+  test-wali-x86_64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
       - name: Run tests
         run: cd tests && python3 run_tests.py
 
-  test-aarch64:
+  test-wali-aarch64:
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
