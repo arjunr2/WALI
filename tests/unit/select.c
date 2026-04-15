@@ -34,8 +34,9 @@ int wali_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
 #ifdef SYS_select
     return syscall(SYS_select, nfds, readfds, writefds, exceptfds, timeout);
 #else
-    long data[2] = { 0 , 8 };
-    return syscall(SYS_pselect6, nfds, readfds, writefds, exceptfds, NULL, data);
+    sigset_t set;
+    sigemptyset(&set);
+    return syscall(SYS_pselect6, nfds, readfds, writefds, exceptfds, timeout, &set);
 #endif
 }
 int wali_pipe(int *pipefd) {
