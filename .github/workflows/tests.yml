@@ -65,7 +65,7 @@ jobs:
         run: make libc
 
       - name: Build tests
-        run: make -i -C tests
+        run: make -C tests
 
       - name: Run tests
         run: cd tests && python3 run_tests.py
