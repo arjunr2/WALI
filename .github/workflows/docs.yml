@@ -27,7 +27,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install mkdocs-material pyyaml
+        run: pip install mkdocs-material mkdocs-macros-plugin pyyaml
 
       - name: Generate docs
         working-directory: scripts
