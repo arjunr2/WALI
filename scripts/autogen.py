@@ -601,6 +601,7 @@ def parse_args() -> argparse.Namespace:
         
     return p
 
+
 def main():
     args = parse_args()
     log_level = logging.getLevelName((6-args.verbose)*10) if args.verbose != 0 else logging.NOTSET
