@@ -44,6 +44,7 @@ jobs:
           path: site
 
   deploy-docs:
+    if: github.event_name != 'pull_request'
     needs: build-docs
     runs-on: ubuntu-latest
     environment:
