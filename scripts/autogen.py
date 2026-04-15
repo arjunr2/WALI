@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Callable, Set, Optional, Tuple, Type
 
 # Import definition objects
 from syscall_definitions import SYSCALLS, AUX_SYSCALLS, Syscall, AuxSyscall, Nrs, ScArg
-from type_system import TypeSystem
+from types_abi import TypeSystem, STRUCT_DEFS, field_type_to_wit, to_wit_name
 
 @dataclass
 class GeneratorContext:
@@ -20,9 +20,7 @@ class GeneratorContext:
     @classmethod
     def create(cls) -> 'GeneratorContext':
         logging.info("Creating context...")
-        # Load Type System from wit templates
-        script_dir = Path(__file__).parent
-        ts = TypeSystem.load(script_dir / 'templates' / 'wit')
+        ts = TypeSystem.load()
         archs = [f.name for f in fields(Nrs)]
         return cls(ts, archs, SYSCALLS, AUX_SYSCALLS)
 
@@ -276,6 +274,21 @@ class WitGenerator(StubGenerator):
         
         self._generate_wit_file(buf, buf_aux, uniq_ptr_types, aux_ptr_types)
 
+    def _generate_record_content(self) -> str:
+        """Generate WIT record definitions from STRUCT_DEFS."""
+        lines = []
+        for sd in STRUCT_DEFS.values():
+            wit_name = to_wit_name(sd.name)
+            lines.append(f"record {wit_name} {{")
+            for i, f in enumerate(sd.fields):
+                wit_field_name = to_wit_name(f.name)
+                wit_type = field_type_to_wit(f.type_name)
+                comma = "," if i < len(sd.fields) - 1 else ""
+                lines.append(f"  {wit_field_name}: {wit_type}{comma}")
+            lines.append("}")
+            lines.append("")
+        return '\n'.join(lines)
+
     def _generate_wit_file(self, buf, buf_aux, uniq_ptr_types, aux_ptr_types):
         rep = lambda p: p.replace('_', '-').replace(' ', '-')
         comp_types = {'syscall-result': 's64'}
@@ -287,21 +300,20 @@ class WitGenerator(StubGenerator):
                   [f"\ttype {k} = {v};" for k, v in comp_types.items()] + \
                   ["}"]
 
-        # Process Records
-        with open(self.TEMPLATES_DIR / 'wit' / 'records.wit.template') as f:
-            record_content = f.read()
+        # Generate records from STRUCT_DEFS
+        record_content = self._generate_record_content()
 
-        record_types = set(re.findall(r'record (\S+)', record_content))
+        # Validate that all pointer types in syscalls have matching records
+        record_types = set(to_wit_name(name) for name in STRUCT_DEFS.keys())
         sc_ptr_types = set()
-        
+
         for x in uniq_ptr_types:
             x_no_ptr = x
             while x_no_ptr.startswith("ptr-"):
                 x_no_ptr = x_no_ptr.replace("ptr-", "", 1)
-            
-            # Helper to check validity
-            is_skippable = (x_no_ptr in self.ts.basic_types or 
-                            x_no_ptr in comp_types or 
+
+            is_skippable = (x_no_ptr in self.ts.basic_types or
+                            x_no_ptr in comp_types or
                             x_no_ptr in ['void', 'char'])
             if not is_skippable:
                 sc_ptr_types.add(x_no_ptr)
@@ -311,7 +323,7 @@ class WitGenerator(StubGenerator):
             logging.warning(f"Missing Records for Complex Types: {missing_types}")
         else:
             logging.info("Successfully bound all records")
-        
+
         sc_prelude = (
             ["interface syscalls {"] +
             [f"\tuse types.{{{', '.join(comp_types)}}};"] +
@@ -321,7 +333,6 @@ class WitGenerator(StubGenerator):
             ["\t" + '\n\t'.join(record_content.split('\n'))] +
             [""]
         )
-
 
         aux_prelude = (
             ["interface aux {"] +
@@ -348,9 +359,9 @@ class WitGenerator(StubGenerator):
             num_elem, ty = matchobj.groups()
             return "tuple<{}>".format(','.join([ty] * int(num_elem)))
 
-        # TEMPORARY: No fixed-length arrays in WIT
+        # No fixed-length arrays in WIT — convert Array[N, T] to tuple<T, T, ...>
         fill_temp = re.sub(r'Array\[\s*(\d+),\s*(\S+)\s*\]', matchrep, fill_temp)
-        
+
         self.write_file('wali.wit', fill_temp)
 
 

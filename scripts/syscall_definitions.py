@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, NamedTuple, Dict
-from type_system import TypeSystem
+from types_abi import TypeSystem
 
 @dataclass
 class Nrs:
