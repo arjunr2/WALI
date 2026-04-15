@@ -8,11 +8,10 @@ from typing import List, Dict, Any, Callable, Set, Optional, Tuple, Type
 
 # Import definition objects
 from syscall_definitions import SYSCALLS, AUX_SYSCALLS, Syscall, AuxSyscall, Nrs, ScArg
-from types_abi import TypeSystem, STRUCT_DEFS, field_type_to_wit, to_wit_name
+from types_abi import TypeSystem
 
 @dataclass
 class GeneratorContext:
-    ts: TypeSystem
     archs: List[str]
     syscalls: Dict[str, Syscall]
     aux_syscalls: Dict[str, AuxSyscall]
@@ -20,9 +19,8 @@ class GeneratorContext:
     @classmethod
     def create(cls) -> 'GeneratorContext':
         logging.info("Creating context...")
-        ts = TypeSystem.load()
         archs = [f.name for f in fields(Nrs)]
-        return cls(ts, archs, SYSCALLS, AUX_SYSCALLS)
+        return cls(archs, SYSCALLS, AUX_SYSCALLS)
 
 
 # --- Base Generator ---
@@ -30,24 +28,21 @@ class StubGenerator:
     # Shared paths for all generators
     SCRIPT_DIR = Path(__file__).parent
     TEMPLATES_DIR = SCRIPT_DIR / 'templates'
-    
+    TS = TypeSystem
+
     def __init__(self, spath: Path, context: GeneratorContext):
         self.spath = spath
         self.spath.mkdir(parents=True, exist_ok=True)
         self.ctx = context
 
     @property
-    def ts(self) -> TypeSystem:
-        return self.ctx.ts
-
-    @property
     def archs(self) -> List[str]:
         return self.ctx.archs
-    
+
     @property
     def syscalls(self) -> Dict[str, Syscall]:
         return self.ctx.syscalls
-    
+
     @property
     def aux_syscalls(self) -> Dict[str, AuxSyscall]:
         return self.ctx.aux_syscalls
@@ -84,29 +79,29 @@ class LibcGenerator(StubGenerator):
         """Anonymize pointer argument types to void* for non-basic pointer types."""
         def f(arg: ScArg):
             (indir, base) = arg.ptr_split(max=1)
-            return 'void*' if indir > 0 and not base.is_basic_type(self.ts) else arg
+            return 'void*' if indir > 0 and not self.TS.is_primitive(base) else arg
         
         return [f(arg) for arg in args]
 
     def rustify_args(self, sc: Syscall) -> List[str]:
         """Convert argument types to Rust compatible types"""
         def f(arg: ScArg):
-            prim = arg.wit_primitive_type(self.ts)
+            prim = 's32' if arg.is_ptr() or arg.is_fn_ptr() else self.TS.resolve_primitive(arg).wit_name
             return prim if not prim.startswith('s') else 'i' + prim[1:]
-        
-        return [f(x) for x in sc.args_reduce(self.ts)]
+
+        return [f(x) for x in sc.args_reduce()]
 
 
     def _gen_c_stubs(self):
         def def_stub(sc: Syscall):
-            arglist = ','.join(self._ptr_anonymize(sc.args_reduce(self.ts)))
+            arglist = ','.join(self._ptr_anonymize(sc.args_reduce()))
             s = f"WALI_SYSCALL_DEF ({sc.name}, {arglist});"
             for alias in sc.aliases:
                 s += f"\n#define __syscall_SYS_{alias} __syscall_SYS_{sc.name}"
             return s
 
         def case_stub(sc: Syscall):
-            anon_args = self._ptr_anonymize(sc.args_reduce(self.ts))
+            anon_args = self._ptr_anonymize(sc.args_reduce())
             arglist = ','.join([f"({typ})a{i+1}" for i, typ in enumerate(anon_args)])
             return f"\t\tCASE_SYSCALL ({sc.name}, {arglist});"
 
@@ -130,7 +125,7 @@ class LibcGenerator(StubGenerator):
 
         def rust_match_stub(sc: Syscall):
             if sc.implemented:
-                call_args = ', '.join([f"a{x}" for x, _ in enumerate(sc.args_reduce(self.ts))])
+                call_args = ', '.join([f"a{x}" for x, _ in enumerate(sc.args_reduce())])
                 code = f"super::SYS_{sc.name} => syscall_match_arm!(SYS_{sc.name}, args, {call_args}),"
             else:
                 code = f"super::SYS_{sc.name} => unimplemented!(\"WALI syscall '{sc.name}' ({sc.nr}) unimplemented!\"),"
@@ -162,11 +157,11 @@ class LibcGenerator(StubGenerator):
 class WamrGenerator(StubGenerator):
     def generate(self):
         def declr_stub(sc: Syscall):
-            arglist = ''.join([f", long a{i+1}" for i, _ in enumerate(sc.args_reduce(self.ts))])
+            arglist = ''.join([f", long a{i+1}" for i, _ in enumerate(sc.args_reduce())])
             return f"long wali_syscall_{sc.name} (wasm_exec_env_t exec_env{arglist});"
 
         def impl_stub(sc: Syscall):
-            args_red = sc.args_reduce(self.ts)
+            args_red = sc.args_reduce()
             arglist_def = ''.join([f", long a{i+1}" for i, _ in enumerate(args_red)])
             
             # Construct return call args
@@ -195,7 +190,7 @@ class WamrGenerator(StubGenerator):
             return "\tNSYMBOL ( {: >20}, {: >30}, {: >12} ),".format(
                 "SYS_" + sc.name,
                 "wali_syscall_" + sc.name,
-                gen_native_args(sc.args_reduce(self.ts))
+                gen_native_args(sc.args_reduce())
             )
 
         self.gen_and_write(declr_stub, 'declr.out')
@@ -211,8 +206,55 @@ class WitGenerator(StubGenerator):
         "list": "list-id",
         "option": "option-id",
     }
-    
+
+    # --- WIT naming helpers ---
+
+    @staticmethod
+    def _to_wit(name: str) -> str:
+        """Convert type name to WIT hyphen-style (handles both spaces and underscores)."""
+        return name.replace(' ', '-').replace('_', '-')
+
+    @staticmethod
+    def _is_stdint(name: str) -> bool:
+        """Check if a C_PRIMITIVES key is a stdint type (uint32_t, int64_t, etc.)."""
+        return name.endswith('_t') and len(name) > 1 and name[0] in 'iu'
+
+    def _field_type_to_wit(self, type_name: str) -> str:
+        """Convert a types_abi field type name to its WIT representation."""
+        TS = self.TS
+        if type_name in TS.type_aliases:
+            return self._to_wit(type_name)
+        if type_name in TS.array_types:
+            return self._to_wit(type_name)
+        if type_name in TS.struct_defs:
+            return self._to_wit(type_name)
+        if type_name in TS.c_primitives:
+            if self._is_stdint(type_name):
+                return TS.c_primitives[type_name].wit_name
+            return self._to_wit(type_name)
+        arr = TS.parse_inline_array(type_name)
+        if arr:
+            count, elem = arr
+            wit_elem = self._field_type_to_wit(elem)
+            return f"Array[{count}, {wit_elem}]"
+        raise RuntimeError(f"Cannot convert type '{type_name}' to WIT name")
+
+    def _resolve_arg_wit(self, arg: str) -> str:
+        """Resolve a WIT-formatted syscall arg type to its WIT primitive if it's a basic type."""
+        # arg is already in WIT format (hyphens). Check if it's a basic C type alias.
+        if arg in self._basic_types_wit:
+            return self._basic_types_wit[arg]
+        return arg
+
+    # --- Generation ---
+
     def generate(self):
+        # Build a WIT-format lookup for basic C types: "unsigned-int" -> "u32", etc.
+        self._basic_types_wit = {}
+        for c_name, prim in self.TS.c_primitives.items():
+            if not self._is_stdint(c_name):
+                self._basic_types_wit[self._to_wit(c_name)] = prim.wit_name
+
         buf = []
         buf_aux = []
         uniq_ptr_types = set()
@@ -228,14 +270,14 @@ class WitGenerator(StubGenerator):
         for sc in self.syscalls.values():
             args = [ScArg(x.strip().replace(' ', '-').replace('_', '-')) for x in sc.args]
             args = [transform_ptr_arg(x) for x in args]
-            
+
             up_types = set([x for x in args if x.startswith('ptr-')])
             uniq_ptr_types.update(up_types)
 
             if sc.implemented:
                 l1 = f"\t// [{sc.nr}] {sc.name}({', '.join(sc.args)})"
                 wit_args = ', '.join([
-                    f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
+                    f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self._resolve_arg_wit(arg)}"
                     for (id, arg) in zip(sc.args_id, args)
                 ])
                 l2 = f"\tSYS-{sc.name.replace('_', '-')}: func({wit_args}) -> syscall-result;"
@@ -244,45 +286,73 @@ class WitGenerator(StubGenerator):
         for sc in self.aux_syscalls.values():
             args = [x.strip().replace(' ', '-').replace('_', '-') for x in sc.args]
             args = [transform_ptr_arg(ScArg(x)) for x in args]
-            
+
             up_types = set([x for x in args if x.startswith('ptr-')])
             aux_ptr_types.update(up_types)
 
             l1 = f"\t// {sc.name}({', '.join(sc.args)})"
             wit_args = ', '.join([
-                f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self.ts.basic_types[arg] if arg in self.ts.basic_types else arg}" 
+                f"{self.WIT_KEYWORDS_RESERVED_MAP.get(id, id.replace('_', '-'))}: {self._resolve_arg_wit(arg)}"
                 for (id, arg) in zip(sc.args_id, args)
             ])
-            
+
             name = sc.name.lstrip('_').replace('_', '-')
             start_sig = f"\t{name}: func({wit_args})"
-            
+
             res_ty = None
             if sc.result:
-                # If sc.result is basic type, use map
-                res_ty = self.ts.basic_types.get(sc.result, sc.result)
-            
+                res_ty = self._resolve_arg_wit(sc.result)
+
             if res_ty:
                 l2 = f"{start_sig} -> {res_ty};"
             else:
                 l2 = f"{start_sig};"
-            
+
             buf_aux.append(l1 + '\n' + l2)
 
         buf = list(filter(bool, buf))
         buf_aux = list(filter(bool, buf_aux))
-        
+
         self._generate_wit_file(buf, buf_aux, uniq_ptr_types, aux_ptr_types)
 
+    def _build_wit_comp_types(self) -> dict:
+        """Build the WIT type alias declarations from the type system."""
+        comp_types = {}
+
+        # C primitive type aliases (e.g., "type long = s64;")
+        for c_name, prim in self.TS.c_primitives.items():
+            if self._is_stdint(c_name):
+                continue
+            comp_types[self._to_wit(c_name)] = prim.wit_name
+
+        # Type aliases (e.g., "type off-t = long-long;")
+        for alias_name, target in self.TS.type_aliases.items():
+            wit_alias = self._to_wit(alias_name)
+            if target in self.TS.c_primitives:
+                if self._is_stdint(target):
+                    comp_types[wit_alias] = self.TS.c_primitives[target].wit_name
+                else:
+                    comp_types[wit_alias] = self._to_wit(target)
+            else:
+                comp_types[wit_alias] = self._to_wit(target)
+
+        # Array types (e.g., "type sigset-t = Array[128, u8];")
+        for arr_name, arr_type in self.TS.array_types.items():
+            wit_name = self._to_wit(arr_name)
+            elem_wit = self.TS.c_primitives[arr_type.element_type].wit_name
+            comp_types[wit_name] = f"Array[{arr_type.count}, {elem_wit}]"
+
+        return comp_types
+
     def _generate_record_content(self) -> str:
-        """Generate WIT record definitions from STRUCT_DEFS."""
+        """Generate WIT record definitions from struct defs."""
         lines = []
-        for sd in STRUCT_DEFS.values():
-            wit_name = to_wit_name(sd.name)
+        for sd in self.TS.struct_defs.values():
+            wit_name = self._to_wit(sd.name)
             lines.append(f"record {wit_name} {{")
             for i, f in enumerate(sd.fields):
-                wit_field_name = to_wit_name(f.name)
-                wit_type = field_type_to_wit(f.type_name)
+                wit_field_name = self._to_wit(f.name)
+                wit_type = self._field_type_to_wit(f.type_name)
                 comma = "," if i < len(sd.fields) - 1 else ""
                 lines.append(f"  {wit_field_name}: {wit_type}{comma}")
             lines.append("}")
@@ -290,21 +360,17 @@ class WitGenerator(StubGenerator):
         return '\n'.join(lines)
 
     def _generate_wit_file(self, buf, buf_aux, uniq_ptr_types, aux_ptr_types):
-        rep = lambda p: p.replace('_', '-').replace(' ', '-')
-        comp_types = {'syscall-result': 's64'}
-        for k, v in (self.ts.basic_types | self.ts.complex_types).items():
-             val = rep(v) if not v.startswith('Array') else v.replace('_', '-')
-             comp_types[rep(k)] = val
+        comp_types = self._build_wit_comp_types()
 
         type_if = ["interface types {"] + \
                   [f"\ttype {k} = {v};" for k, v in comp_types.items()] + \
                   ["}"]
 
-        # Generate records from STRUCT_DEFS
+        # Generate records from struct defs
         record_content = self._generate_record_content()
 
         # Validate that all pointer types in syscalls have matching records
-        record_types = set(to_wit_name(name) for name in STRUCT_DEFS.keys())
+        record_types = set(self._to_wit(name) for name in self.TS.struct_defs.keys())
         sc_ptr_types = set()
 
         for x in uniq_ptr_types:
@@ -312,7 +378,7 @@ class WitGenerator(StubGenerator):
             while x_no_ptr.startswith("ptr-"):
                 x_no_ptr = x_no_ptr.replace("ptr-", "", 1)
 
-            is_skippable = (x_no_ptr in self.ts.basic_types or
+            is_skippable = (x_no_ptr in self._basic_types_wit or
                             x_no_ptr in comp_types or
                             x_no_ptr in ['void', 'char'])
             if not is_skippable:
@@ -444,7 +510,7 @@ class DocsGenerator(StubGenerator):
         """Generate Wasm32 import signature in WAT format."""
         # Map C types to Wasm types
         def to_wasm_type(ty: ScArg) -> str:
-            prim = ty.wit_primitive_type(self.ts)
+            prim = self.TS.resolve_primitive(ty).wit_name if not (ty.is_ptr() or ty.is_fn_ptr()) else 's32'
             bitwidth = "32" if int(prim[1:]) < 32 else prim[1:]
             return f"i{bitwidth}"
         

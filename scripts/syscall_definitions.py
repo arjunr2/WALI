@@ -15,9 +15,6 @@ class ScArg(str):
     def is_fn_ptr(self) -> bool:
         return self.startswith('fn(')
 
-    def is_basic_type(self, ts: TypeSystem) -> bool:
-        return self in ts.basic_types
-    
     def ptr_split(self, max: int | None = None) -> Tuple[int, 'ScArg']:
         """Returns a split of the number of pointer indirections and base type."""
         a = self.rstrip('*')
@@ -25,18 +22,6 @@ class ScArg(str):
         if max is not None and indirection > max:
             a += '*' * (indirection - max)
         return (len(self) - len(a), ScArg(a))
-    
-    def wit_primitive_type(self, ts: TypeSystem) -> str:
-        """Resolves the argument to its underlying WIT primitive type."""
-        if self.is_ptr() or self.is_fn_ptr():
-            return 's32'
-        r = self
-        while r not in ts.wit_primitive_set:
-            try:
-                r = ts.combined_types[r]
-            except KeyError as e:
-                raise RuntimeError(f"Type '{r}' not found in combined types") from e
-        return r
 
 
 
@@ -61,16 +46,15 @@ class Syscall:
     def num_args(self) -> int:
         return len(self.args)
 
-    def args_reduce(self, ts: TypeSystem, replace_complex: bool = True) -> List[ScArg]:
-        '''Returns argument list with complex types reduce by their base types.'''
-        def f(ts: TypeSystem, arg: ScArg):
+    def args_reduce(self) -> List[ScArg]:
+        '''Returns argument list with complex types replaced by their base types.'''
+        def f(arg: ScArg):
             try:
-                arg = ScArg(ts.complex_types[arg])
-                return arg
+                return ScArg(TypeSystem.reduce_alias(arg))
             except KeyError as e:
-                raise RuntimeError(f"Type '{arg}' not found in complex types (used in syscall '{self.name}')") from e
+                raise RuntimeError(f"Type '{arg}' not found in type aliases (used in syscall '{self.name}')") from e
 
-        return [f(ts, arg) if not arg.is_ptr() and not arg.is_basic_type(ts) else arg for arg in self.args]
+        return [f(arg) if not arg.is_ptr() and not TypeSystem.is_primitive(arg) else arg for arg in self.args]
 
 
 # -----------------------------------------------------------------------------
