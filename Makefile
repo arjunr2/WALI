@@ -15,19 +15,16 @@ endif
 
 LINK_PARALLEL := $(shell echo $$(($(MEMGB) < 16 ? 1 : $(MEMGB) / 16)))
 
-# LLVM release configuration
-LLVM_VERSION := 22.1.3
-
 MAP_Linux := Linux
 MAP_Darwin := macOS
 MAP_x86_64 := X64
 MAP_aarch64 := ARM64
 
 LLVM_RELEASE_PLATFORM := $(MAP_$(UNAME_S))-$(MAP_$(UNAME_M))
-LLVM_RELEASE_NAME := LLVM-$(LLVM_VERSION)-$(LLVM_RELEASE_PLATFORM)
+LLVM_RELEASE_NAME := LLVM-$(WALI_LLVM_VERSION)-$(LLVM_RELEASE_PLATFORM)
 LLVM_RELEASE_BASE := https://github.com/llvm/llvm-project/releases/download
-LLVM_RELEASE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(LLVM_VERSION)/$(LLVM_RELEASE_NAME).tar.xz
-LLVM_SOURCE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(LLVM_VERSION)/llvm-project-$(LLVM_VERSION).src.tar.xz
+LLVM_RELEASE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(WALI_LLVM_VERSION)/$(LLVM_RELEASE_NAME).tar.xz
+LLVM_SOURCE_URL := $(LLVM_RELEASE_BASE)/llvmorg-$(WALI_LLVM_VERSION)/llvm-project-$(WALI_LLVM_VERSION).src.tar.xz
 
 # Source directories
 LLVM_SOURCE_DIR := $(WALI_BUILD_DIR)/llvm-source
@@ -89,13 +86,13 @@ llvm-source: | build_dir
 	@if [ -d "$(LLVM_SOURCE_DIR)/runtimes" ]; then \
 		echo "LLVM source already at $(LLVM_SOURCE_DIR)"; \
 	else \
-		echo "Downloading llvm-project-$(LLVM_VERSION) source..." && \
+		echo "Downloading llvm-project-$(WALI_LLVM_VERSION) source..." && \
 		curl -L -o $(WALI_BUILD_DIR)/llvm-source.tar.xz $(LLVM_SOURCE_URL) && \
 		echo "Extracting to $(LLVM_SOURCE_DIR)..." && \
 		mkdir -p $(LLVM_SOURCE_DIR) && \
 		tar -xf $(WALI_BUILD_DIR)/llvm-source.tar.xz -C $(LLVM_SOURCE_DIR) --strip-components=1 && \
 		rm $(WALI_BUILD_DIR)/llvm-source.tar.xz && \
-		echo "LLVM $(LLVM_VERSION) source at $(LLVM_SOURCE_DIR)"; \
+		echo "LLVM $(WALI_LLVM_VERSION) source at $(LLVM_SOURCE_DIR)"; \
 	fi
 
 # NOTE: Catching Exceptions only seems to work when libcxx is compiled in Debug mode (O0) #
@@ -172,7 +169,7 @@ wamrc: | wamrc_build_dir
 # Use SLIM=1 to only extract binaries needed for compilation (clang, lld, llvm-ar, etc.)
 SLIM ?= 0
 
-LLVM_SLIM_PATHS = \
+LLVM_SLIM_PATHS := \
 	'*/bin/clang-$(WALI_LLVM_MAJOR_VERSION)' '*/bin/clang' '*/bin/clang++' \
 	'*/bin/lld' '*/bin/ld.lld' '*/bin/wasm-ld' \
 	'*/bin/llvm-ar' '*/bin/llvm-ranlib' '*/bin/llvm-config' \
@@ -194,7 +191,7 @@ llvm-base: | build_dir
 			tar -xf $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz -C $(WALI_LLVM_DIR) --strip-components=1 && \
 			rm $(WALI_BUILD_DIR)/$(LLVM_RELEASE_NAME).tar.xz; \
 		fi && \
-		echo "LLVM $(LLVM_VERSION) installed at $(WALI_LLVM_DIR)"; \
+		echo "LLVM $(WALI_LLVM_VERSION) installed at $(WALI_LLVM_DIR)"; \
 	fi
 
 .ONESHELL:

@@ -23,6 +23,10 @@ def main():
         sys.exit(1)
     target_novendor = '-'.join([triple_split[0]] + triple_split[2:])
 
+    # LLVM version
+    llvm_version = cfg["llvm"]["version"]
+    llvm_major   = llvm_version.split('.')[0]
+
     paths  = cfg["build_dirs"]
     build_dir = paths["root"]
     llvm_dir  = paths["llvm"]
@@ -89,8 +93,9 @@ def main():
         WALI_TARGET          := {target}
         WALI_TARGET_NOVENDOR := {target_novendor}
 
-        # --- Libclang RT --- #
-        WALI_LLVM_MAJOR_VERSION = $(shell $(WALI_LLVM_BIN_DIR)/{llvm_config} --version | cut -d '.' -f 1)
+        # --- LLVM Version --- #
+        WALI_LLVM_VERSION       := {llvm_version}
+        WALI_LLVM_MAJOR_VERSION := {llvm_major}
         WALI_LIBCLANG_RT_LIB = $(WALI_LLVM_DIR)/lib/clang/$(WALI_LLVM_MAJOR_VERSION)/lib/{target}/libclang_rt.builtins.a
 
         #.PHONY: print-vars
@@ -133,9 +138,10 @@ def main():
         export WALI_TARGET={target}
         export WALI_TARGET_NOVENDOR={target_novendor}
 
-        # Libclang RT: Uncomment this only after llvm is already built, if needed.
-        # export WALI_LLVM_MAJOR_VERSION=$($WALI_LLVM_BIN_DIR/{llvm_config} --version | cut -d '.' -f 1)
-        # export WALI_LIBCLANG_RT_LIB=$WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
+        # LLVM Version
+        export WALI_LLVM_VERSION={llvm_version}
+        export WALI_LLVM_MAJOR_VERSION={llvm_major}
+        export WALI_LIBCLANG_RT_LIB=$WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
     """)
 
     # -------------------
@@ -169,9 +175,10 @@ def main():
         set -gx WALI_TARGET {target}
         set -gx WALI_TARGET_NOVENDOR {target_novendor}
 
-        # Libclang RT: Uncomment this only after llvm is already built, if needed.
-        # set -gx WALI_LLVM_MAJOR_VERSION ($WALI_LLVM_BIN_DIR/{llvm_config} --version | cut -d '.' -f 1)
-        # set -gx WALI_LIBCLANG_RT_LIB $WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
+        # LLVM Version
+        set -gx WALI_LLVM_VERSION {llvm_version}
+        set -gx WALI_LLVM_MAJOR_VERSION {llvm_major}
+        set -gx WALI_LIBCLANG_RT_LIB $WALI_LLVM_DIR/lib/clang/$WALI_LLVM_MAJOR_VERSION/lib/{target}/libclang_rt.builtins.a
     """)
 
     # -------------------
