@@ -27,10 +27,10 @@ dir:
 	mkdir -p $(ELF_DIR)
 
 %.o: %.c
-	$(WALI_CC) --target=$(HOST_PLATFORM) -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
+	$(WALI_CC) --target=$(HOST_PLATFORM) -D_GNU_SOURCE -O1 -o $(ELF_DIR)/$* $< $(ELF_LFLAGS)
 
 %.wasm: %.c
-	$(WALI_CC) $(WALI_COMMON_CFLAGS) $(WALI_COMMON_LDFLAGS) -o $(WASM_DIR)/$*.wasm $<
+	$(WALI_CC) $(WALI_COMMON_CFLAGS) -D_GNU_SOURCE $(WALI_COMMON_LDFLAGS) -o $(WASM_DIR)/$*.wasm $<
 	wasm2wat --enable-threads $(WASM_DIR)/$*.wasm -o $(WASM_DIR)/$*.wat
 
 

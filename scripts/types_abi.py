@@ -129,7 +129,7 @@ class TypeSystem:
     }
 
     array_types: dict[str, ArrayType] = {
-        "sigset_t":  ArrayType("uint8_t",  128),
+        "sigset_t":  ArrayType("long",     16),
         "fsid_t":    ArrayType("int32_t",  2),
         "uts_str":   ArrayType("uint8_t",  65),
     }
@@ -143,6 +143,7 @@ class TypeSystem:
         name: str
         fields: list[Field]
         expected_size: int | None = None
+        packed: bool = False   # __attribute__((packed)) — no field padding, alignment=1
 
         # Computed in __post_init__
         field_offsets: list[int] = field(default_factory=list, init=False, repr=False)
@@ -152,7 +153,7 @@ class TypeSystem:
 
         def __post_init__(self):
             self.field_offsets, self.field_sizes, self.total_size, self.alignment = \
-                TypeSystem.compute_struct_layout(self.fields)
+                TypeSystem.compute_struct_layout(self.fields, packed=self.packed)
             if self.expected_size is not None:
                 assert self.total_size == self.expected_size, \
                     f"{self.name}: computed size {self.total_size} != expected {self.expected_size}"
@@ -184,7 +185,9 @@ class TypeSystem:
 
     @classmethod
     def resolve_size(cls, type_name: str) -> int:
-        """Return the byte size of any type (primitive, alias, array, struct, inline array)."""
+        """Return the byte size of any type (primitive, alias, array, struct, inline array, pointer)."""
+        if type_name.endswith('*'):
+            return cls.c_primitives['ptr'].size   # wasm32 pointer
         if type_name in cls.c_primitives:
             return cls.c_primitives[type_name].size
         if type_name in cls.type_aliases:
@@ -203,6 +206,8 @@ class TypeSystem:
     @classmethod
     def resolve_alignment(cls, type_name: str) -> int:
         """Return the alignment requirement (bytes) for any type."""
+        if type_name.endswith('*'):
+            return cls.c_primitives['ptr'].size   # wasm32 pointer alignment
         if type_name in cls.c_primitives:
             return cls.c_primitives[type_name].size  # natural alignment
         if type_name in cls.type_aliases:
@@ -218,11 +223,12 @@ class TypeSystem:
         raise RuntimeError(f"Cannot resolve alignment for type '{type_name}'")
 
     @classmethod
-    def compute_struct_layout(cls, fields: list[Field]) -> tuple[list[int], list[int], int, int]:
+    def compute_struct_layout(cls, fields: list[Field], packed: bool = False) -> tuple[list[int], list[int], int, int]:
         """Compute struct layout using C alignment rules.
 
         Returns (field_offsets, field_sizes, total_size, struct_alignment).
         Fields with explicit offsets override the computed position.
+        If packed=True, all fields are placed with alignment 1 (no padding).
         """
         offsets: list[int] = []
         sizes: list[int] = []
@@ -231,7 +237,7 @@ class TypeSystem:
 
         for f in fields:
             f_size = cls.resolve_size(f.type_name)
-            f_align = cls.resolve_alignment(f.type_name)
+            f_align = 1 if packed else cls.resolve_alignment(f.type_name)
             max_alignment = max(max_alignment, f_align)
 
             if f.offset is not None:
@@ -328,7 +334,7 @@ TypeSystem.StructDef("struct timezone", [
 ], expected_size=8)
 
 TypeSystem.StructDef("stack_t", [
-    Field("ss_sp",    "ptr"),
+    Field("ss_sp",    "void*"),
     Field("ss_flags", "int32_t"),
     Field("ss_size",  "size_t"),
 ])
@@ -344,10 +350,10 @@ TypeSystem.StructDef("struct dirent", [
 TypeSystem.StructDef("struct epoll_event", [
     Field("events", "uint32_t"),
     Field("data",   "epoll_data_t"),
-])
+], packed=True, expected_size=12)
 
 TypeSystem.StructDef("struct iovec", [
-    Field("iov_base", "ptr"),
+    Field("iov_base", "void*"),
     Field("iov_len",  "size_t"),
 ])
 
@@ -442,12 +448,12 @@ TypeSystem.StructDef("struct itimerval", [
 ])
 
 TypeSystem.StructDef("struct msghdr", [
-    Field("msg_name",       "ptr"),
+    Field("msg_name",       "void*"),
     Field("msg_namelen",    "socklen_t"),
-    Field("msg_iov",        "struct iovec"),
+    Field("msg_iov",        "struct iovec*"),
     Field("msg_iovlen",     "int32_t"),
     Field("pad1",           "int32_t"),
-    Field("msg_control",    "ptr"),
+    Field("msg_control",    "void*"),
     Field("msg_controllen", "socklen_t"),
     Field("pad2",           "int32_t"),
     Field("msg_flags",      "int32_t"),
