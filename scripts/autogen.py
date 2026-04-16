@@ -481,12 +481,13 @@ class DocsGenerator(StubGenerator):
             with open(tpl_path) as f:
                 templates[name] = f.read()
         return templates
-    
+
     def generate(self):
         """Generate all documentation files."""
         self._gen_specification_index()
         self._gen_syscall_pages()
         self._gen_aux_pages()
+        self._gen_type_pages()
         self._copy_static_docs()
     
     def _copy_static_docs(self):
@@ -586,21 +587,32 @@ class DocsGenerator(StubGenerator):
     def _gen_syscall_page(self, sc: Syscall):
         """Generate a single syscall documentation page."""
         override = self.overrides.get(sc.name, {})
-        
+
         # Build signatures
         c_sig = self._c_signature(sc.name, sc.args, sc.args_id)
         wasm_sig = self._wasm_signature(sc.name, sc.args, sc.args_id)
-        
+
         # Build badges
         badges = self._make_badges(sc)
-        
+
         # Description from override only
         description = override.get('description', '')
-        
+
         # Notes section
         notes = override.get('notes', '')
         notes_md = f"## Notes\n\n{notes}" if notes else ""
-        
+
+        # Referenced types section
+        refs = self._syscall_referenced_types(sc)
+        if refs:
+            lines = ["## Referenced Types", ""]
+            for type_name, arg_names in refs:
+                via = ", ".join(f"`{n}`" for n in arg_names)
+                lines.append(f"- {self._type_link(type_name, '../types.md')} (via {via})")
+            refs_md = "\n".join(lines) + "\n"
+        else:
+            refs_md = ""
+
         content = self.templates['syscall'].replace(
             '[[NAME]]', sc.name
         ).replace(
@@ -612,9 +624,9 @@ class DocsGenerator(StubGenerator):
         ).replace(
             '[[WASM_SIGNATURE]]', wasm_sig
         ).replace(
-            '[[NOTES]]', notes_md
+            '[[NOTES]]', refs_md + notes_md
         )
-        
+
         self.write_file(f'specification/syscalls/{sc.name}.md', content)
     
     def _gen_aux_pages(self):
@@ -656,9 +668,122 @@ class DocsGenerator(StubGenerator):
         ).replace(
             '[[NOTES]]', notes_md
         )
-        
+
         self.write_file(f'specification/aux/{name_clean}.md', content)
 
+    # --- Type page generation ---
+
+    @staticmethod
+    def _type_page_filename(type_name: str) -> str:
+        """Convert a type name to a markdown filename (e.g., 'struct stat' -> 'struct_stat.md')."""
+        return type_name.replace(' ', '_').replace('*', '').strip('_') + '.md'
+
+    @classmethod
+    def _is_documented_type(cls, type_name: str) -> bool:
+        """Check if type_name is a struct, alias, or named array (i.e., has a dedicated page)."""
+        return (type_name in TypeSystem.struct_defs
+                or type_name in TypeSystem.type_aliases
+                or type_name in TypeSystem.array_types)
+
+    def _type_link(self, type_name: str, relative_link: str = 'types.md') -> str:
+        """Return a markdown link to the given type's entry, or plain text if none exists.
+        All documented types live on a single combined page (specification/types.md).
+        """
+        if not self._is_documented_type(type_name):
+            return f"`{type_name}`"
+        anchor = self._alias_anchor(type_name)
+        return f"[{type_name}]({relative_link}#{anchor})"
+
+    @staticmethod
+    def _alias_anchor(name: str) -> str:
+        """Sanitize a type name for use as a markdown anchor."""
+        return name.replace(' ', '_').replace('*', '').strip('_')
+
+    def _syscall_referenced_types(self, sc: Syscall) -> List[Tuple[str, List[str]]]:
+        """Return [(type_name, [arg_names_using_it])] for types referenced in this syscall's args.
+        Preserves first-occurrence order. Skips primitive types.
+        """
+        order: List[str] = []
+        via: Dict[str, List[str]] = {}
+        for arg, arg_id in zip(sc.args, sc.args_id):
+            base = arg.rstrip('*').strip()
+            if self._is_documented_type(base):
+                if base not in via:
+                    order.append(base)
+                    via[base] = []
+                via[base].append(arg_id)
+        return [(name, via[name]) for name in order]
+
+    def _gen_type_pages(self):
+        """Generate a single combined types page covering all structs, aliases, and named arrays."""
+        self._gen_types_page()
+
+    def _field_type_display(self, type_name: str) -> str:
+        """Render a struct field type for the layout table — linked if documented."""
+        # Handle pointer types: "struct iovec*" -> link to "struct iovec" page + *
+        if type_name.endswith('*'):
+            stripped = type_name.rstrip('*').strip()
+            stars = '*' * (len(type_name) - len(stripped))
+            if self._is_documented_type(stripped):
+                return f"{self._type_link(stripped)}{stars}"
+            return f"`{type_name}`"
+        # Handle inline arrays: "long[3]" stays literal
+        if TypeSystem.parse_inline_array(type_name):
+            return f"`{type_name}`"
+        return self._type_link(type_name)
+
+    def _gen_types_page(self):
+        """Generate a single combined page with all struct layouts + an aliases table.
+        Each entry has an HTML anchor for deep-linking from syscall pages and field tables."""
+        lines = ["---", "title: Types and ABI", "---", "", "# Types and ABI", ""]
+
+        # --- Structs ---
+        lines.append("## Structs")
+        lines.append("")
+        for sd in TypeSystem.struct_defs.values():
+            anchor = self._alias_anchor(sd.name)
+            lines.append(f'<a id="{anchor}"></a>')
+            lines.append(f"### {sd.name}")
+            lines.append("")
+            lines.append(f"**Size:** {sd.total_size} bytes")
+            lines.append("")
+            lines.append(f"**Alignment:** {sd.alignment} bytes")
+            if sd.packed:
+                lines.append("")
+                lines.append("**Packed**")
+            lines.append("")
+            lines.append("| Offset | Field | Type | Size |")
+            lines.append("|--------|-------|------|------|")
+            for f, offset, size in zip(sd.fields, sd.field_offsets, sd.field_sizes):
+                type_disp = self._field_type_display(f.type_name)
+                explicit = " *(explicit)*" if f.offset is not None else ""
+                lines.append(f"| {offset} | `{f.name}`{explicit} | {type_disp} | {size} |")
+            lines.append("")
+
+        # --- Type aliases + named arrays (single table) ---
+        lines.append("## Type Aliases")
+        lines.append("")
+        lines.append("| Name | Target |")
+        lines.append("|------|--------|")
+        for alias_name, target in TypeSystem.type_aliases.items():
+            anchor = self._alias_anchor(alias_name)
+            lines.append(f'| <a id="{anchor}"></a>`{alias_name}` | `{target}` |')
+        for arr_name, at in TypeSystem.array_types.items():
+            anchor = self._alias_anchor(arr_name)
+            lines.append(f'| <a id="{anchor}"></a>`{arr_name}` | `{at.element_type}[{at.count}]` |')
+        lines.append("")
+
+        # --- C primitives ---
+        lines.append("## C Primitives")
+        lines.append("")
+        lines.append("| Name | Size | Alignment |")
+        lines.append("|------|------|-----------|")
+        for c_name, prim in TypeSystem.c_primitives.items():
+            anchor = self._alias_anchor(c_name)
+            lines.append(f'| <a id="{anchor}"></a>`{c_name}` | {prim.size} | {prim.size} |')
+        lines.append("")
+
+        self.write_file('specification/types.md', "\n".join(lines))
 
 # --- Registry & Main ---
 
