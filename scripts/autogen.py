@@ -222,6 +222,12 @@ class WitGenerator(StubGenerator):
     def _field_type_to_wit(self, type_name: str) -> str:
         """Convert a types_abi field type name to its WIT representation."""
         TS = self.TS
+        # Pointer types: "struct iovec*" -> "ptr-struct-iovec", "void*" -> "ptr-void"
+        if type_name.endswith('*'):
+            stripped = type_name.rstrip('*')
+            indirection = len(type_name) - len(stripped)
+            pointee = stripped.strip()
+            return ('ptr-' * indirection) + self._to_wit(pointee)
         if type_name in TS.type_aliases:
             return self._to_wit(type_name)
         if type_name in TS.array_types:
@@ -259,6 +265,13 @@ class WitGenerator(StubGenerator):
         buf_aux = []
         uniq_ptr_types = set()
         aux_ptr_types = set()
+
+        # Collect pointer types referenced in struct fields (so their ptr-X
+        # aliases get emitted alongside those from syscall args).
+        for sd in self.TS.struct_defs.values():
+            for f in sd.fields:
+                if f.type_name.endswith('*'):
+                    uniq_ptr_types.add(self._field_type_to_wit(f.type_name))
 
         def transform_ptr_arg(arg: ScArg):
             if arg.is_fn_ptr():
