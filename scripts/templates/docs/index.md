@@ -2,7 +2,7 @@
 title: Overview
 ---
 
-# The WebAssembly Linux Interface (WALI)
+# WALI : The WebAssembly Linux Interface
 
 <p align="center"><img src="assets/main-logo.png" alt="WALI" width="250"></p>
 
