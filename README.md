@@ -4,13 +4,13 @@
 
 ***A (Nearly-Complete) Linux API for WebAssembly!***
 
-The **[WALI website](https://arjunr2.github.io/WALI/)** contains information about 
+See **[WALI website](https://wasm-thin-kernel-interfaces.github.io/WALI/)** for
 the overarching project and specification. 
 This repo contains the compiler and engine prototypes for the *WALI* implementation.
 
 ## Getting Started
 
-* Clone the repository: `git clone https://github.com/arjunr2/WALI.git` 
+* Clone the repository: `git clone https://github.com/Wasm-Thin-Kernel-Interfaces/WALI.git` 
 * Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
 
 From here, parts of this project may be incrementally built based on needs:
