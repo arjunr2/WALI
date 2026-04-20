@@ -491,11 +491,19 @@ class DocsGenerator(StubGenerator):
         self._copy_static_docs()
     
     def _copy_static_docs(self):
-        """Copy static docs (index.md, etc.) to output."""
+        """Copy static docs (index.md, assets/, stylesheets/, etc.) to output."""
         import shutil
         src_index = self.DOCS_TEMPLATES_DIR / 'index.md'
         if src_index.exists():
             shutil.copy(src_index, self.spath / 'index.md')
+
+        for subdir in ('assets', 'stylesheets'):
+            src = self.DOCS_TEMPLATES_DIR / subdir
+            if src.exists():
+                dst = self.spath / subdir
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
     
     def _make_badge(self, arch: str, number: int) -> str:
         """Generate a Shields.io style badge for syscall number."""
@@ -745,19 +753,21 @@ class DocsGenerator(StubGenerator):
             lines.append(f'<a id="{anchor}"></a>')
             lines.append(f"### {sd.name}")
             lines.append("")
-            lines.append(f"**Size:** {sd.total_size} bytes")
-            lines.append("")
-            lines.append(f"**Alignment:** {sd.alignment} bytes")
-            if sd.packed:
-                lines.append("")
-                lines.append("**Packed**")
-            lines.append("")
             lines.append("| Offset | Field | Type | Size |")
             lines.append("|--------|-------|------|------|")
             for f, offset, size in zip(sd.fields, sd.field_offsets, sd.field_sizes):
                 type_disp = self._field_type_display(f.type_name)
                 explicit = " *(explicit)*" if f.offset is not None else ""
                 lines.append(f"| {offset} | `{f.name}`{explicit} | {type_disp} | {size} |")
+            # Meta line (size / alignment / packed) as small text under the table
+            meta_parts = [
+                f"Total Size: <b>{sd.total_size}</b> bytes",
+                f"Alignment: <b>{sd.alignment}</b> bytes",
+            ]
+            if sd.packed:
+                meta_parts.append("Packed")
+            lines.append(f'<p class="struct-meta"><small>{" · ".join(meta_parts)}</small></p>')
+            lines.append('<hr class="struct-divider">')
             lines.append("")
 
         # --- Type aliases + named arrays (single table) ---

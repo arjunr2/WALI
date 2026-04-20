@@ -1,6 +1,6 @@
 # Webassembly Linux Interface (WALI)
 
-![WebAssembly Linux Interface](assets/wali-2-small.png?raw=true)
+![WebAssembly Linux Interface](assets/main-logo-dark-small.png?raw=true)
 
 ***A (Nearly-Complete) Linux API for WebAssembly!***
 

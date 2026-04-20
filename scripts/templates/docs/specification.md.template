@@ -1,11 +1,7 @@
 # WALI Syscall Specification
 
-This page lists all system calls and auxiliary functions defined in the WALI specification.
-
-## Summary
-
-- **Auxiliary Functions**: [[NUM_AUX]]
-- **System Calls**: [[NUM_SYSCALLS]]
+This page lists all system calls and auxiliary functions defined in the WALI specification:
+there are **[[NUM_AUX]]** auxillary functions and **[[NUM_SYSCALLS]]** syscalls supported.
 
 ## Auxiliary Functions
 

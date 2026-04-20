@@ -57,6 +57,9 @@ plugins:
   - search
   - macros
 
+extra_css:
+  - stylesheets/extra.css
+
 # Navigation will be auto-generated from docs folder structure
 # Remove explicit nav to allow auto-discovery
 

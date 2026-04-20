@@ -3,6 +3,9 @@ title: Overview
 ---
 
 # The WebAssembly Linux Interface (WALI)
+
+<p align="center"><img src="assets/main-logo.png" alt="WALI" width="250"></p>
+
 <center> <h2> WebAssembly is not a niche ecosystem --- <br/> it's a <b>software-defined ISA</b> and we should treat it like one!</h2> </center>
 
 WALI is a specification and implementation of the **Linux syscall interface for Wasm** based on 
