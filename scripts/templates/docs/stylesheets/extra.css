@@ -1,0 +1,23 @@
+/* Denser tables: tighter row padding with a slightly larger font for readability. */
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+    padding: 0.35em 0.75em;
+    line-height: 1.35;
+    font-size: 0.7rem;
+}
+
+/* Compact meta line under struct layout tables. */
+.md-typeset p.struct-meta {
+    margin: 0.15em 0 0.5em 0;
+    line-height: 1.2;
+}
+.md-typeset p.struct-meta small {
+    font-size: 0.7rem;
+}
+
+/* Light horizontal divider between struct entries on the Types and ABI page. */
+.md-typeset hr.struct-divider {
+    border: none;
+    border-top: 1px solid var(--md-default-fg-color--lighter);
+    margin: 1.5em 0;
+}
