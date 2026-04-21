@@ -8,57 +8,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-matrix:
+    uses: ./.github/workflows/build.yml
+
   build:
-    strategy:
-      matrix:
-        include:
-          - arch: x86_64
-            runs-on: ubuntu-latest
-          - arch: aarch64
-            runs-on: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runs-on }}
+    needs: build-matrix
+    if: always()
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: false
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.build-matrix.result }}" != "success" ]; then
+            exit 1
+          fi
 
-      - name: Init required submodules
-        run: git submodule update --init wali-musl wasm-micro-runtime
-
-      - name: Install dependencies
-        run: sudo ./apt-install-deps.sh
-
-      - name: Generate toolchain configs
-        run: python3 toolchains/gen_toolchains.py
-
-      - name: Build compiler
-        run: make compiler SLIM=1
-
-      - name: Build iwasm
-        run: make iwasm
-
-      - name: Build libc
-        run: make libc
-
-      - name: Build tests
-        run: make -C tests
-
-      - name: Upload iwasm
-        uses: actions/upload-artifact@v4
-        with:
-          name: iwasm-${{ matrix.arch }}
-          path: build/wamr/iwasm/iwasm
-          retention-days: 1
-
-      - name: Upload tests bin
-        uses: actions/upload-artifact@v4
-        with:
-          name: tests-bin-${{ matrix.arch }}
-          path: tests/bin/
-          retention-days: 1
-
-  unit-tests:
-    needs: build
+  unit-tests-matrix:
+    needs: build-matrix
     strategy:
       matrix:
         include:
@@ -93,8 +58,19 @@ jobs:
       - name: Run tests
         run: cd tests && python3 run_tests.py
 
-  precompiled-tests:
-    needs: build
+  unit-tests:
+    needs: unit-tests-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.unit-tests-matrix.result }}" != "success" ]; then
+            exit 1
+          fi
+
+  precompiled-tests-matrix:
+    needs: build-matrix
     strategy:
       matrix:
         include:
@@ -149,3 +125,14 @@ jobs:
         run: |
           $IWASM vim.wasm -n -u NONE -es -c "put! ='Hello from CI'" -c "wq" /tmp/vim_testfile.txt
           grep -q "Hello from CI" /tmp/vim_testfile.txt
+
+  precompiled-tests:
+    needs: precompiled-tests-matrix
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.precompiled-tests-matrix.result }}" != "success" ]; then
+            exit 1
+          fi
