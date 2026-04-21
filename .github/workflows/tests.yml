@@ -8,8 +8,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-wali-x86_64:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runs-on: ubuntu-latest
+          - arch: aarch64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,36 +43,102 @@ jobs:
       - name: Build tests
         run: make -C tests
 
-      - name: Run tests
-        run: cd tests && python3 run_tests.py
+      - name: Upload iwasm
+        uses: actions/upload-artifact@v4
+        with:
+          name: iwasm-${{ matrix.arch }}
+          path: build/wamr/iwasm/iwasm
+          retention-days: 1
 
-  test-wali-aarch64:
-    runs-on: ubuntu-24.04-arm
+  unit-tests:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runs-on: ubuntu-latest
+          - arch: aarch64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: false
 
-      - name: Init required submodules
-        run: git submodule update --init wali-musl wasm-micro-runtime
+      - name: Download iwasm
+        uses: actions/download-artifact@v4
+        with:
+          name: iwasm-${{ matrix.arch }}
+          path: build/wamr/iwasm/
 
-      - name: Install dependencies
-        run: sudo ./apt-install-deps.sh
+      - name: Download tests bin
+        uses: actions/download-artifact@v4
+        with:
+          name: tests-bin-${{ matrix.arch }}
+          path: tests/bin/
 
-      - name: Generate toolchain configs
-        run: python3 toolchains/gen_toolchains.py
-
-      - name: Build compiler
-        run: make compiler SLIM=1
-
-      - name: Build iwasm
-        run: make iwasm
-
-      - name: Build libc
-        run: make libc
-
-      - name: Build tests
-        run: make -C tests
+      - name: Restore iwasm symlink and permissions
+        run: |
+          chmod +x build/wamr/iwasm/iwasm
+          find tests/bin -type f -exec chmod +x {} +
+          ln -sf "$PWD/build/wamr/iwasm/iwasm" iwasm
 
       - name: Run tests
         run: cd tests && python3 run_tests.py
+
+  precompiled-tests:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runs-on: ubuntu-latest
+          - arch: aarch64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      IWASM: ${{ github.workspace }}/build/wamr/iwasm/iwasm --stack-size=4194304
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Download iwasm
+        uses: actions/download-artifact@v4
+        with:
+          name: iwasm-${{ matrix.arch }}
+          path: build/wamr/iwasm/
+
+      - name: Restore iwasm permissions
+        run: chmod +x build/wamr/iwasm/iwasm
+
+      - name: Test bash
+        working-directory: examples/precompiled/bash
+        run: |
+          out=$($IWASM bash.wasm test.sh)
+          echo "$out"
+          echo "$out" | grep -q "Hello from WALI bash"
+          echo "$out" | grep -q "sum: 6"
+          echo "$out" | grep -q "read back: wali-bash-payload"
+
+      - name: Test lua
+        working-directory: examples/precompiled/lua
+        run: |
+          out=$($IWASM lua.wasm test.lua)
+          echo "$out"
+          echo "$out" | grep -q "Hello from WALI lua"
+          echo "$out" | grep -q "sum(10):.*55"
+          echo "$out" | grep -q "fact(5):.*120"
+
+      - name: Test sqlite
+        working-directory: examples/precompiled/sqlite
+        run: |
+          out=$($IWASM sqlite3.wasm chinook.db ".read list_albums.sql")
+          echo "$out"
+          echo "$out" | grep -q "Ace Of Spades"
+
+      - name: Test vim
+        working-directory: examples/precompiled
+        run: |
+          $IWASM vim.wasm -n -u NONE -es -c "put! ='Hello from CI'" -c "wq" /tmp/vim_testfile.txt
+          grep -q "Hello from CI" /tmp/vim_testfile.txt
