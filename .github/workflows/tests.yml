@@ -50,6 +50,13 @@ jobs:
           path: build/wamr/iwasm/iwasm
           retention-days: 1
 
+      - name: Upload tests bin
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-bin-${{ matrix.arch }}
+          path: tests/bin/
+          retention-days: 1
+
   unit-tests:
     needs: build
     strategy:
