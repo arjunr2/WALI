@@ -30,11 +30,11 @@ jobs:
         run: pip install mkdocs-material mkdocs-macros-plugin pyyaml
 
       - name: Generate docs
-        working-directory: scripts
+        working-directory: spec 
         run: python3 autogen.py docs
 
       - name: Build site
-        working-directory: scripts
+        working-directory: spec 
         run: mkdocs build --strict --site-dir ../site
 
       - uses: actions/upload-pages-artifact@v3

@@ -5,4 +5,5 @@ aarch64_undefined_consolidate.out
 sorted_syscall_conversion.csv
 *.profile
 autogen/
+site/
 __pycache__
