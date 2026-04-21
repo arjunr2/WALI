@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runs-on: ubuntu-latest
+          - arch: aarch64
+            runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Init required submodules
+        run: git submodule update --init wali-musl wasm-micro-runtime
+
+      - name: Install dependencies
+        run: sudo ./apt-install-deps.sh
+
+      - name: Generate toolchain configs
+        run: python3 toolchains/gen_toolchains.py
+
+      - name: Build compiler
+        run: make compiler SLIM=1
+
+      - name: Build iwasm
+        run: make iwasm
+
+      - name: Build libc
+        run: make libc
+
+      - name: Build tests
+        run: make -C tests
+
+      - name: Upload iwasm
+        uses: actions/upload-artifact@v4
+        with:
+          name: iwasm-${{ matrix.arch }}
+          path: build/wamr/iwasm/iwasm
+          retention-days: 1
+
+      - name: Upload tests bin
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-bin-${{ matrix.arch }}
+          path: tests/bin/
+          retention-days: 1
