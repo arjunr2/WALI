@@ -210,7 +210,6 @@ rustc:
 	./x setup compiler
 	python3 $(WALI_ROOT_DIR)/compiler_ports/rustc_config.py -r $(WALI_ROOT_DIR)/compiler_ports/rust \
 		-m $(WALI_SYSROOT_DIR) -l $(WALI_LLVM_BIN_DIR)
-	cargo update -p libc
 	cargo update --manifest-path src/bootstrap/Cargo.toml -p cc
 	./x build
 	rustup toolchain link wali build/host/stage1

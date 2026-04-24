@@ -105,8 +105,14 @@ class LibcGenerator(StubGenerator):
             arglist = ','.join([f"({typ})a{i+1}" for i, typ in enumerate(anon_args)])
             return f"\t\tCASE_SYSCALL ({sc.name}, {arglist});"
 
+        def case_var_stub(sc: Syscall):
+            anon_args = self._ptr_anonymize(sc.args_reduce())
+            arglist = ','.join([f"va_arg(ap, {typ})" for typ in anon_args])
+            return f"\t\tCASE_SYSCALL ({sc.name}, {arglist});"
+
         self.gen_and_write(def_stub, 'defs.out', True)
         self.gen_and_write(case_stub, 'case.out')
+        self.gen_and_write(case_var_stub, 'case_var.out')
 
     def _gen_rust_stubs(self):
         rpath = self.spath / 'rust'
