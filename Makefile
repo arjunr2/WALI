@@ -20,7 +20,9 @@ LINK_PARALLEL := $(shell echo $$(($(MEMGB) < 16 ? 1 : $(MEMGB) / 16)))
 MAP_Linux := Linux
 MAP_Darwin := macOS
 MAP_x86_64 := X64
+# uname -m gives "arm64" on macOS but "aarch64" on Linux; both map to ARM64.
 MAP_arm64 := ARM64
+MAP_aarch64 := ARM64
 
 LLVM_RELEASE_PLATFORM := $(MAP_$(UNAME_S))-$(MAP_$(UNAME_M))
 LLVM_RELEASE_NAME := LLVM-$(WALI_LLVM_VERSION)-$(LLVM_RELEASE_PLATFORM)
