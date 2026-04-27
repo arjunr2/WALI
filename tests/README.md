@@ -44,6 +44,13 @@ Optionally:
 - **`test_setup(argc, argv)` / `test_cleanup(argc, argv)`** inside `#ifdef WALI_TEST_WRAPPER`. The guard keeps libc-heavy fixture code out of the WASM build while still compiling it into the hooks wrapper.
 - **`test_init_args()`** at the start of `test()` if you read `argv` — required under WASM to populate argc/argv from WALI imports (no-op natively).
 
+**`argv` indexing — note the asymmetry between `test()` and `test_setup`/`test_cleanup`:**
+
+- Inside `test()`, `argv` follows the standard C convention. `argv[0]` is the program path (the test binary or the `.wasm` file); user args from `// CMD: args=...` start at `argv[1]`. So `argc >= 1 + N` where `N` is the number of user args.
+- Inside `test_setup` / `test_cleanup`, the hooks wrapper has already stripped the program path and the `setup`/`cleanup` sub-command before invoking the hook. `argv[0]` is the **first** user arg from `// CMD: setup=...` / `cleanup=...`. So `argc == N` exactly.
+
+This means a `// CMD: args="ok 0777 /tmp/f"` line is read inside `test()` as `argv[1]="ok"`, `argv[2]="0777"`, `argv[3]="/tmp/f"`, but a `// CMD: setup="0644 /tmp/f"` line is read inside `test_setup` as `argv[0]="0644"`, `argv[1]="/tmp/f"`.
+
 See [unit/chmod.c](unit/chmod.c) for a representative example, or [unit/open.c](unit/open.c) for one that uses `// CMD:` directives to parameterize a single `test()` over multiple runs.
 
 ## Architecture
