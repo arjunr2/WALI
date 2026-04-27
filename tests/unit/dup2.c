@@ -14,7 +14,11 @@ long wali_syscall_dup2(int oldfd, int newfd) {
 #ifdef SYS_dup2
     return syscall(SYS_dup2, oldfd, newfd);
 #else
-    return syscall(SYS_dup3, oldfd, newfd, 0);
+    if (oldfd == newfd) {
+        return newfd;  // dup2 with oldfd==newfd is a no-op that returns newfd
+    } else {
+        return syscall(SYS_dup3, oldfd, newfd, 0);
+    }
 #endif
 }
 #endif
