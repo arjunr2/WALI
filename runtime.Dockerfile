@@ -5,7 +5,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 
 COPY wasm-micro-runtime /runtime/wasm-micro-runtime
-COPY misc /runtime/misc
 COPY toolchains /runtime/toolchains
 COPY Makefile /runtime/
 
@@ -19,4 +18,4 @@ RUN cd /runtime && make iwasm && \
 
 RUN env &> /runtime/.walienv
 
-ENTRYPOINT ["/runtime/misc/iwasm-wrapper"]
+ENTRYPOINT ["/runtime/toolchains/binfmt/iwasm-wrapper"]
