@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y make cmake \
         binfmt-support python3
 
 RUN cd /runtime && make iwasm && \
-        cd misc && source gen_iwasm_wrapper.sh
+        source toolchains/binfmt/gen_iwasm_wrapper.sh
 
 RUN env &> /runtime/.walienv
 
