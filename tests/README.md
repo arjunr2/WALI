@@ -66,7 +66,7 @@ The harness in [common/](common/) is what makes one source file work for both ta
 
 The [Makefile](Makefile) builds three artifacts per `unit/<name>.c`: `bin/unit/wasm/<name>.wasm`, `bin/unit/elf/<name>`, and `bin/unit/elf/<name>_hooks` (the last with `-DWALI_TEST_WRAPPER`).
 
-> **Known WALI Issues in Test Suite to Fix**
-> - **[unit/mmap.c](unit/mmap.c) — `bad_size_zero`**: native `mmap(NULL, 0, ...)` returns `-1` with `EINVAL`; WALI returns a valid pointer (size-0 mmap silently accepted).
-> - **[unit/mremap.c](unit/mremap.c) — `bad_addr`**: the test passes a high address (`0x100000000`) to exercise mremap-on-unmapped. That value isn't representable in 32-bit WASM linear memory, so the pointer is truncated/translated and the call doesn't fail the way native mremap does.
-> - **[unit/prctl.c](unit/prctl.c) — `set_get_name`, `get_pdeathsig`**: prctl takes variable arguments with context-dependent pointer conversion on some args. Not supported yet, but support it soon.
+## Known WALI Issues in Test Suite to Fix
+- **[unit/mmap.c](unit/mmap.c) — `bad_size_zero`**: native `mmap(NULL, 0, ...)` returns `-1` with `EINVAL`; WALI returns a valid pointer (size-0 mmap silently accepted).
+- **[unit/mremap.c](unit/mremap.c) — `bad_addr`**: the test passes a high address (`0x100000000`) to exercise mremap-on-unmapped. That value isn't representable in 32-bit WASM linear memory, so the pointer is truncated/translated and the call doesn't fail the way native mremap does.
+- **[unit/prctl.c](unit/prctl.c) — `set_get_name`, `get_pdeathsig`**: prctl takes variable arguments with context-dependent pointer conversion on some args. Not supported yet, but support it soon.
