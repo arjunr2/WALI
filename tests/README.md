@@ -65,6 +65,3 @@ The harness in [common/](common/) is what makes one source file work for both ta
 - **[wali_test_helpers.h](common/wali_test_helpers.h)** — `TEST_ASSERT_EQ` / `TEST_ASSERT_NE` / `TEST_LOG` macros that write directly via `wali_syscall_write` so they work identically under WASM (no libc dependency).
 
 The [Makefile](Makefile) builds three artifacts per `unit/<name>.c`: `bin/unit/wasm/<name>.wasm`, `bin/unit/elf/<name>`, and `bin/unit/elf/<name>_hooks` (the last with `-DWALI_TEST_WRAPPER`).
-
-## Known WALI Issues in Test Suite to Fix
-- **[unit/prctl.c](unit/prctl.c) — `set_get_name`, `get_pdeathsig`**: prctl takes variable arguments with context-dependent pointer conversion on some args. Not supported yet, but support it soon.
