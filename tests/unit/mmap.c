@@ -2,12 +2,7 @@
 // CMD:                                args="anon_shared"                         cleanup=""
 // CMD: setup="/tmp/map_a" args="file        /tmp/map_a" cleanup="/tmp/map_a"
 // CMD:                                args="bad_fd"                              cleanup=""
-
-// Disabled — WALI / native divergence:
-//   Native: mmap(NULL, 0, ...) returns -1 with EINVAL.
-//   WALI:   returns a valid pointer (size-0 mmap is silently accepted).
-// Re-enable once WALI's mmap rejects length=0 with EINVAL.
-// // CMD:                                args="bad_size_zero"                        cleanup=""
+// CMD:                                args="bad_size_zero"                        cleanup=""
 
 #include "wali_start.c"
 #include <sys/mman.h>
@@ -84,10 +79,9 @@ int test(void) {
         void *p = wali_mmap(NULL, 4096, PROT_READ, MAP_PRIVATE, 99999, 0);
         return (p == MAP_FAILED) ? 0 : -1;
     }
-    // Disabled — WALI returns success on size-0 mmap; native returns EINVAL.
-    // if (!strcmp(mode, "bad_size_zero")) {
-    //     void *p = wali_mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    //     return (p == MAP_FAILED) ? 0 : -1;
-    // }
+    if (!strcmp(mode, "bad_size_zero")) {
+        void *p = wali_mmap(NULL, 0, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        return (p == MAP_FAILED) ? 0 : -1;
+    }
     return -1;
 }

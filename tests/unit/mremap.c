@@ -1,14 +1,6 @@
 // CMD: args="grow_maymove"
 // CMD: args="shrink"
 
-// Disabled — WALI / native divergence:
-//   The WASM target uses 32-bit linear memory, so the high address
-//   0x100000000 used by the native test isn't representable. The pointer is
-//   truncated/translated by WALI and the call doesn't fail the way native
-//   mremap does on an unmapped region. Re-enable once we have a portable way
-//   to construct an unmapped-but-valid-pointer-shape address inside WASM.
-// // CMD: args="bad_addr"
-
 #define _GNU_SOURCE
 #include "wali_start.c"
 #include <sys/mman.h>
@@ -52,13 +44,6 @@ int test_cleanup(int argc, char **argv) { return 0; }
 int test(void) {
     if (test_init_args() != 0) return -1;
     const char *mode = (argc > 1) ? argv[1] : "grow_maymove";
-
-    // Disabled — high address 0x100000000 isn't representable in 32-bit WASM.
-    // if (!strcmp(mode, "bad_addr")) {
-    //     // mremap on never-mapped region → EINVAL/EFAULT.
-    //     void *r = wali_mremap((void *)0x100000000ULL, 4096, 8192, MREMAP_MAYMOVE, NULL);
-    //     return (r == MAP_FAILED) ? 0 : -1;
-    // }
 
     size_t old_size = 4096;
     void *ptr = wali_mmap(NULL, old_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
