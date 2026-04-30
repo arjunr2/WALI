@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <font size="4"><strong>Bringing All of Linux to WebAssembly!</strong></font>
+  <font size="5"><strong>Bringing All of Linux to WebAssembly!</strong></font>
   <br>
   [ <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/">Website</a> | <a href="https://dl.acm.org/doi/10.1145/3689031.3717470">Publication</a>  | <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/specification/">WALI Specification</a> ]
 </p>
