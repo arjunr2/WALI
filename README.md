@@ -4,12 +4,11 @@
   <img src="assets/main-logo-small.png?raw=true" alt="WebAssembly Linux Interface">
 </p>
 
-<h3 align="center"><em>Bringing All of Linux to WebAssembly!
-<br>
-[<strong><a href="https://wasm-thin-kernel-interfaces.github.io/WALI/">Website</a></strong>]
-</em></h3>
-
-This repo contains the WALI specification, along with compiler and engine prototypes.
+<p align="center">
+  <font size="4"><strong>Bringing All of Linux to WebAssembly!</strong></font>
+  <br>
+  [ <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/">Website</a> | <a href="https://dl.acm.org/doi/10.1145/3689031.3717470">Publication</a>  | <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/specification/">WALI Specification</a> ]
+</p>
 
 ## Quick Start
 
@@ -30,12 +29,9 @@ For more granular control, see the [detailed setup guide](#detailed-setup-guide)
 
 ## "Hello World": Build and Run
 
-A simple "hello world" can be built and run as below:
-
 ```shell
 cd examples
-# This script sets up standard build flags for the compiler toolchain.
-# For WALI binaries without main/start functions, refer to `print_nostart.c` instead
+# This script sets up standard build flags for the compiler toolchain. For WALI binaries without main/start functions, refer to `print_nostart.c` instead
 ./compile-wali-standalone.sh -o print.wasm print.c
 # Run the binary (or `./print.wasm` if miscellaneous binary format is setup)
 ../iwasm print.wasm
