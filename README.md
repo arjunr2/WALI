@@ -64,12 +64,15 @@ git submodule update --init wasm-micro-runtime
 make iwasm
 ```
 
-*[Optional, but Recommended] Wasm as a Miscellaneous Binary Format*: By registering Wasm/AoT binaries as a miscellenous binary format with the above engine, `.wasm` files can be executed like ELF files (e.g. `./bash.wasm --norc`).
-This is **necessary** to build some [applications](applications) that execute intermediate binaries.
+### [Recommended] Miscellaneous Binary Format
+By registering Wasm/AoT binaries as a miscellenous binary format with the above engine, `.wasm` files can be executed like ELF files (e.g. `./bash.wasm --norc`).
+This is **necessary** to build some applications that execute intermediate binaries.
 To do this, run:
 ```shell
 # Specify '-p' option to register with systemd-binfmt to survive system reboots.
 sudo ./toolchains/binfmt/binfmt_register.sh -p
+# Run like a native binary!
+./examples/precompiled/lua/lua.wasm
 ```
 
 More info on miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
