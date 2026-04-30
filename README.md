@@ -1,17 +1,48 @@
 # Webassembly Linux Interface (WALI)
 
-![WebAssembly Linux Interface](assets/main-logo-small.png?raw=true)
+<p align="center">
+  <img src="assets/main-logo-small.png?raw=true" alt="WebAssembly Linux Interface">
+</p>
 
-***A (Nearly-Complete) Linux API for WebAssembly!***
+<h3 align="center">Bringing All of Linux to WebAssembly!</h3>
+<div align="center">[ <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/">Website</a> | <a href="https://dl.acm.org/doi/10.1145/3689031.3717470">Publication</a> | <a href="https://wasm-thin-kernel-interfaces.github.io/WALI/specification/">WALI Specification</a> ]</div>
 
-See **[WALI website](https://wasm-thin-kernel-interfaces.github.io/WALI/)** for
-the overarching project and specification. 
-This repo contains the compiler and engine prototypes for the *WALI* implementation.
+## Quick Start
 
-## Getting Started
+```shell
+sudo ./install-deps.sh
+# Full setup: toolchain configs + runtime + compiler + libc. Use the `-r` option for only runtime build
+./quick_setup.sh
 
-* Clone the repository: `git clone https://github.com/Wasm-Thin-Kernel-Interfaces/WALI.git` 
-* Setup toolchain configs: `python3 toolchains/gen_toolchains.py`
+# Running programs 
+## Native Linux Host
+./iwasm -v=0 ./examples/precompiled/lua/lua.wasm
+## Non-Linux Host (Docker Image)
+docker build -t wali -f runtime.Dockerfile .
+docker run --rm -it -w /dir -v $(pwd):/dir wali ./examples/precompiled/lua/lua.wasm
+```
+
+For more granular control, see the [detailed setup guide](#detailed-setup-guide).
+
+## "Hello World": Build and Run
+
+```shell
+cd examples
+# This script sets up standard build flags for the compiler toolchain. For WALI binaries without main/start functions, refer to `print_nostart.c` instead
+./compile-wali-standalone.sh -o print.wasm print.c
+# Run the binary (or `./print.wasm` if miscellaneous binary format is setup)
+../iwasm print.wasm
+```
+You can find more sample programs in [examples/mini](examples/mini/).
+
+
+## Detailed Setup Guide
+
+First, setup toolchain configs: 
+```shell
+# See `toolchains/README.md` if creating custom toolchains
+python3 toolchains/gen_toolchains.py
+```
 
 From here, parts of this project may be incrementally built based on needs:
 
@@ -27,18 +58,21 @@ See [examples/precompiled](examples/precompiled) for runnable WALI binaries.
 ### Native Linux Host
 ```shell
 # Install dependencies (or equivalent packages without apt)
-sudo ./apt-install-deps.sh 
+sudo ./install-deps.sh 
 git submodule update --init wasm-micro-runtime
 # Generates `iwasm` symlink in root directory
 make iwasm
 ```
 
-*[Optional, but Recommended] Wasm as a Miscellaneous Binary Format*: By registering Wasm/AoT binaries as a miscellenous binary format with the above engine, `.wasm` files can be executed like ELF files (e.g. `./bash.wasm --norc`).
-This is **necessary** to build some [applications](applications) that execute intermediate binaries.
+### [Recommended] Miscellaneous Binary Format
+By registering Wasm/AoT binaries as a miscellenous binary format with the above engine, `.wasm` files can be executed like ELF files (e.g. `./bash.wasm --norc`).
+This is **necessary** to build some applications that execute intermediate binaries.
 To do this, run:
 ```shell
 # Specify '-p' option to register with systemd-binfmt to survive system reboots.
 sudo ./toolchains/binfmt/binfmt_register.sh -p
+# Run like a native binary!
+./examples/precompiled/lua/lua.wasm
 ```
 
 More info on miscellaneous binary formats and troubleshooting can be found [here](https://docs.kernel.org/admin-guide/binfmt-misc.html)
@@ -82,30 +116,14 @@ wamrc --enable-multi-thread -o <destination-aot-file> <source-wasm-file>
 ```
  AoT files for WAMR can be run from the command line just like Wasm files.
 
-### "Hello World"
 
-> **Note**: Ensure [initial setup](#initial-setup) is completed. For additional information on using/customizing toolchains, see [toolchains](toolchains/README.md) 
-
-A simple "hello world" can be built and run as below:
-
-```shell
-cd examples
-# This script sets up standard build flags for the compiler toolchain.
-# For WALI binaries without main/start functions, refer to `print_nostart.c` instead
-./compile-wali-standalone.sh -o print.wasm print.c
-# Run the binary (or `./print.wasm` if miscellaneous binary format is setup)
-../iwasm print.wasm
-```
-You can find more sample programs in [examples/mini](examples/mini/).
-
-
-## Testing
+## Test Suite
 
 To build and run the unit test suite:
 ```shell
 cd tests
-# Ensure iwasm, libc, and compiler toolchains were all built prior to this
-make && python3 run_tests.py
+# Ensure runtime, libc, and compiler toolchains were built prior to this
+make -j && python3 run_tests.py
 ```
 
 ## Additional Resources
