@@ -9,22 +9,19 @@ make all                                  # build all three artifacts per test
 python3 run_tests.py                      # full suite
 python3 run_tests.py -f open chmod        # subset
 python3 run_tests.py -v                   # verbose, prints all output
-python3 run_tests.py --config other.json  # alternate engine config
+python3 run_tests.py --config other.toml  # alternate engine config
 ```
 
 ### Engine config
 
-`--config` points at a JSON list — every entry is a WASM engine the suite runs each test against. Default is [engines.json](engines.json):
+`--config` points at a TOML file with one or more `[[engines]]` tables — every entry is a WASM engine the suite runs each test against. Default is [engines.toml](engines.toml):
 
-```json
-[
-  {
-    "name": "iwasm",
-    "command": "../iwasm",
-    "args": ["{verbose_arg}", "--env-file={env_file}", "{wasm_file}", "{args}"],
-    "verbose_arg": "-v=5"
-  }
-]
+```toml
+[[engines]]
+name = "iwasm"
+command = "../iwasm"
+args = ["{verbose_arg}", "--env-file={env_file}", "{wasm_file}", "{args}"]
+verbose_arg = "-v=5"
 ```
 
 - `command` — engine binary.
