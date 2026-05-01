@@ -4,8 +4,16 @@ import sys
 import glob
 import argparse
 import shlex
-import json
 import re
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        print("Error: Python <3.11 requires the 'tomli' package. Install with: pip install tomli", file=sys.stderr)
+        sys.exit(1)
 
 # Colors
 GREEN = '\033[92m'
@@ -261,7 +269,7 @@ def run_test_suite(test_path, engines, verbose):
 def main():
     parser = argparse.ArgumentParser(description='Run WALI unit tests.')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output (iwasm -v=5 and full logs)')
-    parser.add_argument('--config', default='engines.json', help='Path to engines config file')
+    parser.add_argument('--config', default='engines.toml', help='Path to engines config file')
     parser.add_argument('-f', '--file', nargs='+', help='Run specific tests (by name, e.g. pselect6 ioctl or specific/path.c)')
     args = parser.parse_args()
 
@@ -270,8 +278,12 @@ def main():
         print(f"Error: Config file {args.config} not found.")
         sys.exit(1)
 
-    with open(args.config, 'r') as f:
-        engines = json.load(f)
+    with open(args.config, 'rb') as f:
+        config = tomllib.load(f)
+    engines = config.get('engines', [])
+    if not engines:
+        print(f"Error: No [[engines]] entries found in {args.config}.")
+        sys.exit(1)
 
     print(f"Testing with engines: {', '.join(e['name'] for e in engines)}")
     print("-" * 60)

@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 import sys, os, textwrap, subprocess
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ImportError:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        print("Error: Python <3.11 requires the 'tomli' package. Install with: pip install tomli", file=sys.stderr)
+        sys.exit(1)
 
 filepath = Path(__file__).parent.absolute()
 
