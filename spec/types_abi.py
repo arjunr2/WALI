@@ -97,8 +97,8 @@ class TypeSystem:
         "int16_t":            Primitive(2, True),
         "int32_t":            Primitive(4, True),
         "int64_t":            Primitive(8, True),
-        # Wasm32 specifics
-        "ptr":                Primitive(4, True),    # all pointers are 4 bytes in wasm32
+        # Wasm32 specifics — both are 4-byte unsigned wasm offsets/indices
+        "ptr":                Primitive(4, False),   # all pointers are 4 bytes in wasm32
         "ptr_func":           Primitive(4, False),   # function pointer = table index
     }
 

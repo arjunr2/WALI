@@ -85,8 +85,9 @@ class LibcGenerator(StubGenerator):
 
     def rustify_args(self, sc: Syscall) -> List[str]:
         """Convert argument types to Rust compatible types"""
+        ptr_wit = self.TS.c_primitives['ptr'].wit_name
         def f(arg: ScArg):
-            prim = 's32' if arg.is_ptr() or arg.is_fn_ptr() else self.TS.resolve_primitive(arg).wit_name
+            prim = ptr_wit if arg.is_ptr() or arg.is_fn_ptr() else self.TS.resolve_primitive(arg).wit_name
             return prim if not prim.startswith('s') else 'i' + prim[1:]
 
         return [f(x) for x in sc.args_reduce()]
@@ -161,15 +162,21 @@ class LibcGenerator(StubGenerator):
 
 
 class WamrGenerator(StubGenerator):
+    def _arg_ctype(self, arg: ScArg) -> str:
+        """Map a syscall arg to its wasm-side fixed-width C type (intN_t/uintN_t)."""
+        prim = self.TS.c_primitives['ptr'] if arg.is_ptr() or arg.is_fn_ptr() \
+               else self.TS.resolve_primitive(arg)
+        return f"{'int' if prim.signed else 'uint'}{prim.size * 8}_t"
+
     def generate(self):
         def declr_stub(sc: Syscall):
-            arglist = ''.join([f", long a{i+1}" for i, _ in enumerate(sc.args_reduce())])
+            arglist = ''.join([f", {self._arg_ctype(a)} a{i+1}" for i, a in enumerate(sc.args_reduce())])
             return f"long wali_syscall_{sc.name} (wasm_exec_env_t exec_env{arglist});"
 
         def impl_stub(sc: Syscall):
             args_red = sc.args_reduce()
-            arglist_def = ''.join([f", long a{i+1}" for i, _ in enumerate(args_red)])
-            
+            arglist_def = ''.join([f", {self._arg_ctype(a)} a{i+1}" for i, a in enumerate(args_red)])
+
             # Construct return call args
             ret_args = []
             for i, argty in enumerate(args_red):
@@ -537,8 +544,9 @@ class DocsGenerator(StubGenerator):
     def _wasm_signature(self, name: str, args: List, args_id: List, ret_type: str = "i64", is_syscall: bool = True) -> str:
         """Generate Wasm32 import signature in WAT format."""
         # Map C types to Wasm types
+        ptr_wit = self.TS.c_primitives['ptr'].wit_name
         def to_wasm_type(ty: ScArg) -> str:
-            prim = self.TS.resolve_primitive(ty).wit_name if not (ty.is_ptr() or ty.is_fn_ptr()) else 's32'
+            prim = ptr_wit if (ty.is_ptr() or ty.is_fn_ptr()) else self.TS.resolve_primitive(ty).wit_name
             bitwidth = "32" if int(prim[1:]) < 32 else prim[1:]
             return f"i{bitwidth}"
         
